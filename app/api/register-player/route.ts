@@ -1,10 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseClient } from "@/lib/supabase-client"
+import { createClient } from "@supabase/supabase-js"
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function POST(request: NextRequest) {
   console.log("🎯 === PLAYER REGISTRATION START ===")
 
   try {
+    console.log("🎳 Registration API called")
+
     const body = await request.json()
     console.log("📝 Registration data received:", {
       name: body.name,
@@ -13,11 +20,11 @@ export async function POST(request: NextRequest) {
     })
 
     // Validate required fields
-    const requiredFields = ["name", "email", "nationality", "passport", "league"]
-    const missingFields = requiredFields.filter((field) => !body[field])
+    const requiredFields = ["name", "email", "nationality", "passport", "league", "gender", "country"]
+    const missingFields = requiredFields.filter((field) => !body[field] || body[field].toString().trim() === "")
 
     if (missingFields.length > 0) {
-      console.error("❌ Missing required fields:", missingFields)
+      console.log("❌ Missing required fields:", missingFields)
       return NextResponse.json(
         {
           success: false,
@@ -28,15 +35,27 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = getSupabaseClient()
+    // Check if at least one category is selected
+    const categories = body.categories || {}
+    const hasCategory = Object.values(categories).some(Boolean)
+    if (!hasCategory) {
+      console.log("❌ No categories selected")
+      return NextResponse.json(
+        {
+          success: false,
+          error: "At least one category must be selected",
+        },
+        { status: 400 },
+      )
+    }
 
     // Check for duplicate email
-    console.log("🔍 Checking for duplicate email...")
+    console.log("🔍 Checking for duplicate email:", body.email)
     const { data: existingPlayer, error: checkError } = await supabase
       .from("players")
       .select("id, email")
-      .eq("email", body.email)
-      .limit(1)
+      .eq("email", body.email.toLowerCase().trim())
+      .single()
 
     if (checkError && checkError.code !== "PGRST116") {
       console.error("❌ Error checking for duplicates:", checkError)
@@ -50,19 +69,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (existingPlayer && existingPlayer.length > 0) {
-      console.log("⚠️ Duplicate email found:", body.email)
+    if (existingPlayer) {
+      console.log("❌ Email already exists:", body.email)
       return NextResponse.json(
         {
           success: false,
           error: "Email already registered",
-          duplicateType: "email",
+          duplicate: true,
         },
         { status: 409 },
       )
     }
 
-    // Prepare player data using the correct database schema
+    // Prepare player data for insertion
     const playerData = {
       name: body.name.trim(),
       email: body.email.toLowerCase().trim(),
@@ -70,18 +89,43 @@ export async function POST(request: NextRequest) {
       passport: body.passport.trim(),
       league: body.league.trim(),
       played_in_2024: Boolean(body.played_in_2024),
-      gender: body.gender || "M",
-      country: body.country || "national",
-      categories: body.categories || {},
-      total_cost: Number(body.total_cost) || 0,
+      gender: body.gender,
+      country: body.country,
+      total_cost: body.total_cost || 0,
       currency: body.currency || "USD",
       payment_status: body.payment_status || "pending",
+      // Categories as individual boolean fields
+      handicap: Boolean(categories.handicap),
+      scratch: Boolean(categories.scratch),
+      senior_m: Boolean(categories.seniorM),
+      senior_f: Boolean(categories.seniorF),
+      marathon: Boolean(categories.marathon),
+      desperate: Boolean(categories.desperate),
+      reenganche_3: Boolean(categories.reenganche3),
+      reenganche_4: Boolean(categories.reenganche4),
+      reenganche_5: Boolean(categories.reenganche5),
+      reenganche_8: Boolean(categories.reenganche8),
       created_at: new Date().toISOString(),
     }
 
-    console.log("💾 Inserting player data...")
+    console.log("💾 Inserting player data:", {
+      name: playerData.name,
+      email: playerData.email,
+      categories: {
+        handicap: playerData.handicap,
+        scratch: playerData.scratch,
+        senior_m: playerData.senior_m,
+        senior_f: playerData.senior_f,
+        marathon: playerData.marathon,
+        desperate: playerData.desperate,
+        reenganche_3: playerData.reenganche_3,
+        reenganche_4: playerData.reenganche_4,
+        reenganche_5: playerData.reenganche_5,
+        reenganche_8: playerData.reenganche_8,
+      },
+    })
 
-    // Insert new player
+    // Insert the player
     const { data: insertedPlayer, error: insertError } = await supabase
       .from("players")
       .insert([playerData])
@@ -89,7 +133,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (insertError) {
-      console.error("❌ Insert error:", insertError)
+      console.error("❌ Error inserting player:", insertError)
       return NextResponse.json(
         {
           success: false,
@@ -100,15 +144,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("✅ Player registered successfully:", insertedPlayer.id)
+    console.log("✅ Player registered successfully:", {
+      id: insertedPlayer.id,
+      name: insertedPlayer.name,
+      email: insertedPlayer.email,
+    })
 
     return NextResponse.json({
       success: true,
       message: "Player registered successfully",
-      data: insertedPlayer,
+      data: {
+        id: insertedPlayer.id,
+        name: insertedPlayer.name,
+        email: insertedPlayer.email,
+      },
     })
   } catch (error: any) {
-    console.error("💥 Registration error:", error)
+    console.error("💥 Registration API error:", error)
     return NextResponse.json(
       {
         success: false,
