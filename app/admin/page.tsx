@@ -1,76 +1,103 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { SimpleAuthGuard } from "@/components/simple-auth-guard"
+import { RefreshCw, Users, DollarSign, Eye, CheckCircle, XCircle, Clock, Wifi, WifiOff } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import {
-  Users,
-  DollarSign,
-  Search,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Eye,
-  EyeOff,
-  RefreshCw,
-  TrendingUp,
-  UserCheck,
-  Trophy,
-  Target,
-  AlertCircle,
-  Wifi,
-  WifiOff,
-} from "lucide-react"
-import { TournamentResults } from "@/components/tournament-results"
-import { TournamentBrackets } from "@/components/tournament-brackets"
-import Image from "next/image"
 
 interface Player {
-  id: string
+  id: number
   name: string
   email: string
   phone: string
-  emergency_contact: string
-  emergency_phone: string
-  payment_status: "pending" | "verified"
+  nationality: string
+  handicap: boolean
+  senior: boolean
+  scratch: boolean
+  total_cost: number
+  payment_status: string
   created_at: string
-  qr_validated: boolean
-  wallet_address?: string
 }
 
-interface TournamentStats {
+interface Stats {
   total_players: number
-  verified_players: number
-  pending_players: number
   total_revenue: number
+  pending_payments: number
+  confirmed_payments: number
+  handicap_players: number
+  senior_players: number
+  scratch_players: number
+  nacional_players: number
+  extranjero_players: number
 }
 
 export default function AdminPage() {
   const [players, setPlayers] = useState<Player[]>([])
-  const [stats, setStats] = useState<TournamentStats>({
-    total_players: 0,
-    verified_players: 0,
-    pending_players: 0,
-    total_revenue: 0,
-  })
+  const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [searchTerm, setSearchTerm] = useState("")
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
-  const [showPlayerDetails, setShowPlayerDetails] = useState(false)
-  const [lastRefresh, setLastRefresh] = useState<string>("")
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
-  const [refreshInterval, setRefreshInterval] = useState(60) // 60 segundos por defecto
+  const [autoRefresh, setAutoRefresh] = useState(true)
+  const [refreshInterval, setRefreshInterval] = useState(60) // seconds
   const [isOnline, setIsOnline] = useState(true)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
 
-  // Monitor connection status
+  const fetchData = useCallback(
+    async (silent = false) => {
+      if (!silent) {
+        setRefreshing(true)
+      }
+
+      try {
+        const [playersRes, statsRes] = await Promise.all([
+          fetch("/api/players", { cache: "no-store" }),
+          fetch("/api/tournament-stats", { cache: "no-store" }),
+        ])
+
+        if (playersRes.ok && statsRes.ok) {
+          const playersData = await playersRes.json()
+          const statsData = await statsRes.json()
+
+          setPlayers(playersData)
+          setStats(statsData)
+
+          if (silent) {
+            toast({
+              title: "Datos actualizados",
+              description: "Información actualizada automáticamente",
+              duration: 2000,
+            })
+          }
+        } else {
+          throw new Error("Error fetching data")
+        }
+      } catch (error) {
+        console.error("Error:", error)
+        if (!silent) {
+          toast({
+            title: "Error",
+            description: "No se pudieron cargar los datos",
+            variant: "destructive",
+          })
+        }
+      } finally {
+        if (!silent) {
+          setRefreshing(false)
+        }
+        setLoading(false)
+      }
+    },
+    [toast],
+  )
+
+  // Check online status
   useEffect(() => {
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
@@ -84,718 +111,415 @@ export default function AdminPage() {
     }
   }, [])
 
+  // Auto-refresh logic
+  useEffect(() => {
+    if (!autoRefresh || !isOnline) return
+
+    const interval = setInterval(() => {
+      // Don't auto-refresh if user is viewing player details
+      if (!selectedPlayer && document.visibilityState === "visible") {
+        fetchData(true) // Silent refresh
+      }
+    }, refreshInterval * 1000)
+
+    return () => clearInterval(interval)
+  }, [autoRefresh, refreshInterval, selectedPlayer, fetchData, isOnline])
+
+  // Initial load
   useEffect(() => {
     fetchData()
-    setupAutoRefresh()
+  }, [fetchData])
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    setupAutoRefresh()
-  }, [autoRefreshEnabled, refreshInterval])
-
-  const setupAutoRefresh = () => {
-    // Clear existing interval
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
-    }
-
-    // Setup new interval if enabled
-    if (autoRefreshEnabled && isOnline) {
-      intervalRef.current = setInterval(() => {
-        // Only auto-refresh if user is not interacting with modals or forms
-        if (!showPlayerDetails && document.visibilityState === "visible") {
-          silentRefresh()
-        }
-      }, refreshInterval * 1000)
-    }
+  const handleManualRefresh = () => {
+    fetchData(false) // Non-silent refresh
   }
 
-  const fetchData = async (silent = false) => {
+  const updatePaymentStatus = async (playerId: number, status: string) => {
     try {
-      if (!silent) {
-        setLoading(true)
-      } else {
-        setRefreshing(true)
-      }
-
-      console.log("🔄 Fetching fresh data at:", new Date().toISOString())
-
-      // Add cache-busting timestamp
-      const timestamp = Date.now()
-
-      const [playersRes, statsRes] = await Promise.all([
-        fetch(`/api/players?t=${timestamp}`, {
-          method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        }),
-        fetch(`/api/tournament-stats?t=${timestamp}`, {
-          method: "GET",
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        }),
-      ])
-
-      console.log("📊 Players API Response:", playersRes.status, playersRes.statusText)
-      console.log("📈 Stats API Response:", statsRes.status, statsRes.statusText)
-
-      let playersData: any = { players: [] }
-      let statsData: any = null
-
-      if (playersRes.ok) {
-        const data = await playersRes.json()
-        console.log("👥 Players data received:", data)
-        playersData = { players: data.players || [] }
-      } else {
-        console.error("❌ Players API failed:", playersRes.status, await playersRes.text())
-        if (!silent) {
-          toast({
-            title: "Error cargando jugadores",
-            description: `HTTP ${playersRes.status}: ${playersRes.statusText}`,
-            variant: "destructive",
-          })
-        }
-      }
-
-      if (statsRes.ok) {
-        const data = await statsRes.json()
-        console.log("📊 Stats data received:", data)
-        statsData = data
-      } else {
-        console.error("❌ Stats API failed:", statsRes.status, await statsRes.text())
-        if (!silent) {
-          toast({
-            title: "Error cargando estadísticas",
-            description: `HTTP ${statsRes.status}: ${statsRes.statusText}`,
-            variant: "destructive",
-          })
-        }
-      }
-
-      setPlayers(playersData.players || [])
-      setStats(
-        statsData || {
-          total_players: 0,
-          verified_players: 0,
-          pending_players: 0,
-          total_revenue: 0,
-        },
-      )
-
-      setLastRefresh(new Date().toLocaleTimeString())
-      console.log("✅ Data updated successfully")
-
-      if (silent) {
-        // Show subtle notification for background refresh
-        toast({
-          title: "📊 Datos actualizados",
-          description: "Información sincronizada automáticamente",
-          duration: 2000,
-        })
-      }
-    } catch (error) {
-      console.error("💥 Error fetching data:", error)
-      if (!silent) {
-        toast({
-          title: "Error de conexión",
-          description: "No se pudo conectar con el servidor",
-          variant: "destructive",
-        })
-      }
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }
-
-  const silentRefresh = () => {
-    fetchData(true)
-  }
-
-  const forceRefresh = async () => {
-    console.log("🔄 Force refresh triggered")
-
-    try {
-      setRefreshing(true)
-
-      // Call force refresh endpoint
-      const response = await fetch("/api/force-refresh", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-        console.log("🔄 Force refresh result:", result)
-        toast({
-          title: "🔄 Conexión refrescada",
-          description: "Datos actualizados desde la base de datos",
-        })
-      }
-    } catch (error) {
-      console.error("❌ Force refresh failed:", error)
-    }
-
-    // Then fetch fresh data
-    await fetchData()
-  }
-
-  const updatePaymentStatus = async (playerId: string, status: "pending" | "verified") => {
-    try {
-      console.log(`💳 Updating payment for player ${playerId} to ${status}`)
-
       const response = await fetch("/api/update-payment", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ playerId, status }),
       })
 
-      const result = await response.json()
-      console.log("💳 Payment update response:", result)
-
-      if (result.success) {
-        // Update local state immediately
-        setPlayers((prevPlayers) =>
-          prevPlayers.map((player) => (player.id === playerId ? { ...player, payment_status: status } : player)),
-        )
-
-        // Force refresh data from server
+      if (response.ok) {
         await fetchData(true)
-
         toast({
-          title: "✅ Estado actualizado",
-          description: `El pago de ${result.playerName} ha sido marcado como ${status === "verified" ? "Verificado" : "Pendiente"}`,
-          duration: 3000,
+          title: "Estado actualizado",
+          description: `Pago marcado como ${status}`,
         })
       } else {
-        console.error("❌ Payment update failed:", result.error)
-        toast({
-          title: "❌ Error",
-          description: result.error || "No se pudo actualizar el estado de pago",
-          variant: "destructive",
-          duration: 4000,
-        })
+        throw new Error("Error updating payment")
       }
     } catch (error) {
-      console.error("💥 Error updating payment status:", error)
       toast({
-        title: "🔌 Error de conexión",
-        description: "Verifica tu internet e intenta de nuevo",
+        title: "Error",
+        description: "No se pudo actualizar el estado del pago",
         variant: "destructive",
-        duration: 4000,
       })
     }
   }
 
-  const toggleAutoRefresh = () => {
-    setAutoRefreshEnabled(!autoRefreshEnabled)
-    toast({
-      title: autoRefreshEnabled ? "⏸️ Auto-actualización desactivada" : "▶️ Auto-actualización activada",
-      description: autoRefreshEnabled
-        ? "Los datos no se actualizarán automáticamente"
-        : `Los datos se actualizarán cada ${refreshInterval} segundos`,
-      duration: 3000,
-    })
+  const formatCurrency = (amount: number, nationality: string) => {
+    if (nationality === "Nacional") {
+      return `₡${amount.toLocaleString()}`
+    } else {
+      return `$${amount.toLocaleString()}`
+    }
   }
 
-  const changeRefreshInterval = (seconds: number) => {
-    setRefreshInterval(seconds)
-    toast({
-      title: "⏱️ Intervalo actualizado",
-      description: `Los datos se actualizarán cada ${seconds} segundos`,
-      duration: 2000,
-    })
-  }
-
-  const filteredPlayers = players.filter((player) => {
-    if (!player) return false
-
-    const name = player.name || ""
-    const email = player.email || ""
-    const phone = player.phone || ""
-    const search = searchTerm.toLowerCase()
-
-    return name.toLowerCase().includes(search) || email.toLowerCase().includes(search) || phone.includes(searchTerm)
-  })
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-    }).format(amount)
+  const getPaymentStatusBadge = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return (
+          <Badge className="bg-green-500">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Confirmado
+          </Badge>
+        )
+      case "pending":
+        return (
+          <Badge variant="outline">
+            <Clock className="w-3 h-3 mr-1" />
+            Pendiente
+          </Badge>
+        )
+      default:
+        return (
+          <Badge variant="destructive">
+            <XCircle className="w-3 h-3 mr-1" />
+            Sin pagar
+          </Badge>
+        )
+    }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-4 border-amber-400 border-t-transparent mx-auto"></div>
-          <p className="mt-4 text-slate-300 font-body">Cargando datos del torneo...</p>
-          <p className="mt-2 text-slate-500 text-sm">Conectando con Supabase...</p>
+      <SimpleAuthGuard>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4" />
+            <p>Cargando panel de administración...</p>
+          </div>
         </div>
-      </div>
+      </SimpleAuthGuard>
     )
   }
 
   return (
-    <div className="relative">
-      <div
-        className="min-h-screen bg-slate-900 relative"
-        style={{
-          backgroundImage: `url('/images/admin-bowling-bg.png')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
-          backgroundAttachment: "fixed",
-        }}
-      >
-        <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-sm"></div>
-
-        <header className="relative z-50 bg-gradient-to-r from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-md shadow-2xl border-b border-gray-600/30">
-          <div className="container mx-auto px-6 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <Image
-                    src="/images/country-club-logo-transparent.png"
-                    alt="Country Club Costa Rica"
-                    width={55}
-                    height={55}
-                    className="brightness-0 invert"
-                  />
-                </div>
-                <div>
-                  <h1 className="text-xl font-heading font-bold text-white tracking-tight">Torneo La Negrita 2025</h1>
-                  <p className="text-sm text-gray-300 font-body font-medium">Panel de Administración</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    {lastRefresh && <p className="text-xs text-gray-500">Última actualización: {lastRefresh}</p>}
-                    <div className="flex items-center gap-1">
-                      {isOnline ? (
-                        <Wifi className="w-3 h-3 text-green-400" />
-                      ) : (
-                        <WifiOff className="w-3 h-3 text-red-400" />
-                      )}
-                      <span className="text-xs text-gray-500">{isOnline ? "En línea" : "Sin conexión"}</span>
-                    </div>
-                  </div>
-                </div>
+    <SimpleAuthGuard>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="max-w-7xl mx-auto">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">Panel de Administración</h1>
+                <p className="text-gray-600">Torneo La Negrita 2025</p>
               </div>
 
-              <div className="flex items-center space-x-2">
-                {/* Auto-refresh controls */}
-                <div className="flex items-center gap-2 mr-4">
-                  <Button
-                    onClick={toggleAutoRefresh}
-                    variant="ghost"
-                    size="sm"
-                    className={`text-xs px-2 py-1 ${
-                      autoRefreshEnabled
-                        ? "text-green-300 hover:text-green-200 hover:bg-green-900/20"
-                        : "text-gray-400 hover:text-gray-300 hover:bg-gray-800/20"
-                    }`}
-                  >
-                    {autoRefreshEnabled ? "🟢 Auto" : "⚫ Manual"}
-                  </Button>
-
-                  {autoRefreshEnabled && (
-                    <select
-                      value={refreshInterval}
-                      onChange={(e) => changeRefreshInterval(Number(e.target.value))}
-                      className="text-xs bg-slate-800 text-slate-300 border border-slate-600 rounded px-2 py-1"
-                    >
-                      <option value={30}>30s</option>
-                      <option value={60}>1min</option>
-                      <option value={120}>2min</option>
-                      <option value={300}>5min</option>
-                    </select>
+              {/* Controls */}
+              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+                {/* Online Status */}
+                <div className="flex items-center gap-2">
+                  {isOnline ? (
+                    <>
+                      <Wifi className="w-4 h-4 text-green-500" />
+                      <span className="text-sm text-green-600">En línea</span>
+                    </>
+                  ) : (
+                    <>
+                      <WifiOff className="w-4 h-4 text-red-500" />
+                      <span className="text-sm text-red-600">Sin conexión</span>
+                    </>
                   )}
                 </div>
 
-                <Button
-                  onClick={forceRefresh}
-                  variant="ghost"
-                  size="sm"
-                  disabled={refreshing}
-                  className="text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-gray-600/30 font-accent"
+                {/* Auto-refresh controls */}
+                <div className="flex items-center gap-2">
+                  <Switch id="auto-refresh" checked={autoRefresh} onCheckedChange={setAutoRefresh} />
+                  <Label htmlFor="auto-refresh" className="text-sm">
+                    {autoRefresh ? "🟢 Auto" : "⚫ Manual"}
+                  </Label>
+                </div>
+
+                {/* Refresh interval */}
+                <Select
+                  value={refreshInterval.toString()}
+                  onValueChange={(value) => setRefreshInterval(Number.parseInt(value))}
                 >
+                  <SelectTrigger className="w-24">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30s</SelectItem>
+                    <SelectItem value="60">1min</SelectItem>
+                    <SelectItem value="120">2min</SelectItem>
+                    <SelectItem value="300">5min</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {/* Manual refresh button */}
+                <Button onClick={handleManualRefresh} disabled={refreshing} variant="outline" size="sm">
                   <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
                   {refreshing ? "Actualizando..." : "Actualizar"}
                 </Button>
-
-                <Badge variant="outline" className="bg-blue-900/50 text-blue-300 border-blue-700">
-                  <Users className="w-3 h-3 mr-1" />
-                  {stats.total_players} Jugadores
-                </Badge>
               </div>
             </div>
           </div>
-        </header>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-accent font-medium text-slate-300">Total Jugadores</CardTitle>
-                <div className="p-2 bg-blue-900/50 rounded-full">
-                  <Users className="h-5 w-5 text-blue-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-heading font-bold text-white">{stats.total_players}</div>
-                <div className="flex items-center mt-2 text-sm text-slate-400">
-                  <TrendingUp className="h-4 w-4 mr-1 text-green-400" />
-                  <span className="font-body">Registrados</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-accent font-medium text-slate-300">Verificados</CardTitle>
-                <div className="p-2 bg-green-900/50 rounded-full">
-                  <CheckCircle className="h-5 w-5 text-green-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-heading font-bold text-green-400">{stats.verified_players}</div>
-                <div className="flex items-center mt-2 text-sm text-slate-400">
-                  <UserCheck className="h-4 w-4 mr-1 text-green-400" />
-                  <span className="font-body">Pagos confirmados</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-accent font-medium text-slate-300">Pendientes</CardTitle>
-                <div className="p-2 bg-amber-900/50 rounded-full">
-                  <Clock className="h-5 w-5 text-amber-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-heading font-bold text-amber-400">{stats.pending_players}</div>
-                <div className="flex items-center mt-2 text-sm text-slate-400">
-                  <Clock className="h-4 w-4 mr-1 text-amber-400" />
-                  <span className="font-body">Por verificar</span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-accent font-medium text-slate-300">Ingresos Totales</CardTitle>
-                <div className="p-2 bg-blue-900/50 rounded-full">
-                  <DollarSign className="h-5 w-5 text-blue-400" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-heading font-bold text-white">
-                  {formatCurrency(stats.total_revenue || 0)}
-                </div>
-                <div className="flex items-center mt-2 text-sm text-slate-400">
-                  <DollarSign className="h-4 w-4 mr-1 text-green-400" />
-                  <span className="font-body">Recaudado</span>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <Tabs defaultValue="players" className="space-y-6">
-            <div className="flex justify-center">
-              <TabsList className="grid w-full max-w-md grid-cols-3 bg-slate-800/90 backdrop-blur-sm border-slate-700">
-                <TabsTrigger
-                  value="players"
-                  className="font-accent text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700"
-                >
-                  <Users className="h-4 w-4 mr-2" />
-                  Jugadores
-                </TabsTrigger>
-                <TabsTrigger
-                  value="results"
-                  className="font-accent text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700"
-                >
-                  <Target className="h-4 w-4 mr-2" />
-                  Resultados
-                </TabsTrigger>
-                <TabsTrigger
-                  value="brackets"
-                  className="font-accent text-slate-300 data-[state=active]:text-white data-[state=active]:bg-slate-700"
-                >
-                  <Trophy className="h-4 w-4 mr-2" />
-                  Llaves
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="players" className="space-y-6">
-              <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 font-heading text-white">
-                    <div className="p-2 bg-blue-900/50 rounded-full">
-                      <Search className="h-5 w-5 text-blue-400" />
-                    </div>
-                    Buscar Jugadores
-                  </CardTitle>
+          {/* Stats Cards */}
+          {stats && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Jugadores</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <Input
-                    placeholder="Buscar por nombre, email o teléfono..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="max-w-md h-12 bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white placeholder:text-slate-400 focus:border-blue-500 font-body"
-                  />
+                  <div className="text-2xl font-bold">{stats.total_players}</div>
                 </CardContent>
               </Card>
 
-              <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
-                <CardHeader>
-                  <CardTitle className="font-heading text-white">
-                    Jugadores Registrados ({filteredPlayers.length})
-                  </CardTitle>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b-2 border-slate-700">
-                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Nombre</th>
-                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Email</th>
-                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Teléfono</th>
-                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Estado Pago</th>
-                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Fecha Registro</th>
-                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Acciones</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredPlayers.map((player, index) => (
-                          <tr
-                            key={player.id}
-                            className={`border-b border-slate-700 hover:bg-slate-700/50 transition-colors ${
-                              index % 2 === 0 ? "bg-slate-800/50" : "bg-slate-800/30"
-                            }`}
-                          >
-                            <td className="p-4 font-body font-medium text-white">{player.name}</td>
-                            <td className="p-4 text-sm text-slate-300 font-body">{player.email}</td>
-                            <td className="p-4 text-sm text-slate-300 font-body">{player.phone}</td>
-                            <td className="p-4">
-                              <Badge
-                                variant={player.payment_status === "verified" ? "default" : "secondary"}
-                                className={
-                                  player.payment_status === "verified"
-                                    ? "bg-green-900/50 text-green-300 border-green-700 font-accent"
-                                    : "bg-amber-900/50 text-amber-300 border-amber-700 font-accent"
-                                }
-                              >
-                                {player.payment_status === "verified" ? (
-                                  <>
-                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                    Verificado
-                                  </>
-                                ) : (
-                                  <>
-                                    <AlertCircle className="w-3 h-3 mr-1" />
-                                    Pendiente
-                                  </>
-                                )}
-                              </Badge>
-                            </td>
-                            <td className="p-4 text-sm text-slate-300 font-body">
-                              {new Date(player.created_at).toLocaleDateString("es-CR", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              })}
-                            </td>
-                            <td className="p-4">
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelectedPlayer(player)
-                                    setShowPlayerDetails(true)
-                                  }}
-                                  className="bg-slate-700/80 hover:bg-slate-600 border-slate-600 text-slate-300 hover:text-white font-accent backdrop-blur-sm"
-                                  title="Ver detalles"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
+                  <div className="text-2xl font-bold">₡{stats.total_revenue.toLocaleString()}</div>
+                </CardContent>
+              </Card>
 
-                                {player.payment_status === "pending" ? (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => updatePaymentStatus(player.id, "verified")}
-                                    className="bg-green-700/80 hover:bg-green-600 text-white border-0 font-accent backdrop-blur-sm"
-                                    title="Verificar pago"
-                                  >
-                                    <CheckCircle className="h-4 w-4" />
-                                  </Button>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => updatePaymentStatus(player.id, "pending")}
-                                    className="bg-red-700/80 hover:bg-red-600 text-white border-0 font-accent backdrop-blur-sm"
-                                    title="Marcar como pendiente"
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pagos Confirmados</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{stats.confirmed_payments}</div>
+                </CardContent>
+              </Card>
 
-                    {filteredPlayers.length === 0 && (
-                      <div className="text-center py-12">
-                        <Users className="h-12 w-12 text-slate-500 mx-auto mb-4" />
-                        <p className="text-slate-400 font-body">
-                          {searchTerm ? "No se encontraron jugadores con ese criterio" : "No hay jugadores registrados"}
-                        </p>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pagos Pendientes</CardTitle>
+                  <Clock className="h-4 w-4 text-orange-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">{stats.pending_payments}</div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Main Content */}
+          <Tabs defaultValue="players" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="players">Jugadores Registrados</TabsTrigger>
+              <TabsTrigger value="categories">Por Categorías</TabsTrigger>
+              <TabsTrigger value="payments">Estado de Pagos</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="players" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Lista de Jugadores</CardTitle>
+                  <CardDescription>{players.length} jugadores registrados</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {players.map((player) => (
+                      <div key={player.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <h3 className="font-semibold">{player.name}</h3>
+                              <p className="text-sm text-gray-600">{player.email}</p>
+                              <p className="text-sm text-gray-600">{player.phone}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Badge variant="outline">{player.nationality}</Badge>
+                              {player.handicap && <Badge>Handicap</Badge>}
+                              {player.senior && <Badge>Senior</Badge>}
+                              {player.scratch && <Badge>Scratch</Badge>}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="font-semibold">{formatCurrency(player.total_cost, player.nationality)}</p>
+                            {getPaymentStatusBadge(player.payment_status)}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setSelectedPlayer(player)}>
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            {player.payment_status !== "confirmed" && (
+                              <Button size="sm" onClick={() => updatePaymentStatus(player.id, "confirmed")}>
+                                Confirmar Pago
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            <TabsContent value="results">
-              <TournamentResults />
+            <TabsContent value="categories" className="space-y-6">
+              {stats && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Por Nacionalidad</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span>Nacionales:</span>
+                          <span className="font-semibold">{stats.nacional_players}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Extranjeros:</span>
+                          <span className="font-semibold">{stats.extranjero_players}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Por Categoría</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <span>Handicap:</span>
+                          <span className="font-semibold">{stats.handicap_players}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Senior:</span>
+                          <span className="font-semibold">{stats.senior_players}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Scratch:</span>
+                          <span className="font-semibold">{stats.scratch_players}</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
             </TabsContent>
 
-            <TabsContent value="brackets">
-              <TournamentBrackets />
+            <TabsContent value="payments" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Estado de Pagos</CardTitle>
+                  <CardDescription>Gestión de confirmaciones de pago</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {players
+                      .filter((p) => p.payment_status !== "confirmed")
+                      .map((player) => (
+                        <div key={player.id} className="flex items-center justify-between p-4 border rounded-lg">
+                          <div>
+                            <h3 className="font-semibold">{player.name}</h3>
+                            <p className="text-sm text-gray-600">{player.email}</p>
+                            <p className="text-sm font-medium">
+                              {formatCurrency(player.total_cost, player.nationality)}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {getPaymentStatusBadge(player.payment_status)}
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => updatePaymentStatus(player.id, "confirmed")}>
+                                Confirmar
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => updatePaymentStatus(player.id, "pending")}
+                              >
+                                Pendiente
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
             </TabsContent>
           </Tabs>
+
+          {/* Player Details Modal */}
+          {selectedPlayer && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <Card className="w-full max-w-2xl">
+                <CardHeader>
+                  <CardTitle>Detalles del Jugador</CardTitle>
+                  <Button
+                    className="absolute top-4 right-4"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedPlayer(null)}
+                  >
+                    ✕
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Nombre</label>
+                      <p className="font-semibold">{selectedPlayer.name}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Email</label>
+                      <p>{selectedPlayer.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Teléfono</label>
+                      <p>{selectedPlayer.phone}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Nacionalidad</label>
+                      <p>{selectedPlayer.nationality}</p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Costo Total</label>
+                      <p className="font-semibold">
+                        {formatCurrency(selectedPlayer.total_cost, selectedPlayer.nationality)}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Estado de Pago</label>
+                      <div className="mt-1">{getPaymentStatusBadge(selectedPlayer.payment_status)}</div>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-gray-500">Categorías</label>
+                      <div className="flex gap-2 mt-1">
+                        {selectedPlayer.handicap && <Badge>Handicap</Badge>}
+                        {selectedPlayer.senior && <Badge>Senior</Badge>}
+                        {selectedPlayer.scratch && <Badge>Scratch</Badge>}
+                      </div>
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-sm font-medium text-gray-500">Fecha de Registro</label>
+                      <p>{new Date(selectedPlayer.created_at).toLocaleString("es-ES")}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
-
-      {showPlayerDetails && selectedPlayer && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-800/95 backdrop-blur-md border-slate-700">
-            <CardHeader className="bg-gradient-to-r from-slate-700/95 to-slate-800/95 text-white border-b border-slate-600">
-              <div className="flex justify-between items-center">
-                <CardTitle className="font-heading flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Detalles del Jugador
-                </CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowPlayerDetails(false)}
-                  className="text-slate-300 hover:text-white hover:bg-slate-600"
-                >
-                  <EyeOff className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6 p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Nombre Completo</Label>
-                  <Input
-                    value={selectedPlayer.name}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Email</Label>
-                  <Input
-                    value={selectedPlayer.email}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Teléfono</Label>
-                  <Input
-                    value={selectedPlayer.phone}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Contacto de Emergencia</Label>
-                  <Input
-                    value={selectedPlayer.emergency_contact}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Teléfono de Emergencia</Label>
-                  <Input
-                    value={selectedPlayer.emergency_phone}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Estado de Pago</Label>
-                  <Badge
-                    variant={selectedPlayer.payment_status === "verified" ? "default" : "secondary"}
-                    className={
-                      selectedPlayer.payment_status === "verified"
-                        ? "bg-green-900/50 text-green-300 border-green-700 font-accent"
-                        : "bg-amber-900/50 text-amber-300 border-amber-700 font-accent"
-                    }
-                  >
-                    {selectedPlayer.payment_status === "verified" ? (
-                      <>
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Verificado
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        Pendiente
-                      </>
-                    )}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Fecha de Registro</Label>
-                  <Input
-                    value={new Date(selectedPlayer.created_at).toLocaleDateString("es-CR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Dirección de Wallet</Label>
-                  <Input
-                    value={selectedPlayer.wallet_address || "No disponible"}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
+    </SimpleAuthGuard>
   )
 }
