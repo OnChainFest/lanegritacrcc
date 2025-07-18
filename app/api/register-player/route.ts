@@ -15,13 +15,14 @@ export async function POST(request: NextRequest) {
       name: body.name,
       email: body.email,
       nationality: body.nationality,
+      country: body.country,
       categories: body.categories,
       extras: body.extras,
       total_cost: body.total_cost,
     })
 
     // Validate required fields
-    const requiredFields = ["name", "email", "nationality", "passport", "league", "gender"]
+    const requiredFields = ["name", "email", "nationality", "passport", "league", "gender", "country"]
     const missingFields = requiredFields.filter((field) => !body[field] || body[field].toString().trim() === "")
 
     if (missingFields.length > 0) {
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing required fields",
+          error: "Missing required fields: " + missingFields.join(", "),
           missingFields,
         },
         { status: 400 },
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
       league: body.league.trim(),
       played_in_2024: Boolean(body.played_in_2024),
       gender: body.gender,
-      country: body.country || "national",
+      country: body.country,
       total_cost: body.total_cost || 0,
       currency: body.currency || "USD",
       payment_status: body.payment_status || "pending",
@@ -109,6 +110,8 @@ export async function POST(request: NextRequest) {
     console.log("💾 Inserting player data:", {
       name: playerData.name,
       email: playerData.email,
+      nationality: playerData.nationality,
+      country: playerData.country,
       categories: {
         handicap: playerData.handicap,
         senior: playerData.senior,
@@ -136,6 +139,7 @@ export async function POST(request: NextRequest) {
           success: false,
           error: "Failed to register player",
           details: insertError.message,
+          code: insertError.code,
         },
         { status: 500 },
       )
