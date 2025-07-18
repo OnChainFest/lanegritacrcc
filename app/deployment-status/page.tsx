@@ -21,10 +21,35 @@ import {
 export default function DeploymentStatusPage() {
   const [currentUrl, setCurrentUrl] = useState("")
   const [deploymentTime, setDeploymentTime] = useState("")
+  const [isClient, setIsClient] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setCurrentUrl(window.location.origin)
-    setDeploymentTime(new Date().toLocaleString())
+    // Marcar que estamos en el cliente para evitar problemas de hidratación
+    setIsClient(true)
+
+    // Configurar URL y tiempo de deployment de forma segura
+    try {
+      if (typeof window !== "undefined") {
+        setCurrentUrl(window.location.origin)
+        setDeploymentTime(
+          new Date().toLocaleString("es-CR", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          }),
+        )
+      }
+    } catch (error) {
+      console.error("Error setting up page:", error)
+      setCurrentUrl("https://tu-app.vercel.app")
+      setDeploymentTime("Ahora")
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   const deploymentFeatures = [
@@ -58,40 +83,67 @@ export default function DeploymentStatusPage() {
     },
   ]
 
-  const appUrls = [
-    {
-      name: "Página Principal",
-      url: currentUrl,
-      description: "Landing page del torneo",
-      icon: <Globe className="w-4 h-4" />,
-    },
-    {
-      name: "Registro de Jugadores",
-      url: `${currentUrl}/register`,
-      description: "Formulario de inscripción",
-      icon: <Users className="w-4 h-4" />,
-    },
-    {
-      name: "Panel de Administración",
-      url: `${currentUrl}/admin`,
-      description: "Gestión del torneo",
-      icon: <Settings className="w-4 h-4" />,
-    },
-    {
-      name: "Brackets del Torneo",
-      url: `${currentUrl}/brackets`,
-      description: "Visualización de llaves",
-      icon: <Trophy className="w-4 h-4" />,
-    },
-  ]
+  const getAppUrls = () => {
+    if (!currentUrl) return []
+
+    return [
+      {
+        name: "Página Principal",
+        url: currentUrl,
+        description: "Landing page del torneo",
+        icon: <Globe className="w-4 h-4" />,
+      },
+      {
+        name: "Registro de Jugadores",
+        url: `${currentUrl}/register`,
+        description: "Formulario de inscripción",
+        icon: <Users className="w-4 h-4" />,
+      },
+      {
+        name: "Panel de Administración",
+        url: `${currentUrl}/admin`,
+        description: "Gestión del torneo",
+        icon: <Settings className="w-4 h-4" />,
+      },
+      {
+        name: "Brackets del Torneo",
+        url: `${currentUrl}/brackets`,
+        description: "Visualización de llaves",
+        icon: <Trophy className="w-4 h-4" />,
+      },
+    ]
+  }
 
   const testApp = async (url: string) => {
     try {
-      window.open(url, "_blank")
+      if (typeof window !== "undefined") {
+        window.open(url, "_blank", "noopener,noreferrer")
+      }
     } catch (error) {
       console.error("Error opening URL:", error)
+      // Fallback: copiar URL al clipboard
+      try {
+        await navigator.clipboard.writeText(url)
+        alert(`URL copiada al portapapeles: ${url}`)
+      } catch (clipboardError) {
+        alert(`Visita manualmente: ${url}`)
+      }
     }
   }
+
+  // Mostrar loading mientras se inicializa
+  if (loading || !isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-green-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando estado del deployment...</p>
+        </div>
+      </div>
+    )
+  }
+
+  const appUrls = getAppUrls()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-4 md:p-8">
@@ -119,7 +171,7 @@ export default function DeploymentStatusPage() {
                 <p className="text-green-600 text-lg">
                   Tu aplicación está <strong>LIVE</strong> y funcionando perfectamente
                 </p>
-                <p className="text-sm text-green-500 mt-1">Último deployment: {deploymentTime}</p>
+                {deploymentTime && <p className="text-sm text-green-500 mt-1">Último deployment: {deploymentTime}</p>}
               </div>
             </div>
           </CardContent>
@@ -141,7 +193,18 @@ export default function DeploymentStatusPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
                       <h3 className="font-semibold">{feature.title}</h3>
-                      <Badge variant="default" className={`bg-${feature.color}-100 text-${feature.color}-800`}>
+                      <Badge
+                        variant="default"
+                        className={`${
+                          feature.color === "green"
+                            ? "bg-green-100 text-green-800"
+                            : feature.color === "blue"
+                              ? "bg-blue-100 text-blue-800"
+                              : feature.color === "purple"
+                                ? "bg-purple-100 text-purple-800"
+                                : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
                         {feature.status}
                       </Badge>
                     </div>
@@ -154,38 +217,40 @@ export default function DeploymentStatusPage() {
         </Card>
 
         {/* URLs Funcionales */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Globe className="w-5 h-5" />
-              Prueba tu Aplicación (URLs Activas)
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-gray-700">
-              Todas estas URLs están funcionando <strong>AHORA MISMO</strong>. Haz clic para probarlas:
-            </p>
+        {appUrls.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                Prueba tu Aplicación (URLs Activas)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-700">
+                Todas estas URLs están funcionando <strong>AHORA MISMO</strong>. Haz clic para probarlas:
+              </p>
 
-            <div className="grid grid-cols-1 gap-3">
-              {appUrls.map((url, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                  <div className="flex items-center gap-3">
-                    {url.icon}
-                    <div>
-                      <h3 className="font-semibold">{url.name}</h3>
-                      <p className="text-sm text-gray-600">{url.description}</p>
-                      <code className="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{url.url}</code>
+              <div className="grid grid-cols-1 gap-3">
+                {appUrls.map((url, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      {url.icon}
+                      <div>
+                        <h3 className="font-semibold">{url.name}</h3>
+                        <p className="text-sm text-gray-600">{url.description}</p>
+                        <code className="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{url.url}</code>
+                      </div>
                     </div>
+                    <Button size="sm" onClick={() => testApp(url.url)} className="bg-green-600 hover:bg-green-700">
+                      <ExternalLink className="w-4 h-4 mr-1" />
+                      Probar Ahora
+                    </Button>
                   </div>
-                  <Button size="sm" onClick={() => testApp(url.url)} className="bg-green-600 hover:bg-green-700">
-                    <ExternalLink className="w-4 h-4 mr-1" />
-                    Probar Ahora
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* ¿Qué significa "Desplegado"? */}
         <Card>
