@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -23,6 +23,8 @@ import {
   Trophy,
   Target,
   AlertCircle,
+  Wifi,
+  WifiOff,
 } from "lucide-react"
 import { TournamentResults } from "@/components/tournament-results"
 import { TournamentBrackets } from "@/components/tournament-brackets"
@@ -57,22 +59,71 @@ export default function AdminPage() {
     total_revenue: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [showPlayerDetails, setShowPlayerDetails] = useState(false)
   const [lastRefresh, setLastRefresh] = useState<string>("")
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true)
+  const [refreshInterval, setRefreshInterval] = useState(60) // 60 segundos por defecto
+  const [isOnline, setIsOnline] = useState(true)
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
+
+  // Monitor connection status
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+    }
+  }, [])
 
   useEffect(() => {
     fetchData()
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(fetchData, 30000)
-    return () => clearInterval(interval)
+    setupAutoRefresh()
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
   }, [])
 
-  const fetchData = async () => {
+  useEffect(() => {
+    setupAutoRefresh()
+  }, [autoRefreshEnabled, refreshInterval])
+
+  const setupAutoRefresh = () => {
+    // Clear existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
+
+    // Setup new interval if enabled
+    if (autoRefreshEnabled && isOnline) {
+      intervalRef.current = setInterval(() => {
+        // Only auto-refresh if user is not interacting with modals or forms
+        if (!showPlayerDetails && document.visibilityState === "visible") {
+          silentRefresh()
+        }
+      }, refreshInterval * 1000)
+    }
+  }
+
+  const fetchData = async (silent = false) => {
     try {
-      setLoading(true)
+      if (!silent) {
+        setLoading(true)
+      } else {
+        setRefreshing(true)
+      }
+
       console.log("🔄 Fetching fresh data at:", new Date().toISOString())
 
       // Add cache-busting timestamp
@@ -106,15 +157,16 @@ export default function AdminPage() {
       if (playersRes.ok) {
         const data = await playersRes.json()
         console.log("👥 Players data received:", data)
-        // Handle the new API response format
         playersData = { players: data.players || [] }
       } else {
         console.error("❌ Players API failed:", playersRes.status, await playersRes.text())
-        toast({
-          title: "Error cargando jugadores",
-          description: `HTTP ${playersRes.status}: ${playersRes.statusText}`,
-          variant: "destructive",
-        })
+        if (!silent) {
+          toast({
+            title: "Error cargando jugadores",
+            description: `HTTP ${playersRes.status}: ${playersRes.statusText}`,
+            variant: "destructive",
+          })
+        }
       }
 
       if (statsRes.ok) {
@@ -123,11 +175,13 @@ export default function AdminPage() {
         statsData = data
       } else {
         console.error("❌ Stats API failed:", statsRes.status, await statsRes.text())
-        toast({
-          title: "Error cargando estadísticas",
-          description: `HTTP ${statsRes.status}: ${statsRes.statusText}`,
-          variant: "destructive",
-        })
+        if (!silent) {
+          toast({
+            title: "Error cargando estadísticas",
+            description: `HTTP ${statsRes.status}: ${statsRes.statusText}`,
+            variant: "destructive",
+          })
+        }
       }
 
       setPlayers(playersData.players || [])
@@ -142,22 +196,40 @@ export default function AdminPage() {
 
       setLastRefresh(new Date().toLocaleTimeString())
       console.log("✅ Data updated successfully")
+
+      if (silent) {
+        // Show subtle notification for background refresh
+        toast({
+          title: "📊 Datos actualizados",
+          description: "Información sincronizada automáticamente",
+          duration: 2000,
+        })
+      }
     } catch (error) {
       console.error("💥 Error fetching data:", error)
-      toast({
-        title: "Error de conexión",
-        description: "No se pudo conectar con el servidor",
-        variant: "destructive",
-      })
+      if (!silent) {
+        toast({
+          title: "Error de conexión",
+          description: "No se pudo conectar con el servidor",
+          variant: "destructive",
+        })
+      }
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
+  }
+
+  const silentRefresh = () => {
+    fetchData(true)
   }
 
   const forceRefresh = async () => {
     console.log("🔄 Force refresh triggered")
 
     try {
+      setRefreshing(true)
+
       // Call force refresh endpoint
       const response = await fetch("/api/force-refresh", {
         method: "POST",
@@ -170,7 +242,7 @@ export default function AdminPage() {
         const result = await response.json()
         console.log("🔄 Force refresh result:", result)
         toast({
-          title: "Conexión refrescada",
+          title: "🔄 Conexión refrescada",
           description: "Datos actualizados desde la base de datos",
         })
       }
@@ -204,7 +276,7 @@ export default function AdminPage() {
         )
 
         // Force refresh data from server
-        await fetchData()
+        await fetchData(true)
 
         toast({
           title: "✅ Estado actualizado",
@@ -229,6 +301,26 @@ export default function AdminPage() {
         duration: 4000,
       })
     }
+  }
+
+  const toggleAutoRefresh = () => {
+    setAutoRefreshEnabled(!autoRefreshEnabled)
+    toast({
+      title: autoRefreshEnabled ? "⏸️ Auto-actualización desactivada" : "▶️ Auto-actualización activada",
+      description: autoRefreshEnabled
+        ? "Los datos no se actualizarán automáticamente"
+        : `Los datos se actualizarán cada ${refreshInterval} segundos`,
+      duration: 3000,
+    })
+  }
+
+  const changeRefreshInterval = (seconds: number) => {
+    setRefreshInterval(seconds)
+    toast({
+      title: "⏱️ Intervalo actualizado",
+      description: `Los datos se actualizarán cada ${seconds} segundos`,
+      duration: 2000,
+    })
   }
 
   const filteredPlayers = players.filter((player) => {
@@ -291,20 +383,61 @@ export default function AdminPage() {
                 <div>
                   <h1 className="text-xl font-heading font-bold text-white tracking-tight">Torneo La Negrita 2025</h1>
                   <p className="text-sm text-gray-300 font-body font-medium">Panel de Administración</p>
-                  {lastRefresh && <p className="text-xs text-gray-500">Última actualización: {lastRefresh}</p>}
+                  <div className="flex items-center gap-2 mt-1">
+                    {lastRefresh && <p className="text-xs text-gray-500">Última actualización: {lastRefresh}</p>}
+                    <div className="flex items-center gap-1">
+                      {isOnline ? (
+                        <Wifi className="w-3 h-3 text-green-400" />
+                      ) : (
+                        <WifiOff className="w-3 h-3 text-red-400" />
+                      )}
+                      <span className="text-xs text-gray-500">{isOnline ? "En línea" : "Sin conexión"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                {/* Auto-refresh controls */}
+                <div className="flex items-center gap-2 mr-4">
+                  <Button
+                    onClick={toggleAutoRefresh}
+                    variant="ghost"
+                    size="sm"
+                    className={`text-xs px-2 py-1 ${
+                      autoRefreshEnabled
+                        ? "text-green-300 hover:text-green-200 hover:bg-green-900/20"
+                        : "text-gray-400 hover:text-gray-300 hover:bg-gray-800/20"
+                    }`}
+                  >
+                    {autoRefreshEnabled ? "🟢 Auto" : "⚫ Manual"}
+                  </Button>
+
+                  {autoRefreshEnabled && (
+                    <select
+                      value={refreshInterval}
+                      onChange={(e) => changeRefreshInterval(Number(e.target.value))}
+                      className="text-xs bg-slate-800 text-slate-300 border border-slate-600 rounded px-2 py-1"
+                    >
+                      <option value={30}>30s</option>
+                      <option value={60}>1min</option>
+                      <option value={120}>2min</option>
+                      <option value={300}>5min</option>
+                    </select>
+                  )}
+                </div>
+
                 <Button
                   onClick={forceRefresh}
                   variant="ghost"
                   size="sm"
+                  disabled={refreshing}
                   className="text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-gray-600/30 font-accent"
                 >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Actualizar
+                  <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? "animate-spin" : ""}`} />
+                  {refreshing ? "Actualizando..." : "Actualizar"}
                 </Button>
+
                 <Badge variant="outline" className="bg-blue-900/50 text-blue-300 border-blue-700">
                   <Users className="w-3 h-3 mr-1" />
                   {stats.total_players} Jugadores
