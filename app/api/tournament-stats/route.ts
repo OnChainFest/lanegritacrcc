@@ -2,82 +2,82 @@ import { NextResponse } from "next/server"
 import { getSupabaseClient } from "@/lib/supabase-client"
 
 export async function GET() {
-  console.log("📈 === FETCHING TOURNAMENT STATS ===")
+  console.log("📊 === TOURNAMENT STATS API CALLED ===")
 
   try {
     const supabase = getSupabaseClient()
 
-    // Get total players count
-    const { count: totalPlayers, error: countError } = await supabase
+    // Get all players to calculate stats manually
+    const { data: allPlayers, error: playersError } = await supabase
       .from("players")
-      .select("*", { count: "exact", head: true })
+      .select("id, nationality, payment_status, created_at")
 
-    if (countError) {
-      console.error("❌ Error counting players:", countError)
+    if (playersError) {
+      console.error("❌ Error fetching players for stats:", playersError)
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to get player count",
-          details: countError.message,
+          error: "Failed to fetch tournament stats",
+          details: playersError.message,
         },
         { status: 500 },
       )
     }
 
-    // Get players by nationality
-    const { data: nationalityData, error: nationalityError } = await supabase.from("players").select("nationality")
+    const players = allPlayers || []
 
-    if (nationalityError) {
-      console.error("❌ Error fetching nationality data:", nationalityError)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Failed to get nationality data",
-          details: nationalityError.message,
-        },
-        { status: 500 },
-      )
-    }
+    // Calculate stats manually
+    const totalPlayers = players.length
+    const verifiedPlayers = players.filter((p) => p.payment_status === "verified").length
+    const pendingPlayers = players.filter((p) => p.payment_status === "pending").length
 
-    // Count by nationality
-    const nationalityStats = (nationalityData || []).reduce((acc: Record<string, number>, player) => {
+    // Calculate nationality breakdown
+    const nationalityStats = players.reduce((acc: Record<string, number>, player) => {
       const nationality = player.nationality || "Unknown"
       acc[nationality] = (acc[nationality] || 0) + 1
       return acc
     }, {})
 
-    // Get recent registrations (last 7 days)
+    // Calculate recent registrations (last 7 days)
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
 
-    const { count: recentRegistrations, error: recentError } = await supabase
-      .from("players")
-      .select("*", { count: "exact", head: true })
-      .gte("created_at", sevenDaysAgo.toISOString())
-
-    if (recentError) {
-      console.error("❌ Error fetching recent registrations:", recentError)
-    }
+    const recentRegistrations = players.filter((player) => {
+      if (!player.created_at) return false
+      const createdDate = new Date(player.created_at)
+      return createdDate >= sevenDaysAgo
+    }).length
 
     const stats = {
-      totalPlayers: totalPlayers || 0,
-      nationalityBreakdown: nationalityStats,
-      recentRegistrations: recentRegistrations || 0,
-      lastUpdated: new Date().toISOString(),
+      total_players: totalPlayers,
+      verified_players: verifiedPlayers,
+      pending_players: pendingPlayers,
+      nationality_breakdown: nationalityStats,
+      recent_registrations: recentRegistrations,
+      last_updated: new Date().toISOString(),
     }
 
-    console.log("✅ Tournament stats:", stats)
+    console.log("✅ Tournament stats calculated:", stats)
 
-    return NextResponse.json({
-      success: true,
-      stats,
-    })
+    return NextResponse.json(
+      {
+        success: true,
+        ...stats,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      },
+    )
   } catch (error: any) {
     console.error("💥 Tournament stats error:", error)
     return NextResponse.json(
       {
         success: false,
-        error: "Internal server error",
+        error: "Failed to calculate tournament stats",
         details: error.message,
       },
       { status: 500 },

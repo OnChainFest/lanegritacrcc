@@ -1,62 +1,31 @@
 import { createClient } from "@supabase/supabase-js"
 
-// Ensure we have the required environment variables
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("❌ Missing Supabase environment variables:", {
-    url: !!supabaseUrl,
-    key: !!supabaseAnonKey,
-  })
-  throw new Error("Missing required Supabase environment variables")
-}
-
-// Create a singleton Supabase client
-let supabaseInstance: ReturnType<typeof createClient> | null = null
+let supabaseClient: ReturnType<typeof createClient> | null = null
 
 export function getSupabaseClient() {
-  if (!supabaseInstance) {
-    console.log("🔄 Creating new Supabase client instance")
-    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  if (!supabaseClient) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing Supabase environment variables")
+    }
+
+    supabaseClient = createClient(supabaseUrl, supabaseKey, {
       auth: {
         persistSession: false,
-        autoRefreshToken: false,
-      },
-      db: {
-        schema: "public",
-      },
-      global: {
-        headers: {
-          "X-Client-Info": "torneo-la-negrita-2025",
-        },
       },
     })
   }
-  return supabaseInstance
+
+  return supabaseClient
 }
 
-// Reset function for testing
-export function resetSupabaseClient() {
-  supabaseInstance = null
-  console.log("🔄 Supabase client reset")
-}
-
-// Test connection function
-export async function testSupabaseConnection() {
-  try {
-    const client = getSupabaseClient()
-    const { data, error } = await client.from("players").select("count(*)").limit(1)
-
-    if (error) {
-      console.error("❌ Supabase connection test failed:", error)
-      return { success: false, error: error.message }
-    }
-
-    console.log("✅ Supabase connection test successful")
-    return { success: true, data }
-  } catch (error: any) {
-    console.error("❌ Supabase connection test error:", error)
-    return { success: false, error: error.message }
+export function getSupabaseConfig() {
+  return {
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   }
 }

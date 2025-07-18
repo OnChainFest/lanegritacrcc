@@ -2,26 +2,31 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSupabaseClient } from "@/lib/supabase-client"
 
 export async function GET(request: NextRequest) {
-  console.log("👥 === FETCHING PLAYERS ===")
+  console.log("👥 === PLAYERS API CALLED ===")
 
   try {
-    const { searchParams } = new URL(request.url)
-    const limit = Number.parseInt(searchParams.get("limit") || "50")
-    const offset = Number.parseInt(searchParams.get("offset") || "0")
-
     const supabase = getSupabaseClient()
+    const { searchParams } = new URL(request.url)
 
-    console.log(`📊 Fetching players (limit: ${limit}, offset: ${offset})`)
+    // Get filter parameters
+    const paymentStatus = searchParams.get("paymentStatus")
+    const country = searchParams.get("country")
 
-    const {
-      data: players,
-      error,
-      count,
-    } = await supabase
-      .from("players")
-      .select("*", { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1)
+    console.log("🔍 Filters applied:", { paymentStatus, country })
+
+    // Build query
+    let query = supabase.from("players").select("*").order("created_at", { ascending: false })
+
+    // Apply filters
+    if (paymentStatus && paymentStatus !== "all") {
+      query = query.eq("payment_status", paymentStatus)
+    }
+
+    if (country && country !== "all") {
+      query = query.eq("nationality", country)
+    }
+
+    const { data: players, error } = await query
 
     if (error) {
       console.error("❌ Error fetching players:", error)
@@ -35,17 +40,24 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`✅ Fetched ${players?.length || 0} players (total: ${count})`)
+    console.log(`✅ Retrieved ${players?.length || 0} players`)
 
-    return NextResponse.json({
-      success: true,
-      players: players || [],
-      total: count || 0,
-      limit,
-      offset,
-    })
+    return NextResponse.json(
+      {
+        success: true,
+        players: players || [],
+        count: players?.length || 0,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      },
+    )
   } catch (error: any) {
-    console.error("💥 Players fetch error:", error)
+    console.error("💥 Players API error:", error)
     return NextResponse.json(
       {
         success: false,

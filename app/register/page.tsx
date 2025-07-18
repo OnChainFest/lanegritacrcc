@@ -8,161 +8,113 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react"
+import { CheckCircle, Loader2, User, Mail, Phone, Globe, Trophy } from "lucide-react"
+import Image from "next/image"
 
-interface FormData {
-  name: string
-  email: string
-  nationality: string
-  passport: string
-  league: string
-  played_in_2024: boolean
-  gender: "M" | "F"
-  country: "national" | "international"
-  categories: {
-    handicap: boolean
-    scratch: boolean
-    seniorM: boolean
-    seniorF: boolean
-    marathon: boolean
-    desperate: boolean
-    reenganche3: boolean
-    reenganche4: boolean
-    reenganche5: boolean
-    reenganche8: boolean
-  }
-}
+const countries = [
+  "Costa Rica",
+  "Nicaragua",
+  "Guatemala",
+  "Honduras",
+  "El Salvador",
+  "Panamá",
+  "México",
+  "Estados Unidos",
+  "Canadá",
+  "Colombia",
+  "Venezuela",
+  "Ecuador",
+  "Perú",
+  "Brasil",
+  "Argentina",
+  "Chile",
+  "Uruguay",
+  "Paraguay",
+  "Bolivia",
+  "España",
+  "Otro",
+]
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     nationality: "",
-    passport: "",
-    league: "",
-    played_in_2024: false,
-    gender: "M",
-    country: "national",
-    categories: {
-      handicap: false,
-      scratch: false,
-      seniorM: false,
-      seniorF: false,
-      marathon: false,
-      desperate: false,
-      reenganche3: false,
-      reenganche4: false,
-      reenganche5: false,
-      reenganche8: false,
-    },
+    average_score: "",
   })
-
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [errors, setErrors] = useState<Record<string, string>>({})
   const { toast } = useToast()
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {}
-
-    if (!formData.name.trim()) newErrors.name = "El nombre es requerido"
-    if (!formData.email.trim()) newErrors.email = "El email es requerido"
-    if (!formData.nationality.trim()) newErrors.nationality = "La nacionalidad es requerida"
-    if (!formData.passport.trim()) newErrors.passport = "El pasaporte es requerido"
-    if (!formData.league.trim()) newErrors.league = "La liga es requerida"
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (formData.email && !emailRegex.test(formData.email)) {
-      newErrors.email = "Formato de email inválido"
-    }
-
-    // Check if at least one category is selected
-    const hasCategory = Object.values(formData.categories).some(Boolean)
-    if (!hasCategory) {
-      newErrors.categories = "Selecciona al menos una categoría"
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
-
-  const calculateCost = () => {
-    const selectedCategories = Object.values(formData.categories).filter(Boolean).length
-    const baseCost = formData.country === "national" ? 25 : 50
-    return baseCost * selectedCategories
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!validateForm()) {
-      toast({
-        title: "Error de validación",
-        description: "Por favor corrige los errores en el formulario",
-        variant: "destructive",
-      })
-      return
-    }
-
     setLoading(true)
-    setErrors({})
 
     try {
-      console.log("📝 Submitting registration:", {
-        name: formData.name,
-        email: formData.email,
-        nationality: formData.nationality,
-      })
-
-      const registrationData = {
-        ...formData,
-        total_cost: calculateCost(),
-        currency: "USD",
-        payment_status: "pending",
-      }
+      console.log("🎳 Submitting registration:", formData)
 
       const response = await fetch("/api/register-player", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(registrationData),
+        body: JSON.stringify(formData),
       })
 
       const result = await response.json()
-      console.log("📝 Registration result:", result)
-
-      if (!response.ok) {
-        if (result.duplicate) {
-          setErrors({ email: "Este email ya está registrado" })
-          toast({
-            title: "Email duplicado",
-            description: "Este email ya está registrado en el torneo",
-            variant: "destructive",
-          })
-        } else {
-          throw new Error(result.error || `HTTP ${response.status}`)
-        }
-        return
-      }
+      console.log("🎳 Registration response:", result)
 
       if (result.success) {
         setSuccess(true)
         toast({
           title: "¡Registro exitoso!",
-          description: `Bienvenido al torneo, ${formData.name}`,
+          description: "Te has registrado correctamente para el torneo. Recibirás información sobre el pago pronto.",
+        })
+
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          phone: "",
+          nationality: "",
+          average_score: "",
         })
       } else {
-        throw new Error(result.error || "Error desconocido")
+        // Handle specific error cases
+        if (result.error === "Email already registered") {
+          toast({
+            title: "Email ya registrado",
+            description: "Este email ya está registrado en el torneo. Si tienes problemas, contacta al organizador.",
+            variant: "destructive",
+          })
+        } else if (result.missingFields) {
+          toast({
+            title: "Campos requeridos",
+            description: `Por favor completa: ${result.missingFields.join(", ")}`,
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Error en el registro",
+            description: result.details || result.error || "Hubo un problema al registrarte. Intenta de nuevo.",
+            variant: "destructive",
+          })
+        }
       }
     } catch (error: any) {
       console.error("Registration error:", error)
       toast({
-        title: "Error de registro",
-        description: error.message || "No se pudo completar el registro",
+        title: "Error de conexión",
+        description: "No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo.",
         variant: "destructive",
       })
     } finally {
@@ -172,13 +124,18 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white/10 backdrop-blur-md border-white/20">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-slate-800/90 border-slate-700 backdrop-blur-sm">
           <CardContent className="text-center py-8">
             <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-white mb-2">¡Registro Exitoso!</h2>
-            <p className="text-white/80 mb-4">Te has registrado correctamente para el Torneo La Negrita 2025</p>
-            <p className="text-sm text-white/60">Recibirás un email de confirmación con los detalles del pago</p>
+            <p className="text-slate-300 mb-6">
+              Te has registrado correctamente para el Torneo La Negrita 2025. Recibirás información sobre el proceso de
+              pago por email.
+            </p>
+            <Button onClick={() => setSuccess(false)} className="bg-blue-600 hover:bg-blue-700 text-white">
+              Registrar otro jugador
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -186,225 +143,146 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
       <div className="max-w-2xl mx-auto">
-        <Card className="bg-white/10 backdrop-blur-md border-white/20">
+        {/* Header */}
+        <div className="text-center mb-8 pt-8">
+          <div className="flex justify-center items-center gap-4 mb-6">
+            <Image
+              src="/images/country-club-logo-transparent.png"
+              alt="Country Club Logo"
+              width={80}
+              height={80}
+              className="rounded-full"
+            />
+            <Image
+              src="/images/tournament-logo.png"
+              alt="Tournament Logo"
+              width={100}
+              height={80}
+              className="rounded-lg"
+            />
+          </div>
+          <h1 className="text-4xl font-bold text-white mb-2">Torneo La Negrita 2025</h1>
+          <p className="text-xl text-blue-300">Registro de Participantes</p>
+        </div>
+
+        {/* Registration Form */}
+        <Card className="bg-slate-800/90 border-slate-700 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-2xl font-bold text-white text-center">
-              Registro - Torneo La Negrita 2025
+            <CardTitle className="text-white flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Información del Jugador
             </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Información Personal</h3>
-
-                <div>
-                  <Label htmlFor="name" className="text-white">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-slate-200 flex items-center gap-2">
+                    <User className="w-4 h-4" />
                     Nombre Completo *
                   </Label>
                   <Input
                     id="name"
+                    type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    onChange={(e) => handleInputChange("name", e.target.value)}
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
                     placeholder="Tu nombre completo"
+                    required
                   />
-                  {errors.name && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.name}
-                    </p>
-                  )}
                 </div>
 
-                <div>
-                  <Label htmlFor="email" className="text-white">
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-slate-200 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
                     Email *
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
+                    onChange={(e) => handleInputChange("email", e.target.value)}
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
                     placeholder="tu@email.com"
+                    required
                   />
-                  {errors.email && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.email}
-                    </p>
-                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="nationality" className="text-white">
-                      Nacionalidad *
-                    </Label>
-                    <Input
-                      id="nationality"
-                      value={formData.nationality}
-                      onChange={(e) => setFormData({ ...formData, nationality: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                      placeholder="Costa Rica"
-                    />
-                    {errors.nationality && (
-                      <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.nationality}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label htmlFor="passport" className="text-white">
-                      Pasaporte/Cédula *
-                    </Label>
-                    <Input
-                      id="passport"
-                      value={formData.passport}
-                      onChange={(e) => setFormData({ ...formData, passport: e.target.value })}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                      placeholder="123456789"
-                    />
-                    {errors.passport && (
-                      <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.passport}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="league" className="text-white">
-                    Liga/Club *
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-slate-200 flex items-center gap-2">
+                    <Phone className="w-4 h-4" />
+                    Teléfono *
                   </Label>
                   <Input
-                    id="league"
-                    value={formData.league}
-                    onChange={(e) => setFormData({ ...formData, league: e.target.value })}
-                    className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-                    placeholder="Tu liga o club"
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange("phone", e.target.value)}
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
+                    placeholder="+506 8888-8888"
+                    required
                   />
-                  {errors.league && (
-                    <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.league}
-                    </p>
-                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label className="text-white">Género</Label>
-                    <Select
-                      value={formData.gender}
-                      onValueChange={(value: "M" | "F") => setFormData({ ...formData, gender: value })}
-                    >
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="M">Masculino</SelectItem>
-                        <SelectItem value="F">Femenino</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label className="text-white">Tipo</Label>
-                    <Select
-                      value={formData.country}
-                      onValueChange={(value: "national" | "international") =>
-                        setFormData({ ...formData, country: value })
-                      }
-                    >
-                      <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="national">Nacional</SelectItem>
-                        <SelectItem value="international">Internacional</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="flex items-center space-x-2 pt-6">
-                    <Checkbox
-                      id="played_2024"
-                      checked={formData.played_in_2024}
-                      onCheckedChange={(checked) => setFormData({ ...formData, played_in_2024: !!checked })}
-                    />
-                    <Label htmlFor="played_2024" className="text-white text-sm">
-                      Jugué en 2024
-                    </Label>
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nationality" className="text-slate-200 flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    Nacionalidad *
+                  </Label>
+                  <Select
+                    value={formData.nationality}
+                    onValueChange={(value) => handleInputChange("nationality", value)}
+                  >
+                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
+                      <SelectValue placeholder="Selecciona tu país" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-slate-700 border-slate-600">
+                      {countries.map((country) => (
+                        <SelectItem key={country} value={country} className="text-white hover:bg-slate-600">
+                          {country}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
 
-              {/* Categories */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-white">Categorías *</h3>
-                {errors.categories && (
-                  <p className="text-red-400 text-sm flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.categories}
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="average_score" className="text-slate-200 flex items-center gap-2">
+                    <Trophy className="w-4 h-4" />
+                    Promedio de Bolos (opcional)
+                  </Label>
+                  <Input
+                    id="average_score"
+                    type="number"
+                    min="0"
+                    max="300"
+                    value={formData.average_score}
+                    onChange={(e) => handleInputChange("average_score", e.target.value)}
+                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
+                    placeholder="Ej: 150"
+                  />
+                  <p className="text-sm text-slate-400">
+                    Tu promedio actual de bolos (esto nos ayuda a organizar mejor el torneo)
                   </p>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {Object.entries({
-                    handicap: "Handicap",
-                    scratch: "Scratch",
-                    seniorM: "Senior Masculino",
-                    seniorF: "Senior Femenino",
-                    marathon: "Maratón",
-                    desperate: "Desesperados",
-                    reenganche3: "Reenganche 3",
-                    reenganche4: "Reenganche 4",
-                    reenganche5: "Reenganche 5",
-                    reenganche8: "Reenganche 8",
-                  }).map(([key, label]) => (
-                    <div key={key} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={key}
-                        checked={formData.categories[key as keyof typeof formData.categories]}
-                        onCheckedChange={(checked) =>
-                          setFormData({
-                            ...formData,
-                            categories: {
-                              ...formData.categories,
-                              [key]: !!checked,
-                            },
-                          })
-                        }
-                      />
-                      <Label htmlFor={key} className="text-white">
-                        {label}
-                      </Label>
-                    </div>
-                  ))}
                 </div>
               </div>
 
-              {/* Cost Summary */}
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-white mb-2">Resumen de Costos</h3>
-                <div className="text-white/80">
-                  <p>Categorías seleccionadas: {Object.values(formData.categories).filter(Boolean).length}</p>
-                  <p>Costo por categoría: ${formData.country === "national" ? 25 : 50} USD</p>
-                  <p className="text-xl font-bold text-white">Total: ${calculateCost()} USD</p>
-                </div>
+              <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
+                <h3 className="text-blue-300 font-semibold mb-2">Información Importante:</h3>
+                <ul className="text-sm text-blue-200 space-y-1">
+                  <li>• El torneo se realizará del 15-16 de febrero de 2025</li>
+                  <li>• Costo de inscripción: $50 USD</li>
+                  <li>• Recibirás información de pago por email</li>
+                  <li>• Cupos limitados - ¡regístrate pronto!</li>
+                </ul>
               </div>
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3"
               >
                 {loading ? (
                   <>
@@ -412,12 +290,17 @@ export default function RegisterPage() {
                     Registrando...
                   </>
                 ) : (
-                  "Registrarse"
+                  "Registrarme en el Torneo"
                 )}
               </Button>
             </form>
           </CardContent>
         </Card>
+
+        {/* Footer */}
+        <div className="text-center mt-8 text-slate-400">
+          <p>¿Tienes preguntas? Contacta al organizador del torneo</p>
+        </div>
       </div>
     </div>
   )
