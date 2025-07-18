@@ -106,7 +106,8 @@ export default function AdminPage() {
       if (playersRes.ok) {
         const data = await playersRes.json()
         console.log("👥 Players data received:", data)
-        playersData = data
+        // Handle the new API response format
+        playersData = { players: data.players || [] }
       } else {
         console.error("❌ Players API failed:", playersRes.status, await playersRes.text())
         toast({

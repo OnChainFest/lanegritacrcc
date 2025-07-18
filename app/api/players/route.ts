@@ -2,25 +2,16 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSupabaseClient } from "@/lib/supabase-client"
 
 export async function GET(request: NextRequest) {
-  console.log("👥 === PLAYERS API CALLED ===")
+  console.log("👥 Players API called")
 
   try {
     const supabase = getSupabaseClient()
-    const { searchParams } = new URL(request.url)
-    const limit = searchParams.get("limit")
-    const offset = searchParams.get("offset")
 
-    let query = supabase.from("players").select("*").order("created_at", { ascending: false })
-
-    if (limit) {
-      query = query.limit(Number.parseInt(limit))
-    }
-
-    if (offset) {
-      query = query.range(Number.parseInt(offset), Number.parseInt(offset) + (Number.parseInt(limit) || 10) - 1)
-    }
-
-    const { data: players, error } = await query
+    // Get all players
+    const { data: players, error } = await supabase
+      .from("players")
+      .select("*")
+      .order("created_at", { ascending: false })
 
     if (error) {
       console.error("❌ Error fetching players:", error)
@@ -38,7 +29,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: players || [],
+      players: players || [],
       count: players?.length || 0,
     })
   } catch (error: any) {
@@ -46,7 +37,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        error: "Internal server error",
+        error: "Server error",
         details: error.message,
       },
       { status: 500 },
