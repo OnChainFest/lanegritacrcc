@@ -15,75 +15,145 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 
+interface UserData {
+  name: string
+  nationality: string
+  email: string
+  passport: string
+  league: string
+  played_in_2024: boolean
+  gender: "M" | "F" | ""
+  country: "national" | "international" | ""
+}
+
+interface Categories {
+  handicap: boolean
+  scratch: boolean
+  seniorM: boolean
+  seniorF: boolean
+  marathon: boolean
+  desperate: boolean
+  reenganche3: boolean
+  reenganche4: boolean
+  reenganche5: boolean
+  reenganche8: boolean
+}
+
 interface PlayerData {
   name: string
-  email: string
-  phone: string
-  passport: string
   nationality: string
-  address: string
-  city: string
-  country: string
-  birth_date: string
-  gender: string
-  shirt_size: string
-  payment_method: string
+  email: string
+  passport: string
+  league: string
+  played_in_2024: boolean
+  gender: "M" | "F" | ""
+  country: "national" | "international" | ""
+  categories: Categories
+  total_cost: number
+  currency: string
   payment_status: "pending"
-  terms_accepted: boolean
 }
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState<PlayerData>({
-    name: "",
-    email: "",
-    phone: "",
-    passport: "",
-    nationality: "",
-    address: "",
-    city: "",
-    country: "",
-    birth_date: "",
-    gender: "",
-    shirt_size: "",
-    payment_method: "",
-    payment_status: "pending",
-    terms_accepted: false,
-  })
-
+  const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
 
-  const handleInputChange = (field: keyof PlayerData, value: string | boolean) => {
-    setFormData((prev) => ({
+  const [playerData, setPlayerData] = useState<PlayerData>({
+    name: "",
+    nationality: "",
+    email: "",
+    passport: "",
+    league: "",
+    played_in_2024: false,
+    gender: "",
+    country: "",
+    categories: {
+      handicap: false,
+      scratch: false,
+      seniorM: false,
+      seniorF: false,
+      marathon: false,
+      desperate: false,
+      reenganche3: false,
+      reenganche4: false,
+      reenganche5: false,
+      reenganche8: false,
+    },
+    total_cost: 0,
+    currency: "USD",
+    payment_status: "pending",
+  })
+
+  const nextStep = () => {
+    setStep(step + 1)
+  }
+
+  const prevStep = () => {
+    setStep(step - 1)
+  }
+
+  const handleInputChange = (field: keyof UserData, value: string | boolean) => {
+    setPlayerData((prev) => ({
       ...prev,
       [field]: value,
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleCategoryChange = (category: keyof Categories, value: boolean) => {
+    setPlayerData((prev) => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [category]: value,
+      },
+    }))
+  }
 
-    if (!formData.terms_accepted) {
-      toast({
-        title: "Error",
-        description: "Debes aceptar los términos y condiciones",
-        variant: "destructive",
-      })
-      return
+  const calculateTotal = () => {
+    let total = 50 // Base price
+
+    // Early bird discount until December 31, 2024
+    const now = new Date()
+    const earlyBirdDeadline = new Date("2024-12-31")
+    if (now <= earlyBirdDeadline) {
+      total = 40
     }
 
+    // Category add-ons
+    if (playerData.categories.handicap) total += 10
+    if (playerData.categories.scratch) total += 15
+    if (playerData.categories.seniorM) total += 20
+    if (playerData.categories.seniorF) total += 20
+    if (playerData.categories.marathon) total += 25
+    if (playerData.categories.desperate) total += 30
+    if (playerData.categories.reenganche3) total += 35
+    if (playerData.categories.reenganche4) total += 40
+    if (playerData.categories.reenganche5) total += 45
+    if (playerData.categories.reenganche8) total += 50
+
+    setPlayerData((prev) => ({
+      ...prev,
+      total_cost: total,
+    }))
+
+    return total
+  }
+
+  const handleRegistration = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
 
     try {
-      console.log("🚀 Submitting registration:", formData.email)
+      console.log("🚀 Submitting registration:", playerData.email)
 
       const response = await fetch("/api/register-player", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(playerData),
       })
 
       const result = await response.json()
@@ -120,6 +190,43 @@ export default function RegisterPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const renderForm = () => {
+    switch (step) {
+      case 1:
+        return <Step1 playerData={playerData} handleInputChange={handleInputChange} nextStep={nextStep} />
+      case 2:
+        return (
+          <Step2
+            playerData={playerData}
+            handleInputChange={handleInputChange}
+            prevStep={prevStep}
+            nextStep={nextStep}
+          />
+        )
+      case 3:
+        return (
+          <Step3
+            playerData={playerData}
+            handleCategoryChange={handleCategoryChange}
+            calculateTotal={calculateTotal}
+            prevStep={prevStep}
+            nextStep={nextStep}
+          />
+        )
+      case 4:
+        return (
+          <Step4
+            playerData={playerData}
+            handleRegistration={handleRegistration}
+            loading={loading}
+            prevStep={prevStep}
+          />
+        )
+      default:
+        return null
     }
   }
 
@@ -162,265 +269,365 @@ export default function RegisterPage() {
                 Registro al Torneo
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Personal Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">
-                    Información Personal
-                  </h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="name" className="font-body font-medium">
-                        Nombre Completo *
-                      </Label>
-                      <Input
-                        id="name"
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => handleInputChange("name", e.target.value)}
-                        className="font-body"
-                        placeholder="Tu nombre completo"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="email" className="font-body font-medium">
-                        Email *
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        required
-                        value={formData.email}
-                        onChange={(e) => handleInputChange("email", e.target.value)}
-                        className="font-body"
-                        placeholder="tu@email.com"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="phone" className="font-body font-medium">
-                        Teléfono *
-                      </Label>
-                      <Input
-                        id="phone"
-                        type="tel"
-                        required
-                        value={formData.phone}
-                        onChange={(e) => handleInputChange("phone", e.target.value)}
-                        className="font-body"
-                        placeholder="+506 8888-8888"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="passport" className="font-body font-medium">
-                        Pasaporte/Cédula *
-                      </Label>
-                      <Input
-                        id="passport"
-                        type="text"
-                        required
-                        value={formData.passport}
-                        onChange={(e) => handleInputChange("passport", e.target.value)}
-                        className="font-body"
-                        placeholder="Número de identificación"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="birth_date" className="font-body font-medium">
-                        Fecha de Nacimiento *
-                      </Label>
-                      <Input
-                        id="birth_date"
-                        type="date"
-                        required
-                        value={formData.birth_date}
-                        onChange={(e) => handleInputChange("birth_date", e.target.value)}
-                        className="font-body"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="gender" className="font-body font-medium">
-                        Género *
-                      </Label>
-                      <Select value={formData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
-                        <SelectTrigger className="font-body">
-                          <SelectValue placeholder="Seleccionar género" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="masculino">Masculino</SelectItem>
-                          <SelectItem value="femenino">Femenino</SelectItem>
-                          <SelectItem value="otro">Otro</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Location Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">
-                    Información de Ubicación
-                  </h3>
-
-                  <div>
-                    <Label htmlFor="address" className="font-body font-medium">
-                      Dirección *
-                    </Label>
-                    <Input
-                      id="address"
-                      type="text"
-                      required
-                      value={formData.address}
-                      onChange={(e) => handleInputChange("address", e.target.value)}
-                      className="font-body"
-                      placeholder="Tu dirección completa"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="city" className="font-body font-medium">
-                        Ciudad *
-                      </Label>
-                      <Input
-                        id="city"
-                        type="text"
-                        required
-                        value={formData.city}
-                        onChange={(e) => handleInputChange("city", e.target.value)}
-                        className="font-body"
-                        placeholder="Tu ciudad"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="country" className="font-body font-medium">
-                        País *
-                      </Label>
-                      <Input
-                        id="country"
-                        type="text"
-                        required
-                        value={formData.country}
-                        onChange={(e) => handleInputChange("country", e.target.value)}
-                        className="font-body"
-                        placeholder="Tu país"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="nationality" className="font-body font-medium">
-                      Nacionalidad *
-                    </Label>
-                    <Input
-                      id="nationality"
-                      type="text"
-                      required
-                      value={formData.nationality}
-                      onChange={(e) => handleInputChange("nationality", e.target.value)}
-                      className="font-body"
-                      placeholder="Tu nacionalidad"
-                    />
-                  </div>
-                </div>
-
-                {/* Tournament Information */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">
-                    Información del Torneo
-                  </h3>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="shirt_size" className="font-body font-medium">
-                        Talla de Camisa *
-                      </Label>
-                      <Select
-                        value={formData.shirt_size}
-                        onValueChange={(value) => handleInputChange("shirt_size", value)}
-                      >
-                        <SelectTrigger className="font-body">
-                          <SelectValue placeholder="Seleccionar talla" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="XS">XS</SelectItem>
-                          <SelectItem value="S">S</SelectItem>
-                          <SelectItem value="M">M</SelectItem>
-                          <SelectItem value="L">L</SelectItem>
-                          <SelectItem value="XL">XL</SelectItem>
-                          <SelectItem value="XXL">XXL</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="payment_method" className="font-body font-medium">
-                        Método de Pago *
-                      </Label>
-                      <Select
-                        value={formData.payment_method}
-                        onValueChange={(value) => handleInputChange("payment_method", value)}
-                      >
-                        <SelectTrigger className="font-body">
-                          <SelectValue placeholder="Seleccionar método" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="transferencia">Transferencia Bancaria</SelectItem>
-                          <SelectItem value="sinpe">SINPE Móvil</SelectItem>
-                          <SelectItem value="efectivo">Efectivo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Terms and Conditions */}
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="terms"
-                      checked={formData.terms_accepted}
-                      onCheckedChange={(checked) => handleInputChange("terms_accepted", checked as boolean)}
-                    />
-                    <Label htmlFor="terms" className="text-sm font-body">
-                      Acepto los términos y condiciones del torneo *
-                    </Label>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Registrando...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Registrarse al Torneo
-                    </>
-                  )}
-                </Button>
-              </form>
-            </CardContent>
+            <CardContent className="p-8">{renderForm()}</CardContent>
           </Card>
         </div>
+      </div>
+    </div>
+  )
+}
+
+interface Step1Props {
+  playerData: PlayerData
+  handleInputChange: (field: keyof UserData, value: string | boolean) => void
+  nextStep: () => void
+}
+
+const Step1: React.FC<Step1Props> = ({ playerData, handleInputChange, nextStep }) => {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">Información Personal</h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name" className="font-body font-medium">
+            Nombre Completo *
+          </Label>
+          <Input
+            id="name"
+            type="text"
+            required
+            value={playerData.name}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            className="font-body"
+            placeholder="Tu nombre completo"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="nationality" className="font-body font-medium">
+            Nacionalidad *
+          </Label>
+          <Input
+            id="nationality"
+            type="text"
+            required
+            value={playerData.nationality}
+            onChange={(e) => handleInputChange("nationality", e.target.value)}
+            className="font-body"
+            placeholder="Tu nacionalidad"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="email" className="font-body font-medium">
+            Email *
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            required
+            value={playerData.email}
+            onChange={(e) => handleInputChange("email", e.target.value)}
+            className="font-body"
+            placeholder="tu@email.com"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="passport" className="font-body font-medium">
+            Pasaporte/Cédula *
+          </Label>
+          <Input
+            id="passport"
+            type="text"
+            required
+            value={playerData.passport}
+            onChange={(e) => handleInputChange("passport", e.target.value)}
+            className="font-body"
+            placeholder="Número de identificación"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="league" className="font-body font-medium">
+            Liga *
+          </Label>
+          <Input
+            id="league"
+            type="text"
+            required
+            value={playerData.league}
+            onChange={(e) => handleInputChange("league", e.target.value)}
+            className="font-body"
+            placeholder="Tu liga"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="gender" className="font-body font-medium">
+            Género *
+          </Label>
+          <Select value={playerData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
+            <SelectTrigger className="font-body">
+              <SelectValue placeholder="Seleccionar género" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="M">Masculino</SelectItem>
+              <SelectItem value="F">Femenino</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div>
+        <Label htmlFor="played_in_2024" className="font-body font-medium">
+          ¿Jugó en 2024? *
+        </Label>
+        <Checkbox
+          id="played_in_2024"
+          checked={playerData.played_in_2024}
+          onCheckedChange={(checked) => handleInputChange("played_in_2024", checked as boolean)}
+        />
+      </div>
+
+      <Button onClick={nextStep} className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading">
+        Siguiente
+      </Button>
+    </div>
+  )
+}
+
+interface Step2Props {
+  playerData: PlayerData
+  handleInputChange: (field: keyof UserData, value: string | boolean) => void
+  prevStep: () => void
+  nextStep: () => void
+}
+
+const Step2: React.FC<Step2Props> = ({ playerData, handleInputChange, prevStep, nextStep }) => {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">País de Residencia</h3>
+
+      <div>
+        <Label htmlFor="country" className="font-body font-medium">
+          Tipo de Participante *
+        </Label>
+        <Select value={playerData.country} onValueChange={(value) => handleInputChange("country", value)}>
+          <SelectTrigger className="font-body">
+            <SelectValue placeholder="Seleccionar tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="national">Nacional</SelectItem>
+            <SelectItem value="international">Internacional</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Anterior
+        </Button>
+        <Button onClick={nextStep} className="bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading">
+          Siguiente
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+interface Step3Props {
+  playerData: PlayerData
+  handleCategoryChange: (category: keyof Categories, value: boolean) => void
+  calculateTotal: () => number
+  prevStep: () => void
+  nextStep: () => void
+}
+
+const Step3: React.FC<Step3Props> = ({ playerData, handleCategoryChange, calculateTotal, prevStep, nextStep }) => {
+  const total = calculateTotal()
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">Selección de Categorías</h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="handicap" className="font-body font-medium">
+            Handicap
+          </Label>
+          <Checkbox
+            id="handicap"
+            checked={playerData.categories.handicap}
+            onCheckedChange={(checked) => handleCategoryChange("handicap", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="scratch" className="font-body font-medium">
+            Scratch
+          </Label>
+          <Checkbox
+            id="scratch"
+            checked={playerData.categories.scratch}
+            onCheckedChange={(checked) => handleCategoryChange("scratch", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="seniorM" className="font-body font-medium">
+            Senior Masculino
+          </Label>
+          <Checkbox
+            id="seniorM"
+            checked={playerData.categories.seniorM}
+            onCheckedChange={(checked) => handleCategoryChange("seniorM", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="seniorF" className="font-body font-medium">
+            Senior Femenino
+          </Label>
+          <Checkbox
+            id="seniorF"
+            checked={playerData.categories.seniorF}
+            onCheckedChange={(checked) => handleCategoryChange("seniorF", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="marathon" className="font-body font-medium">
+            Maratón
+          </Label>
+          <Checkbox
+            id="marathon"
+            checked={playerData.categories.marathon}
+            onCheckedChange={(checked) => handleCategoryChange("marathon", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="desperate" className="font-body font-medium">
+            Desesperado
+          </Label>
+          <Checkbox
+            id="desperate"
+            checked={playerData.categories.desperate}
+            onCheckedChange={(checked) => handleCategoryChange("desperate", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="reenganche3" className="font-body font-medium">
+            Reenganche 3
+          </Label>
+          <Checkbox
+            id="reenganche3"
+            checked={playerData.categories.reenganche3}
+            onCheckedChange={(checked) => handleCategoryChange("reenganche3", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="reenganche4" className="font-body font-medium">
+            Reenganche 4
+          </Label>
+          <Checkbox
+            id="reenganche4"
+            checked={playerData.categories.reenganche4}
+            onCheckedChange={(checked) => handleCategoryChange("reenganche4", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="reenganche5" className="font-body font-medium">
+            Reenganche 5
+          </Label>
+          <Checkbox
+            id="reenganche5"
+            checked={playerData.categories.reenganche5}
+            onCheckedChange={(checked) => handleCategoryChange("reenganche5", checked as boolean)}
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="reenganche8" className="font-body font-medium">
+            Reenganche 8
+          </Label>
+          <Checkbox
+            id="reenganche8"
+            checked={playerData.categories.reenganche8}
+            onCheckedChange={(checked) => handleCategoryChange("reenganche8", checked as boolean)}
+          />
+        </div>
+      </div>
+
+      <div className="text-lg font-heading font-semibold text-gray-900">Total a pagar: ${total} USD</div>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Anterior
+        </Button>
+        <Button onClick={nextStep} className="bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading">
+          Siguiente
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+interface Step4Props {
+  playerData: PlayerData
+  handleRegistration: (e: React.FormEvent) => Promise<void>
+  loading: boolean
+  prevStep: () => void
+}
+
+const Step4: React.FC<Step4Props> = ({ playerData, handleRegistration, loading, prevStep }) => {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">Información de Pago</h3>
+
+      <p className="font-body">
+        Por favor, realice el pago a la siguiente cuenta bancaria:
+        <br />
+        Banco: Banco de Costa Rica
+        <br />
+        Cuenta: 1234567890
+        <br />A nombre de: Country Club Costa Rica
+      </p>
+
+      <p className="font-body">
+        Una vez realizado el pago, por favor adjunte el comprobante al correo torneolanegrita@gmail.com
+      </p>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Anterior
+        </Button>
+        <Button
+          onClick={handleRegistration}
+          disabled={loading}
+          className="bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Registrando...
+            </>
+          ) : (
+            <>
+              <CreditCard className="w-5 h-5 mr-2" />
+              Registrarse al Torneo
+            </>
+          )}
+        </Button>
       </div>
     </div>
   )

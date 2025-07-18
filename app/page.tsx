@@ -86,7 +86,6 @@ export default function TorneoLaNegritaLanding() {
       info: {
         participation: "Digital registration system with automatic validation and real-time tracking",
         prizes: "Prizes in Handicap, Scratch, Senior, Strike Marathon and Desperate categories",
-        payments: "Payments in colones and dollars with options for foreign players",
       },
       testimonials: {
         title: "What participants say",
@@ -210,7 +209,7 @@ export default function TorneoLaNegritaLanding() {
       <section className="relative min-h-screen flex flex-col overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image src="/images/bowling-scene-1.png" alt="Bowling Tournament" fill className="object-cover" priority />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/75" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/70" />
         </div>
 
         <div className="relative z-10 container mx-auto px-4 flex-1 flex flex-col">
