@@ -2,29 +2,26 @@ import { NextResponse } from "next/server"
 import { getSupabase } from "@/lib/supabase-server"
 
 export async function GET() {
-  return NextResponse.json({
-    message: "Force refresh endpoint is working",
-    timestamp: new Date().toISOString(),
-    instructions: "Send a POST request to trigger cache reset",
-  })
-}
-
-export async function POST() {
   try {
-    console.log("🔄 Force refresh triggered at", new Date().toISOString())
+    console.log("🔍 Debug Cache: Starting cache analysis...")
 
     const supabase = getSupabase()
 
-    // Test connection
-    const { data, error } = await supabase.from("players").select("count", { count: "exact", head: true })
+    // Get fresh data with timestamp
+    const timestamp = new Date().toISOString()
+
+    const { data: players, error } = await supabase
+      .from("players")
+      .select("id, name, email, payment_status, created_at")
+      .order("created_at", { ascending: false })
 
     if (error) {
-      console.error("❌ Supabase connection error:", error)
+      console.error("❌ Debug Cache: Supabase error:", error)
       return NextResponse.json(
         {
           success: false,
-          error: `Supabase error: ${error.message}`,
-          timestamp: new Date().toISOString(),
+          error: error.message,
+          timestamp,
         },
         {
           status: 500,
@@ -37,14 +34,19 @@ export async function POST() {
       )
     }
 
-    console.log("✅ Cache refresh successful, player count:", data)
+    console.log(`✅ Debug Cache: Found ${players?.length || 0} players`)
 
     return NextResponse.json(
       {
         success: true,
-        message: "Cache refreshed successfully",
-        playerCount: data,
-        timestamp: new Date().toISOString(),
+        timestamp,
+        playersCount: players?.length || 0,
+        samplePlayers: players?.slice(0, 3) || [],
+        cacheHeaders: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
       },
       {
         headers: {
@@ -55,14 +57,11 @@ export async function POST() {
       },
     )
   } catch (error) {
-    console.error("❌ Force refresh error:", error)
-
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
-
+    console.error("💥 Debug Cache: Unexpected error:", error)
     return NextResponse.json(
       {
         success: false,
-        error: errorMessage,
+        error: error instanceof Error ? error.message : "Unknown error",
         timestamp: new Date().toISOString(),
       },
       {

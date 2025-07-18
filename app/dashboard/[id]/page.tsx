@@ -4,10 +4,9 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, User, CreditCard, Trophy, Calendar } from "lucide-react"
+import { ArrowLeft, User, CreditCard, Trophy, Calendar, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { TournamentDatabase } from "@/lib/database"
-import type { Player } from "@/lib/supabase"
+import { createClient } from "@supabase/supabase-js"
 
 interface DashboardPageProps {
   params: {
@@ -15,44 +14,98 @@ interface DashboardPageProps {
   }
 }
 
+interface Player {
+  id: string
+  name: string
+  email: string
+  nationality: string
+  passport: string
+  league: string
+  played_in_2024: boolean
+  gender: "M" | "F"
+  country: "national" | "international"
+  categories: {
+    handicap: boolean
+    scratch: boolean
+    seniorM: boolean
+    seniorF: boolean
+    marathon: boolean
+    desperate: boolean
+    reenganche3: boolean
+    reenganche4: boolean
+    reenganche5: boolean
+    reenganche8: boolean
+  }
+  total_cost: number
+  currency: string
+  payment_status: "pending" | "verified" | "rejected"
+  created_at: string
+  assigned_bracket?: string
+}
+
 export default function DashboardPage({ params }: DashboardPageProps) {
   const [player, setPlayer] = useState<Player | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string>("")
 
   useEffect(() => {
     const fetchPlayer = async () => {
       try {
-        const { data: players } = await TournamentDatabase.getPlayers()
-        const foundPlayer = players?.find((p) => p.id === params.id)
-        setPlayer(foundPlayer || null)
-      } catch (error) {
-        console.error("Error fetching player:", error)
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://pybfjonqjzlhilknrmbh.supabase.co"
+        const supabaseKey =
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5YmZqb25xanpsaGlsa25ybWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4Mzc4MjksImV4cCI6MjA2NTQxMzgyOX0.TErykfq_jF16DB4sQ57qcnR7mRv07hrj8euv7DOXB8M"
+
+        const supabase = createClient(supabaseUrl, supabaseKey)
+
+        console.log("🔍 Fetching player with ID:", params.id)
+
+        const { data, error } = await supabase.from("players").select("*").eq("id", params.id).single()
+
+        if (error) {
+          console.error("❌ Error fetching player:", error)
+          setError("No se pudo encontrar el jugador")
+          return
+        }
+
+        if (!data) {
+          setError("Jugador no encontrado")
+          return
+        }
+
+        console.log("✅ Player found:", data)
+        setPlayer(data)
+      } catch (err) {
+        console.error("❌ Unexpected error:", err)
+        setError("Error inesperado al cargar los datos")
       } finally {
         setLoading(false)
       }
     }
 
-    fetchPlayer()
+    if (params.id) {
+      fetchPlayer()
+    }
   }, [params.id])
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto mb-4"></div>
-          <p>Cargando información...</p>
+          <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">Cargando información...</p>
         </div>
       </div>
     )
   }
 
-  if (!player) {
+  if (error || !player) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-50">
         <Card className="max-w-md mx-auto">
           <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-bold mb-2">Jugador no encontrado</h2>
-            <p className="text-gray-600 mb-4">No se pudo encontrar la información del registro.</p>
+            <h2 className="text-xl font-bold mb-2 text-red-600">Error</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
             <Link href="/">
               <Button>Volver al inicio</Button>
             </Link>
@@ -86,6 +139,11 @@ export default function DashboardPage({ params }: DashboardPageProps) {
       default:
         return "Desconocido"
     }
+  }
+
+  const getCategoriesSelected = () => {
+    if (!player.categories) return 0
+    return Object.entries(player.categories).filter(([_, value]) => value).length
   }
 
   return (
@@ -138,9 +196,7 @@ export default function DashboardPage({ params }: DashboardPageProps) {
                     <Trophy className="w-4 h-4" />
                     Categorías
                   </h4>
-                  <p className="text-green-600">
-                    {Object.entries(player.categories).filter(([_, value]) => value).length} seleccionadas
-                  </p>
+                  <p className="text-green-600">{getCategoriesSelected()} seleccionadas</p>
                 </div>
                 <div className="bg-purple-50 p-4 rounded-lg">
                   <h4 className="font-semibold text-purple-800 flex items-center gap-2">
@@ -180,31 +236,31 @@ export default function DashboardPage({ params }: DashboardPageProps) {
                       <Badge variant="secondary">Hándicap</Badge>
                       <span className="text-green-600">✓</span>
                     </div>
-                    {player.categories.scratch && (
+                    {player.categories?.scratch && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">Scratch</Badge>
                         <span className="text-green-600">✓</span>
                       </div>
                     )}
-                    {player.categories.seniorM && (
+                    {player.categories?.seniorM && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">Senior Masculino</Badge>
                         <span className="text-green-600">✓</span>
                       </div>
                     )}
-                    {player.categories.seniorF && (
+                    {player.categories?.seniorF && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">Senior Femenino</Badge>
                         <span className="text-green-600">✓</span>
                       </div>
                     )}
-                    {player.categories.marathon && (
+                    {player.categories?.marathon && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">Maratón de Strikes</Badge>
                         <span className="text-green-600">✓</span>
                       </div>
                     )}
-                    {player.categories.desperate && (
+                    {player.categories?.desperate && (
                       <div className="flex items-center gap-2">
                         <Badge variant="outline">Desesperado</Badge>
                         <span className="text-green-600">✓</span>

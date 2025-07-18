@@ -60,43 +60,73 @@ export default function AdminPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null)
   const [showPlayerDetails, setShowPlayerDetails] = useState(false)
+  const [lastRefresh, setLastRefresh] = useState<string>("")
   const { toast } = useToast()
 
   useEffect(() => {
     fetchData()
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchData, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   const fetchData = async () => {
     try {
       setLoading(true)
+      console.log("🔄 Fetching fresh data at:", new Date().toISOString())
 
-      const safeJson = async (res: Response) => {
-        const txt = await res.text()
-        try {
-          return JSON.parse(txt)
-        } catch {
-          console.error("↩️  Non-JSON response:", txt)
-          return null
-        }
-      }
+      // Add cache-busting timestamp
+      const timestamp = Date.now()
 
-      const [playersRes, statsRes] = await Promise.all([fetch("/api/players"), fetch("/api/tournament-stats")])
+      const [playersRes, statsRes] = await Promise.all([
+        fetch(`/api/players?t=${timestamp}`, {
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }),
+        fetch(`/api/tournament-stats?t=${timestamp}`, {
+          method: "GET",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+        }),
+      ])
+
+      console.log("📊 Players API Response:", playersRes.status, playersRes.statusText)
+      console.log("📈 Stats API Response:", statsRes.status, statsRes.statusText)
 
       let playersData: any = { players: [] }
       let statsData: any = null
 
       if (playersRes.ok) {
-        const data = await safeJson(playersRes)
-        if (data) playersData = data
+        const data = await playersRes.json()
+        console.log("👥 Players data received:", data)
+        playersData = data
       } else {
-        console.error("🚨 /api/players HTTP", playersRes.status)
+        console.error("❌ Players API failed:", playersRes.status, await playersRes.text())
+        toast({
+          title: "Error cargando jugadores",
+          description: `HTTP ${playersRes.status}: ${playersRes.statusText}`,
+          variant: "destructive",
+        })
       }
 
       if (statsRes.ok) {
-        const data = await safeJson(statsRes)
-        if (data) statsData = data
+        const data = await statsRes.json()
+        console.log("📊 Stats data received:", data)
+        statsData = data
       } else {
-        console.error("🚨 /api/tournament-stats HTTP", statsRes.status)
+        console.error("❌ Stats API failed:", statsRes.status, await statsRes.text())
+        toast({
+          title: "Error cargando estadísticas",
+          description: `HTTP ${statsRes.status}: ${statsRes.statusText}`,
+          variant: "destructive",
+        })
       }
 
       setPlayers(playersData.players || [])
@@ -108,16 +138,52 @@ export default function AdminPage() {
           total_revenue: 0,
         },
       )
+
+      setLastRefresh(new Date().toLocaleTimeString())
+      console.log("✅ Data updated successfully")
     } catch (error) {
-      console.error("Error fetching data:", error)
+      console.error("💥 Error fetching data:", error)
+      toast({
+        title: "Error de conexión",
+        description: "No se pudo conectar con el servidor",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
   }
 
+  const forceRefresh = async () => {
+    console.log("🔄 Force refresh triggered")
+
+    try {
+      // Call force refresh endpoint
+      const response = await fetch("/api/force-refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        console.log("🔄 Force refresh result:", result)
+        toast({
+          title: "Conexión refrescada",
+          description: "Datos actualizados desde la base de datos",
+        })
+      }
+    } catch (error) {
+      console.error("❌ Force refresh failed:", error)
+    }
+
+    // Then fetch fresh data
+    await fetchData()
+  }
+
   const updatePaymentStatus = async (playerId: string, status: "pending" | "verified") => {
     try {
-      console.log(`Actualizando pago para jugador ${playerId} a ${status}`)
+      console.log(`💳 Updating payment for player ${playerId} to ${status}`)
 
       const response = await fetch("/api/update-payment", {
         method: "POST",
@@ -128,13 +194,15 @@ export default function AdminPage() {
       })
 
       const result = await response.json()
-      console.log("Respuesta de API:", result)
+      console.log("💳 Payment update response:", result)
 
       if (result.success) {
+        // Update local state immediately
         setPlayers((prevPlayers) =>
           prevPlayers.map((player) => (player.id === playerId ? { ...player, payment_status: status } : player)),
         )
 
+        // Force refresh data from server
         await fetchData()
 
         toast({
@@ -143,7 +211,7 @@ export default function AdminPage() {
           duration: 3000,
         })
       } else {
-        console.error("Error en respuesta:", result.error)
+        console.error("❌ Payment update failed:", result.error)
         toast({
           title: "❌ Error",
           description: result.error || "No se pudo actualizar el estado de pago",
@@ -152,7 +220,7 @@ export default function AdminPage() {
         })
       }
     } catch (error) {
-      console.error("Error updating payment status:", error)
+      console.error("💥 Error updating payment status:", error)
       toast({
         title: "🔌 Error de conexión",
         description: "Verifica tu internet e intenta de nuevo",
@@ -186,6 +254,7 @@ export default function AdminPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-amber-400 border-t-transparent mx-auto"></div>
           <p className="mt-4 text-slate-300 font-body">Cargando datos del torneo...</p>
+          <p className="mt-2 text-slate-500 text-sm">Conectando con Supabase...</p>
         </div>
       </div>
     )
@@ -221,12 +290,13 @@ export default function AdminPage() {
                 <div>
                   <h1 className="text-xl font-heading font-bold text-white tracking-tight">Torneo La Negrita 2025</h1>
                   <p className="text-sm text-gray-300 font-body font-medium">Panel de Administración</p>
+                  {lastRefresh && <p className="text-xs text-gray-500">Última actualización: {lastRefresh}</p>}
                 </div>
               </div>
 
               <div className="flex items-center space-x-4">
                 <Button
-                  onClick={fetchData}
+                  onClick={forceRefresh}
                   variant="ghost"
                   size="sm"
                   className="text-gray-300 hover:text-white hover:bg-white/10 backdrop-blur-sm border border-gray-600/30 font-accent"
@@ -234,6 +304,10 @@ export default function AdminPage() {
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Actualizar
                 </Button>
+                <Badge variant="outline" className="bg-blue-900/50 text-blue-300 border-blue-700">
+                  <Users className="w-3 h-3 mr-1" />
+                  {stats.total_players} Jugadores
+                </Badge>
               </div>
             </div>
           </div>
