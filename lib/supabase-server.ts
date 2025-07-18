@@ -2,43 +2,35 @@ import { createClient } from "@supabase/supabase-js"
 
 let supabaseInstance: any = null
 
+export function resetSupabaseConnection() {
+  console.log("🔄 Resetting Supabase connection...")
+  supabaseInstance = null
+}
+
 export function getSupabase() {
-  if (supabaseInstance) {
-    return supabaseInstance
-  }
+  if (!supabaseInstance) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Verificar variables de entorno con valores por defecto
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-  console.log("🔍 Supabase Environment check:", {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseKey,
-    urlPreview: supabaseUrl ? supabaseUrl.substring(0, 40) + "..." : "MISSING",
-    keyPreview: supabaseKey ? "***" + supabaseKey.slice(-8) : "MISSING",
-    allSupabaseVars: Object.keys(process.env).filter((k) => k.includes("SUPABASE")),
-    nodeEnv: process.env.NODE_ENV,
-    timestamp: new Date().toISOString(),
-  })
-
-  // Si no hay variables de entorno, usar las por defecto del proyecto
-  const finalUrl = supabaseUrl || "https://pybfjonqjzlhilknrmbh.supabase.co"
-  const finalKey =
-    supabaseKey ||
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5YmZqb25xanpsaGlsa25ybWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4Mzc4MjksImV4cCI6MjA2NTQxMzgyOX0.TErykfq_jF16DB4sQ57qcnR7mRv07hrj8euv7DOXB8M"
-
-  if (!finalUrl || !finalKey) {
-    console.error("🔥 Supabase configuration missing even with fallbacks:", {
-      url: !!finalUrl,
-      key: !!finalKey,
+    console.log("🔍 Supabase Environment check:", {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseKey,
+      urlPreview: supabaseUrl ? supabaseUrl.substring(0, 40) + "..." : "MISSING",
+      keyPreview: supabaseKey ? "***" + supabaseKey.slice(-8) : "MISSING",
+      nodeEnv: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
     })
-    throw new Error("Supabase configuration is missing")
-  }
 
-  console.log("🔧 Creating Supabase client...")
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("🔥 Supabase configuration missing:", {
+        url: !!supabaseUrl,
+        key: !!supabaseKey,
+      })
+      throw new Error("Supabase configuration is missing")
+    }
 
-  try {
-    supabaseInstance = createClient(finalUrl, finalKey, {
+    console.log("🔗 Creating new Supabase connection...")
+    supabaseInstance = createClient(supabaseUrl, supabaseKey, {
       auth: {
         persistSession: false,
         autoRefreshToken: false,
@@ -56,15 +48,7 @@ export function getSupabase() {
     })
 
     console.log("✅ Supabase client created successfully")
-    return supabaseInstance
-  } catch (error) {
-    console.error("❌ Failed to create Supabase client:", error)
-    throw error
   }
-}
 
-// Reset connection function for debugging
-export function resetSupabaseConnection() {
-  supabaseInstance = null
-  console.log("🔄 Supabase connection reset")
+  return supabaseInstance
 }

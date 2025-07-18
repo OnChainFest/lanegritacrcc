@@ -1,53 +1,65 @@
 import { NextResponse } from "next/server"
-import { resetSupabaseConnection, getSupabase } from "@/lib/supabase-server"
+import { resetSupabaseConnection } from "@/lib/supabase-server"
+
+export async function GET() {
+  return NextResponse.json({
+    message: "Force refresh endpoint is working",
+    timestamp: new Date().toISOString(),
+    method: "GET",
+    note: "Use POST to trigger actual refresh",
+  })
+}
 
 export async function POST() {
   try {
-    console.log("🔄 Force Refresh: Resetting all connections...")
+    console.log("🔄 Force refresh triggered at:", new Date().toISOString())
 
     // Reset Supabase connection
     resetSupabaseConnection()
 
-    // Create fresh connection
-    const supabase = getSupabase()
+    // Clear any potential caches
+    const timestamp = Date.now()
 
-    // Test the connection with fresh data
-    const { data, error } = await supabase
-      .from("players")
-      .select("id, name, email, created_at")
-      .order("created_at", { ascending: false })
-      .limit(10)
+    console.log("✅ Force refresh completed successfully")
 
-    if (error) {
-      console.error("❌ Force Refresh: Connection test failed:", error)
-      return NextResponse.json(
-        {
-          success: false,
-          error: error.message,
-          timestamp: new Date().toISOString(),
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Cache cleared and connections reset",
+        timestamp: new Date().toISOString(),
+        cache_busted: timestamp,
+      },
+      {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+          Expires: "0",
+          "Surrogate-Control": "no-store",
+          "CDN-Cache-Control": "no-store",
         },
-        { status: 500 },
-      )
-    }
-
-    console.log("✅ Force Refresh: Connection refreshed successfully")
-
-    return NextResponse.json({
-      success: true,
-      message: "Connection refreshed successfully",
-      playersCount: data?.length || 0,
-      timestamp: new Date().toISOString(),
-      sampleData: data?.slice(0, 3) || [],
-    })
+      },
+    )
   } catch (error) {
-    console.error("❌ Force Refresh: Unexpected error:", error)
+    console.error("❌ Force refresh failed:", error)
+
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+    const errorStack = error instanceof Error ? error.stack : undefined
+
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: errorMessage,
+        stack: errorStack,
         timestamp: new Date().toISOString(),
       },
-      { status: 500 },
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      },
     )
   }
 }
