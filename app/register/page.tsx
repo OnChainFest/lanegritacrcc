@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
-import { ArrowLeft, User, CreditCard, Loader2, Copy, CheckCircle } from "lucide-react"
+import { ArrowLeft, User, CreditCard, Loader2, Copy, CheckCircle, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -44,6 +44,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [registeredPlayer, setRegisteredPlayer] = useState<any>(null)
+  const [debugInfo, setDebugInfo] = useState<any>(null)
   const { toast } = useToast()
   const router = useRouter()
 
@@ -154,6 +155,7 @@ export default function RegisterPage() {
   const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setDebugInfo(null)
 
     try {
       const finalData = {
@@ -173,6 +175,13 @@ export default function RegisterPage() {
 
       const result = await response.json()
       console.log("📝 Registration response:", result)
+
+      // Store debug info for troubleshooting
+      setDebugInfo({
+        status: response.status,
+        response: result,
+        submitted_data: finalData,
+      })
 
       if (result.success) {
         setRegisteredPlayer(result.data)
@@ -200,6 +209,10 @@ export default function RegisterPage() {
       }
     } catch (error) {
       console.error("💥 Registration error:", error)
+      setDebugInfo({
+        error: "Network or parsing error",
+        details: error,
+      })
       toast({
         title: "Error de conexión",
         description: "Verifica tu internet e intenta de nuevo.",
@@ -525,7 +538,25 @@ export default function RegisterPage() {
                 Registro al Torneo - Paso {step} de 3
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-8">{renderForm()}</CardContent>
+            <CardContent className="p-8">
+              {renderForm()}
+
+              {/* Debug Info - Only show if there's an error */}
+              {debugInfo && !success && (
+                <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="w-4 h-4 text-red-600" />
+                    <span className="font-semibold text-red-900">Información de Debug</span>
+                  </div>
+                  <details className="text-sm">
+                    <summary className="cursor-pointer text-red-700">Ver detalles técnicos</summary>
+                    <pre className="mt-2 text-xs bg-white p-2 rounded overflow-auto max-h-40">
+                      {JSON.stringify(debugInfo, null, 2)}
+                    </pre>
+                  </details>
+                </div>
+              )}
+            </CardContent>
           </Card>
         </div>
       </div>

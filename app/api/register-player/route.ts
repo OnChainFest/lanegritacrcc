@@ -11,17 +11,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    console.log("📝 Registration data received:", {
-      name: body.name,
-      email: body.email,
-      nationality: body.nationality,
-      country: body.country,
-      categories: body.categories,
-      extras: body.extras,
-      total_cost: body.total_cost,
-    })
+    console.log("📝 Full registration data received:", JSON.stringify(body, null, 2))
 
-    // Validate required fields
+    // Step 1: Validate required fields
     const requiredFields = ["name", "email", "nationality", "passport", "league", "gender", "country"]
     const missingFields = requiredFields.filter((field) => !body[field] || body[field].toString().trim() === "")
 
@@ -37,7 +29,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if at least one category is selected
+    // Step 2: Check categories
     const categories = body.categories || {}
     const hasCategory = Object.values(categories).some(Boolean)
     if (!hasCategory) {
@@ -51,96 +43,29 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check for duplicate email
+    // Step 3: Check for duplicate email
     console.log("🔍 Checking for duplicate email:", body.email)
-    const { data: existingPlayer, error: checkError } = await supabase
-      .from("players")
-      .select("id, email")
-      .eq("email", body.email.toLowerCase().trim())
-      .maybeSingle()
+    try {
+      const { data: existingPlayer, error: checkError } = await supabase
+        .from("players")
+        .select("id, email")
+        .eq("email", body.email.toLowerCase().trim())
+        .maybeSingle()
 
-    if (checkError) {
-      console.error("❌ Error checking for duplicates:", checkError)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Database error while checking duplicates",
-          details: checkError.message,
-        },
-        { status: 500 },
-      )
-    }
+      if (checkError) {
+        console.error("❌ Error checking duplicates:", checkError)
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Database error during duplicate check",
+            details: checkError.message,
+          },
+          { status: 500 },
+        )
+      }
 
-    if (existingPlayer) {
-      console.log("❌ Email already exists:", body.email)
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Email already registered",
-          duplicate: true,
-        },
-        { status: 409 },
-      )
-    }
-
-    // Prepare player data for insertion - only include fields that exist in the database
-    const playerData = {
-      name: body.name.trim(),
-      email: body.email.toLowerCase().trim(),
-      nationality: body.nationality.trim(),
-      passport: body.passport.trim(),
-      league: body.league.trim(),
-      played_in_2024: Boolean(body.played_in_2024),
-      gender: body.gender,
-      country: body.country,
-      total_cost: Number(body.total_cost) || 0,
-      currency: body.currency || "USD",
-      payment_status: "pending",
-      // Categories as boolean fields
-      handicap: Boolean(categories.handicap),
-      senior: Boolean(categories.senior),
-      scratch: Boolean(categories.scratch),
-      // Extras as boolean fields
-      reenganche: Boolean(body.extras?.reenganche),
-      marathon: Boolean(body.extras?.marathon),
-      desperate: Boolean(body.extras?.desperate),
-    }
-
-    console.log("💾 Attempting to insert player data:", {
-      name: playerData.name,
-      email: playerData.email,
-      nationality: playerData.nationality,
-      country: playerData.country,
-      total_cost: playerData.total_cost,
-      categories: {
-        handicap: playerData.handicap,
-        senior: playerData.senior,
-        scratch: playerData.scratch,
-      },
-      extras: {
-        reenganche: playerData.reenganche,
-        marathon: playerData.marathon,
-        desperate: playerData.desperate,
-      },
-    })
-
-    // Insert the player
-    const { data: insertedPlayer, error: insertError } = await supabase
-      .from("players")
-      .insert([playerData])
-      .select("id, name, email, total_cost, country")
-      .single()
-
-    if (insertError) {
-      console.error("❌ Error inserting player:", {
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint,
-        code: insertError.code,
-      })
-
-      // More specific error handling
-      if (insertError.code === "23505") {
+      if (existingPlayer) {
+        console.log("❌ Email already exists:", body.email)
         return NextResponse.json(
           {
             success: false,
@@ -150,36 +75,129 @@ export async function POST(request: NextRequest) {
           { status: 409 },
         )
       }
-
+    } catch (duplicateError: any) {
+      console.error("💥 Duplicate check failed:", duplicateError)
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to register player",
-          details: insertError.message,
-          code: insertError.code,
+          error: "Failed to check for duplicates",
+          details: duplicateError.message,
         },
         { status: 500 },
       )
     }
 
-    console.log("✅ Player registered successfully:", {
-      id: insertedPlayer.id,
-      name: insertedPlayer.name,
-      email: insertedPlayer.email,
-      total_cost: insertedPlayer.total_cost,
-    })
+    // Step 4: Prepare minimal player data first
+    const minimalPlayerData = {
+      name: body.name.trim(),
+      email: body.email.toLowerCase().trim(),
+      nationality: body.nationality.trim(),
+      passport: body.passport.trim(),
+      league: body.league.trim(),
+      gender: body.gender,
+      country: body.country,
+    }
 
-    return NextResponse.json({
-      success: true,
-      message: "Player registered successfully",
-      data: {
-        id: insertedPlayer.id,
-        name: insertedPlayer.name,
-        email: insertedPlayer.email,
-        total_cost: insertedPlayer.total_cost,
-        country: insertedPlayer.country,
-      },
-    })
+    console.log("💾 Attempting minimal insert first:", minimalPlayerData)
+
+    // Try minimal insert first
+    try {
+      const { data: minimalResult, error: minimalError } = await supabase
+        .from("players")
+        .insert([minimalPlayerData])
+        .select("id, name, email")
+        .single()
+
+      if (minimalError) {
+        console.error("❌ Minimal insert failed:", {
+          message: minimalError.message,
+          details: minimalError.details,
+          hint: minimalError.hint,
+          code: minimalError.code,
+        })
+
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Failed to register player (minimal data)",
+            details: {
+              message: minimalError.message,
+              details: minimalError.details,
+              hint: minimalError.hint,
+              code: minimalError.code,
+            },
+            attempted_data: minimalPlayerData,
+          },
+          { status: 500 },
+        )
+      }
+
+      console.log("✅ Minimal insert successful:", minimalResult)
+
+      // Now update with additional fields
+      const additionalData = {
+        played_in_2024: Boolean(body.played_in_2024),
+        total_cost: Number(body.total_cost) || 0,
+        currency: body.currency || "USD",
+        payment_status: "pending",
+        handicap: Boolean(categories.handicap),
+        senior: Boolean(categories.senior),
+        scratch: Boolean(categories.scratch),
+        reenganche: Boolean(body.extras?.reenganche),
+        marathon: Boolean(body.extras?.marathon),
+        desperate: Boolean(body.extras?.desperate),
+      }
+
+      console.log("🔄 Updating with additional data:", additionalData)
+
+      const { data: updatedPlayer, error: updateError } = await supabase
+        .from("players")
+        .update(additionalData)
+        .eq("id", minimalResult.id)
+        .select("id, name, email, total_cost, country")
+        .single()
+
+      if (updateError) {
+        console.error("❌ Update failed:", updateError)
+        // Player was created but update failed - still return success with basic info
+        return NextResponse.json({
+          success: true,
+          message: "Player registered successfully (basic info only)",
+          data: {
+            id: minimalResult.id,
+            name: minimalResult.name,
+            email: minimalResult.email,
+            total_cost: body.total_cost,
+            country: body.country,
+          },
+          warning: "Some additional fields could not be saved",
+        })
+      }
+
+      console.log("✅ Player fully registered:", updatedPlayer)
+
+      return NextResponse.json({
+        success: true,
+        message: "Player registered successfully",
+        data: {
+          id: updatedPlayer.id,
+          name: updatedPlayer.name,
+          email: updatedPlayer.email,
+          total_cost: updatedPlayer.total_cost,
+          country: updatedPlayer.country,
+        },
+      })
+    } catch (insertError: any) {
+      console.error("💥 Insert operation failed:", insertError)
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Database insert failed",
+          details: insertError.message,
+        },
+        { status: 500 },
+      )
+    }
   } catch (error: any) {
     console.error("💥 Registration API error:", error)
     return NextResponse.json(
@@ -187,6 +205,7 @@ export async function POST(request: NextRequest) {
         success: false,
         error: "Internal server error",
         details: error.message,
+        stack: error.stack,
       },
       { status: 500 },
     )
