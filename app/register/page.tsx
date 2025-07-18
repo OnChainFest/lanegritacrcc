@@ -115,20 +115,40 @@ export default function RegisterPage() {
     const now = new Date()
     const earlyBirdDeadline = new Date("2025-07-19")
 
-    // Base price
-    let total = now <= earlyBirdDeadline ? 70 : 80
+    // Base price in USD
+    let totalUSD = now <= earlyBirdDeadline ? 70 : 80
 
     // Scratch category
     if (playerData.categories.scratch) {
-      total += 22
+      totalUSD += 22
     }
 
     // Extras
-    if (playerData.extras.reenganche) total += 22
-    if (playerData.extras.marathon) total += 22
-    if (playerData.extras.desperate) total += 22
+    if (playerData.extras.reenganche) totalUSD += 22
+    if (playerData.extras.marathon) totalUSD += 22
+    if (playerData.extras.desperate) totalUSD += 22
 
-    return total
+    return totalUSD
+  }
+
+  const calculateTotalCRC = () => {
+    const now = new Date()
+    const earlyBirdDeadline = new Date("2025-07-19")
+
+    // Base price in CRC (colones)
+    let totalCRC = now <= earlyBirdDeadline ? 36000 : 42000
+
+    // Scratch category (22 USD = ~11,000 CRC)
+    if (playerData.categories.scratch) {
+      totalCRC += 11000
+    }
+
+    // Extras (22 USD each = ~11,000 CRC each)
+    if (playerData.extras.reenganche) totalCRC += 11000
+    if (playerData.extras.marathon) totalCRC += 11000
+    if (playerData.extras.desperate) totalCRC += 11000
+
+    return totalCRC
   }
 
   const handleRegistration = async (e: React.FormEvent) => {
@@ -236,7 +256,12 @@ export default function RegisterPage() {
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     Bienvenido al Torneo La Negrita 2025, {registeredPlayer.name}!
                   </h3>
-                  <p className="text-gray-600">Total a pagar: ${registeredPlayer.total_cost} USD</p>
+                  <div className="space-y-1">
+                    <p className="text-gray-600">Total a pagar: ${registeredPlayer.total_cost} USD</p>
+                    {playerData.country === "national" && (
+                      <p className="text-gray-600">Equivalente: ₡{calculateTotalCRC().toLocaleString()} CRC</p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Payment Information */}
@@ -440,6 +465,7 @@ export default function RegisterPage() {
             handleCategoryChange={handleCategoryChange}
             handleExtraChange={handleExtraChange}
             calculateTotal={calculateTotal}
+            calculateTotalCRC={calculateTotalCRC}
             prevStep={prevStep}
             nextStep={nextStep}
           />
@@ -449,6 +475,7 @@ export default function RegisterPage() {
           <Step3
             playerData={playerData}
             calculateTotal={calculateTotal}
+            calculateTotalCRC={calculateTotalCRC}
             handleRegistration={handleRegistration}
             loading={loading}
             prevStep={prevStep}
@@ -669,6 +696,7 @@ interface Step2Props {
   handleCategoryChange: (category: string, value: boolean) => void
   handleExtraChange: (extra: string, value: boolean) => void
   calculateTotal: () => number
+  calculateTotalCRC: () => number
   prevStep: () => void
   nextStep: () => void
 }
@@ -678,6 +706,7 @@ const Step2: React.FC<Step2Props> = ({
   handleCategoryChange,
   handleExtraChange,
   calculateTotal,
+  calculateTotalCRC,
   prevStep,
   nextStep,
 }) => {
@@ -705,17 +734,36 @@ const Step2: React.FC<Step2Props> = ({
       {/* Price Info */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h4 className="font-semibold text-blue-900 mb-2">Información de Precios</h4>
-        <p className="text-blue-800 text-sm">
-          {isEarlyBird ? (
-            <>
-              Precio hasta el 19 de julio: <strong>$70</strong> (incluye 2 series)
-            </>
-          ) : (
-            <>
-              Precio después del 19 de julio: <strong>$80</strong> (incluye 2 series)
-            </>
-          )}
-        </p>
+        {playerData.country === "national" ? (
+          <div className="space-y-1">
+            <p className="text-blue-800 text-sm">
+              {isEarlyBird ? (
+                <>
+                  Precio hasta el 19 de julio: <strong>₡36,000</strong> (incluye 2 series)
+                </>
+              ) : (
+                <>
+                  Precio después del 19 de julio: <strong>₡42,000</strong> (incluye 2 series)
+                </>
+              )}
+            </p>
+            <p className="text-blue-700 text-xs">Equivalente: {isEarlyBird ? "$70 USD" : "$80 USD"}</p>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <p className="text-blue-800 text-sm">
+              {isEarlyBird ? (
+                <>
+                  Precio hasta el 19 de julio: <strong>$70 USD</strong> (incluye 2 series)
+                </>
+              ) : (
+                <>
+                  Precio después del 19 de julio: <strong>$80 USD</strong> (incluye 2 series)
+                </>
+              )}
+            </p>
+          </div>
+        )}
         <p className="text-blue-800 text-sm">Modalidad 700, series de 3 juegos</p>
       </div>
 
@@ -753,7 +801,7 @@ const Step2: React.FC<Step2Props> = ({
               onCheckedChange={(checked) => handleCategoryChange("scratch", checked as boolean)}
             />
             <Label htmlFor="scratch" className="font-body font-medium">
-              Scratch (+$22)
+              Scratch {playerData.country === "national" ? "(+₡11,000)" : "(+$22)"}
             </Label>
           </div>
         </div>
@@ -771,7 +819,7 @@ const Step2: React.FC<Step2Props> = ({
               onCheckedChange={(checked) => handleExtraChange("reenganche", checked as boolean)}
             />
             <Label htmlFor="reenganche" className="font-body font-medium">
-              Reenganche (+$22)
+              Reenganche {playerData.country === "national" ? "(+₡11,000)" : "(+$22)"}
             </Label>
           </div>
 
@@ -782,7 +830,7 @@ const Step2: React.FC<Step2Props> = ({
               onCheckedChange={(checked) => handleExtraChange("marathon", checked as boolean)}
             />
             <Label htmlFor="marathon" className="font-body font-medium">
-              Maratón de Strikes (+$22)
+              Maratón de Strikes {playerData.country === "national" ? "(+₡11,000)" : "(+$22)"}
             </Label>
           </div>
 
@@ -793,7 +841,7 @@ const Step2: React.FC<Step2Props> = ({
               onCheckedChange={(checked) => handleExtraChange("desperate", checked as boolean)}
             />
             <Label htmlFor="desperate" className="font-body font-medium">
-              Desesperado (+$22) - un juego
+              Desesperado {playerData.country === "national" ? "(+₡11,000)" : "(+$22)"} - un juego
             </Label>
           </div>
         </div>
@@ -801,7 +849,18 @@ const Step2: React.FC<Step2Props> = ({
 
       {/* Total */}
       <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-        <div className="text-lg font-heading font-semibold text-green-900">Total a pagar: ${calculateTotal()} USD</div>
+        {playerData.country === "national" ? (
+          <div className="space-y-1">
+            <div className="text-lg font-heading font-semibold text-green-900">
+              Total a pagar: ₡{calculateTotalCRC().toLocaleString()} CRC
+            </div>
+            <div className="text-sm text-green-700">Equivalente: ${calculateTotal()} USD</div>
+          </div>
+        ) : (
+          <div className="text-lg font-heading font-semibold text-green-900">
+            Total a pagar: ${calculateTotal()} USD
+          </div>
+        )}
       </div>
 
       <div className="flex justify-between">
@@ -820,12 +879,20 @@ const Step2: React.FC<Step2Props> = ({
 interface Step3Props {
   playerData: PlayerData
   calculateTotal: () => number
+  calculateTotalCRC: () => number
   handleRegistration: (e: React.FormEvent) => Promise<void>
   loading: boolean
   prevStep: () => void
 }
 
-const Step3: React.FC<Step3Props> = ({ playerData, calculateTotal, handleRegistration, loading, prevStep }) => {
+const Step3: React.FC<Step3Props> = ({
+  playerData,
+  calculateTotal,
+  calculateTotalCRC,
+  handleRegistration,
+  loading,
+  prevStep,
+}) => {
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">Confirmación de Registro</h3>
@@ -845,7 +912,9 @@ const Step3: React.FC<Step3Props> = ({ playerData, calculateTotal, handleRegistr
           <ul className="text-gray-700">
             {playerData.categories.handicap && <li>• Hándicap</li>}
             {playerData.categories.senior && <li>• Senior</li>}
-            {playerData.categories.scratch && <li>• Scratch (+$22)</li>}
+            {playerData.categories.scratch && (
+              <li>• Scratch {playerData.country === "national" ? "(+₡11,000)" : "(+$22)"}</li>
+            )}
           </ul>
         </div>
 
@@ -853,15 +922,28 @@ const Step3: React.FC<Step3Props> = ({ playerData, calculateTotal, handleRegistr
           <div>
             <h4 className="font-semibold text-gray-900">Extras</h4>
             <ul className="text-gray-700">
-              {playerData.extras.reenganche && <li>• Reenganche (+$22)</li>}
-              {playerData.extras.marathon && <li>• Maratón de Strikes (+$22)</li>}
-              {playerData.extras.desperate && <li>• Desesperado (+$22)</li>}
+              {playerData.extras.reenganche && (
+                <li>• Reenganche {playerData.country === "national" ? "(+₡11,000)" : "(+$22)"}</li>
+              )}
+              {playerData.extras.marathon && (
+                <li>• Maratón de Strikes {playerData.country === "national" ? "(+₡11,000)" : "(+$22)"}</li>
+              )}
+              {playerData.extras.desperate && (
+                <li>• Desesperado {playerData.country === "national" ? "(+₡11,000)" : "(+$22)"}</li>
+              )}
             </ul>
           </div>
         )}
 
         <div className="border-t pt-4">
-          <div className="text-xl font-bold text-gray-900">Total: ${calculateTotal()} USD</div>
+          {playerData.country === "national" ? (
+            <div className="space-y-1">
+              <div className="text-xl font-bold text-gray-900">Total: ₡{calculateTotalCRC().toLocaleString()} CRC</div>
+              <div className="text-sm text-gray-600">Equivalente: ${calculateTotal()} USD</div>
+            </div>
+          ) : (
+            <div className="text-xl font-bold text-gray-900">Total: ${calculateTotal()} USD</div>
+          )}
         </div>
       </div>
 

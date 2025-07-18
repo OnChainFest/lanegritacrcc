@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
       .from("players")
       .select("id, email")
       .eq("email", body.email.toLowerCase().trim())
-      .single()
+      .maybeSingle()
 
-    if (checkError && checkError.code !== "PGRST116") {
+    if (checkError) {
       console.error("❌ Error checking for duplicates:", checkError)
       return NextResponse.json(
         {
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prepare player data for insertion
+    // Prepare player data for insertion - only include fields that exist in the database
     const playerData = {
       name: body.name.trim(),
       email: body.email.toLowerCase().trim(),
@@ -93,25 +93,25 @@ export async function POST(request: NextRequest) {
       played_in_2024: Boolean(body.played_in_2024),
       gender: body.gender,
       country: body.country,
-      total_cost: body.total_cost || 0,
+      total_cost: Number(body.total_cost) || 0,
       currency: body.currency || "USD",
-      payment_status: body.payment_status || "pending",
-      // Categories
+      payment_status: "pending",
+      // Categories as boolean fields
       handicap: Boolean(categories.handicap),
       senior: Boolean(categories.senior),
       scratch: Boolean(categories.scratch),
-      // Extras
+      // Extras as boolean fields
       reenganche: Boolean(body.extras?.reenganche),
       marathon: Boolean(body.extras?.marathon),
       desperate: Boolean(body.extras?.desperate),
-      created_at: new Date().toISOString(),
     }
 
-    console.log("💾 Inserting player data:", {
+    console.log("💾 Attempting to insert player data:", {
       name: playerData.name,
       email: playerData.email,
       nationality: playerData.nationality,
       country: playerData.country,
+      total_cost: playerData.total_cost,
       categories: {
         handicap: playerData.handicap,
         senior: playerData.senior,
@@ -122,18 +122,35 @@ export async function POST(request: NextRequest) {
         marathon: playerData.marathon,
         desperate: playerData.desperate,
       },
-      total_cost: playerData.total_cost,
     })
 
     // Insert the player
     const { data: insertedPlayer, error: insertError } = await supabase
       .from("players")
       .insert([playerData])
-      .select()
+      .select("id, name, email, total_cost, country")
       .single()
 
     if (insertError) {
-      console.error("❌ Error inserting player:", insertError)
+      console.error("❌ Error inserting player:", {
+        message: insertError.message,
+        details: insertError.details,
+        hint: insertError.hint,
+        code: insertError.code,
+      })
+
+      // More specific error handling
+      if (insertError.code === "23505") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Email already registered",
+            duplicate: true,
+          },
+          { status: 409 },
+        )
+      }
+
       return NextResponse.json(
         {
           success: false,
@@ -160,6 +177,7 @@ export async function POST(request: NextRequest) {
         name: insertedPlayer.name,
         email: insertedPlayer.email,
         total_cost: insertedPlayer.total_cost,
+        country: insertedPlayer.country,
       },
     })
   } catch (error: any) {
@@ -181,7 +199,11 @@ export async function GET() {
     method: "POST",
     status: "active",
     tournament_dates: "2 al 9 de agosto 2025",
-    early_bird_price: "$70 hasta 19 de julio",
-    regular_price: "$80 después del 19 de julio",
+    pricing: {
+      early_bird_usd: "$70 hasta 19 de julio",
+      regular_usd: "$80 después del 19 de julio",
+      early_bird_crc: "₡36,000 hasta 19 de julio",
+      regular_crc: "₡42,000 después del 19 de julio",
+    },
   })
 }
