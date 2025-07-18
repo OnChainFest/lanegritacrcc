@@ -1,115 +1,77 @@
-import { NextResponse } from "next/server"
-import { getSupabaseClient, getSupabaseConfig } from "@/lib/supabase-client"
+import { type NextRequest, NextResponse } from "next/server"
+import { getSupabaseClient, testSupabaseConnection } from "@/lib/supabase-client"
 
 export async function GET() {
-  console.log("🔧 === DEBUG REGISTRATION API CALLED ===")
+  console.log("🔍 === DEBUG REGISTRATION API ===")
 
   try {
-    const config = getSupabaseConfig()
+    // Test Supabase connection
+    const connectionTest = await testSupabaseConnection()
 
-    const debugInfo = {
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || "unknown",
-      supabase: {
-        url: config.hasUrl,
-        key: config.hasKey,
-        urlValue: config.url ? `${config.url.substring(0, 30)}...` : "missing",
-      },
-      connection: null as any,
-      tableAccess: null as any,
-      sampleData: [] as any[],
-    }
-
-    // Test basic connection
-    try {
-      const supabase = getSupabaseClient()
-      console.log("🔧 Testing basic connection...")
-
-      const { data: testData, error: testError } = await supabase.from("players").select("id").limit(1)
-
-      if (testError) {
-        console.error("❌ Connection test failed:", testError)
-        debugInfo.connection = {
-          success: false,
-          error: testError.message,
-        }
-      } else {
-        console.log("✅ Connection test successful")
-        debugInfo.connection = {
-          success: true,
-          data: testData,
-        }
-      }
-    } catch (connectionError: any) {
-      console.error("💥 Connection error:", connectionError)
-      debugInfo.connection = {
+    if (!connectionTest.success) {
+      return NextResponse.json({
         success: false,
-        error: connectionError.message,
-      }
+        error: "Database connection failed",
+        details: connectionTest.error,
+      })
     }
 
-    // Test table access
-    if (debugInfo.connection?.success) {
-      try {
-        const supabase = getSupabaseClient()
-        console.log("🔧 Testing table access...")
+    const supabase = getSupabaseClient()
 
-        const { data: allPlayers, error: playersError } = await supabase
-          .from("players")
-          .select("id, name, email, created_at")
-          .order("created_at", { ascending: false })
+    // Get player count
+    const { data: players, error: playersError } = await supabase.from("players").select("id")
 
-        if (playersError) {
-          console.error("❌ Table access failed:", playersError)
-          debugInfo.tableAccess = {
-            success: false,
-            error: playersError.message,
-          }
-        } else {
-          console.log("✅ Table access successful")
-          debugInfo.tableAccess = {
-            success: true,
-            count: allPlayers?.length || 0,
-            hasData: (allPlayers?.length || 0) > 0,
-          }
-
-          debugInfo.sampleData = allPlayers?.slice(0, 5) || []
-        }
-      } catch (tableError: any) {
-        console.error("💥 Table access error:", tableError)
-        debugInfo.tableAccess = {
-          success: false,
-          error: tableError.message,
-        }
-      }
-    }
-
-    return NextResponse.json(debugInfo)
-  } catch (error: any) {
-    console.error("💥 Debug API error:", error)
-    return NextResponse.json(
-      {
+    if (playersError) {
+      return NextResponse.json({
         success: false,
-        error: "Debug API failed",
-        details: error.message,
+        error: "Failed to fetch players",
+        details: playersError.message,
+      })
+    }
+
+    // Get recent registrations
+    const { data: recentPlayers, error: recentError } = await supabase
+      .from("players")
+      .select("id, name, email, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5)
+
+    if (recentError) {
+      return NextResponse.json({
+        success: false,
+        error: "Failed to fetch recent players",
+        details: recentError.message,
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        totalPlayers: players?.length || 0,
+        recentRegistrations: recentPlayers || [],
+        connectionStatus: "connected",
         timestamp: new Date().toISOString(),
       },
-      { status: 500 },
-    )
+    })
+  } catch (error: any) {
+    console.error("Debug registration error:", error)
+    return NextResponse.json({
+      success: false,
+      error: "Internal server error",
+      details: error.message,
+    })
   }
 }
 
-export async function POST() {
-  console.log("🧪 === TEST REGISTRATION API CALLED ===")
+export async function POST(request: NextRequest) {
+  console.log("🧪 === TEST REGISTRATION ===")
 
   try {
-    const supabase = getSupabaseClient()
-
     const testPlayer = {
       name: `Test Player ${Date.now()}`,
       email: `test${Date.now()}@example.com`,
       nationality: "Costa Rica",
-      passport: `TEST-${Date.now()}`,
+      passport: `TEST${Date.now()}`,
       league: "Test League",
       played_in_2024: false,
       gender: "M",
@@ -132,35 +94,32 @@ export async function POST() {
       created_at: new Date().toISOString(),
     }
 
-    console.log("🧪 Attempting to register test player:", testPlayer)
+    const supabase = getSupabaseClient()
 
-    const { data, error } = await supabase.from("players").insert([testPlayer]).select()
+    const { data: insertedPlayer, error: insertError } = await supabase
+      .from("players")
+      .insert([testPlayer])
+      .select()
+      .single()
 
-    if (error) {
-      console.error("❌ Test registration failed:", error)
+    if (insertError) {
       return NextResponse.json({
         success: false,
         error: "Test registration failed",
-        details: error.message,
+        details: insertError.message,
       })
     }
 
-    console.log("✅ Test registration successful:", data)
-
     return NextResponse.json({
       success: true,
-      message: "Test registration completed successfully",
-      data: data,
+      message: "Test registration successful",
+      data: insertedPlayer,
     })
   } catch (error: any) {
-    console.error("💥 Test registration error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Test registration failed",
-        details: error.message,
-      },
-      { status: 500 },
-    )
+    return NextResponse.json({
+      success: false,
+      error: "Test registration error",
+      details: error.message,
+    })
   }
 }

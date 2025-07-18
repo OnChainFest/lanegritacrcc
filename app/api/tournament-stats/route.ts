@@ -2,82 +2,89 @@ import { NextResponse } from "next/server"
 import { getSupabaseClient } from "@/lib/supabase-client"
 
 export async function GET() {
-  console.log("📊 === TOURNAMENT STATS API CALLED ===")
+  console.log("📊 === TOURNAMENT STATS API ===")
 
   try {
     const supabase = getSupabaseClient()
 
-    // Get all players to calculate stats manually
-    const { data: allPlayers, error: playersError } = await supabase
-      .from("players")
-      .select("id, nationality, payment_status, created_at")
+    // Get all players
+    const { data: players, error: playersError } = await supabase.from("players").select("*")
 
     if (playersError) {
-      console.error("❌ Error fetching players for stats:", playersError)
+      console.error("❌ Error fetching players:", playersError)
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to fetch tournament stats",
+          error: "Failed to fetch players",
           details: playersError.message,
         },
         { status: 500 },
       )
     }
 
-    const players = allPlayers || []
+    const allPlayers = players || []
 
-    // Calculate stats manually
-    const totalPlayers = players.length
-    const verifiedPlayers = players.filter((p) => p.payment_status === "verified").length
-    const pendingPlayers = players.filter((p) => p.payment_status === "pending").length
+    // Calculate statistics
+    const totalPlayers = allPlayers.length
+    const nationalPlayers = allPlayers.filter((p) => p.country === "national").length
+    const internationalPlayers = allPlayers.filter((p) => p.country === "international").length
+    const maleePlayers = allPlayers.filter((p) => p.gender === "M").length
+    const femalePlayers = allPlayers.filter((p) => p.gender === "F").length
+    const paidPlayers = allPlayers.filter((p) => p.payment_status === "paid").length
+    const pendingPlayers = allPlayers.filter((p) => p.payment_status === "pending").length
 
-    // Calculate nationality breakdown
-    const nationalityStats = players.reduce((acc: Record<string, number>, player) => {
-      const nationality = player.nationality || "Unknown"
-      acc[nationality] = (acc[nationality] || 0) + 1
-      return acc
-    }, {})
+    // Calculate category statistics
+    const categoryStats = {
+      handicap: 0,
+      scratch: 0,
+      seniorM: 0,
+      seniorF: 0,
+      marathon: 0,
+      desperate: 0,
+      reenganche3: 0,
+      reenganche4: 0,
+      reenganche5: 0,
+      reenganche8: 0,
+    }
 
-    // Calculate recent registrations (last 7 days)
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    allPlayers.forEach((player) => {
+      if (player.categories) {
+        Object.keys(categoryStats).forEach((category) => {
+          if (player.categories[category]) {
+            categoryStats[category as keyof typeof categoryStats]++
+          }
+        })
+      }
+    })
 
-    const recentRegistrations = players.filter((player) => {
-      if (!player.created_at) return false
-      const createdDate = new Date(player.created_at)
-      return createdDate >= sevenDaysAgo
-    }).length
+    // Calculate total revenue
+    const totalRevenue = allPlayers.reduce((sum, player) => sum + (player.total_cost || 0), 0)
 
     const stats = {
-      total_players: totalPlayers,
-      verified_players: verifiedPlayers,
-      pending_players: pendingPlayers,
-      nationality_breakdown: nationalityStats,
-      recent_registrations: recentRegistrations,
-      last_updated: new Date().toISOString(),
+      totalPlayers,
+      nationalPlayers,
+      internationalPlayers,
+      maleePlayers,
+      femalePlayers,
+      paidPlayers,
+      pendingPlayers,
+      categoryStats,
+      totalRevenue,
+      averageCost: totalPlayers > 0 ? totalRevenue / totalPlayers : 0,
     }
 
     console.log("✅ Tournament stats calculated:", stats)
 
-    return NextResponse.json(
-      {
-        success: true,
-        ...stats,
-      },
-      {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      },
-    )
+    return NextResponse.json({
+      success: true,
+      data: stats,
+    })
   } catch (error: any) {
     console.error("💥 Tournament stats error:", error)
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to calculate tournament stats",
+        error: "Internal server error",
         details: error.message,
       },
       { status: 500 },

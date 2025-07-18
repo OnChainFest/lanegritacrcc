@@ -7,23 +7,17 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = getSupabaseClient()
     const { searchParams } = new URL(request.url)
+    const limit = searchParams.get("limit")
+    const offset = searchParams.get("offset")
 
-    // Get filter parameters
-    const paymentStatus = searchParams.get("paymentStatus")
-    const country = searchParams.get("country")
-
-    console.log("🔍 Filters applied:", { paymentStatus, country })
-
-    // Build query
     let query = supabase.from("players").select("*").order("created_at", { ascending: false })
 
-    // Apply filters
-    if (paymentStatus && paymentStatus !== "all") {
-      query = query.eq("payment_status", paymentStatus)
+    if (limit) {
+      query = query.limit(Number.parseInt(limit))
     }
 
-    if (country && country !== "all") {
-      query = query.eq("nationality", country)
+    if (offset) {
+      query = query.range(Number.parseInt(offset), Number.parseInt(offset) + (Number.parseInt(limit) || 10) - 1)
     }
 
     const { data: players, error } = await query
@@ -40,22 +34,13 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    console.log(`✅ Retrieved ${players?.length || 0} players`)
+    console.log(`✅ Fetched ${players?.length || 0} players`)
 
-    return NextResponse.json(
-      {
-        success: true,
-        players: players || [],
-        count: players?.length || 0,
-      },
-      {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      },
-    )
+    return NextResponse.json({
+      success: true,
+      data: players || [],
+      count: players?.length || 0,
+    })
   } catch (error: any) {
     console.error("💥 Players API error:", error)
     return NextResponse.json(
