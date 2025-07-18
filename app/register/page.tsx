@@ -26,9 +26,6 @@ interface UserData {
   played_in_2024: boolean
   gender: "M" | "F" | ""
   country: "national" | "international" | ""
-  phone: string
-  emergency_contact: string
-  emergency_phone: string
 }
 
 interface Categories {
@@ -58,9 +55,6 @@ export default function RegisterPage() {
     played_in_2024: false,
     gender: "",
     country: "",
-    phone: "",
-    emergency_contact: "",
-    emergency_phone: "",
   })
   const [categories, setCategories] = useState<Categories>({
     handicap: true, // Always included
@@ -133,9 +127,6 @@ export default function RegisterPage() {
         handicap_average: null,
         assigned_bracket: null,
         position: null,
-        phone: userData.phone,
-        emergency_contact: userData.emergency_contact,
-        emergency_phone: userData.emergency_phone,
       }
 
       console.log("🎯 Sending registration data:", playerData)
@@ -251,33 +242,6 @@ export default function RegisterPage() {
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label htmlFor="phone">Teléfono *</Label>
-            <Input
-              id="phone"
-              value={userData.phone}
-              onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="emergency_contact">Contacto de Emergencia *</Label>
-            <Input
-              id="emergency_contact"
-              value={userData.emergency_contact}
-              onChange={(e) => setUserData({ ...userData, emergency_contact: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="emergency_phone">Teléfono de Emergencia *</Label>
-            <Input
-              id="emergency_phone"
-              value={userData.emergency_phone}
-              onChange={(e) => setUserData({ ...userData, emergency_phone: e.target.value })}
-              required
-            />
-          </div>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -292,15 +256,7 @@ export default function RegisterPage() {
         <Button
           onClick={() => setStep("country")}
           className="w-full"
-          disabled={
-            !userData.name ||
-            !userData.email ||
-            !userData.passport ||
-            !userData.gender ||
-            !userData.phone ||
-            !userData.emergency_contact ||
-            !userData.emergency_phone
-          }
+          disabled={!userData.name || !userData.email || !userData.passport || !userData.gender}
         >
           Continuar
         </Button>

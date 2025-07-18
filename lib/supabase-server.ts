@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js"
 
-let supabaseInstance: ReturnType<typeof createClient> | null = null
+let supabaseInstance: any = null
 
 export function getSupabase() {
   if (!supabaseInstance) {
@@ -8,28 +8,18 @@ export function getSupabase() {
     const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Missing Supabase environment variables")
+      console.error("❌ Missing Supabase environment variables")
+      throw new Error("Missing Supabase configuration")
     }
 
-    supabaseInstance = createClient(supabaseUrl, supabaseKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      },
-    })
+    supabaseInstance = createClient(supabaseUrl, supabaseKey)
+    console.log("✅ Supabase client created successfully")
   }
+
   return supabaseInstance
 }
 
-/**
- * Resets the stored Supabase client so that a fresh
- * connection can be created on the next call to getSupabase().
- * Useful for debugging or after environment-variable changes.
- */
 export function resetSupabaseConnection() {
   supabaseInstance = null
+  console.log("🔄 Supabase connection reset")
 }
