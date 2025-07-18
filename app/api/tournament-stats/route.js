@@ -1,9 +1,15 @@
 import { NextResponse } from "next/server"
 import { getSupabase } from "@/lib/supabase-server"
 
-export async function GET() {
+export async function GET(request) {
   try {
     console.log("📈 API Tournament Stats: Starting request at", new Date().toISOString())
+
+    // Get timestamp from URL to force fresh data
+    const { searchParams } = new URL(request.url)
+    const timestamp = searchParams.get("t") || Date.now()
+    console.log("🔄 Stats cache-busting timestamp:", timestamp)
+
     const supabase = getSupabase()
 
     // Get total players count with fresh data
@@ -22,9 +28,11 @@ export async function GET() {
         {
           status: 500,
           headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
             Pragma: "no-cache",
             Expires: "0",
+            "Surrogate-Control": "no-store",
+            "CDN-Cache-Control": "no-store",
           },
         },
       )
@@ -47,9 +55,11 @@ export async function GET() {
         {
           status: 500,
           headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
             Pragma: "no-cache",
             Expires: "0",
+            "Surrogate-Control": "no-store",
+            "CDN-Cache-Control": "no-store",
           },
         },
       )
@@ -58,8 +68,8 @@ export async function GET() {
     // Calculate pending players
     const pendingPlayers = (totalPlayers || 0) - (verifiedPlayers || 0)
 
-    // Calculate total revenue (assuming $50 per verified player)
-    const totalRevenue = (verifiedPlayers || 0) * 50000 // 50,000 CRC per player
+    // Calculate total revenue (assuming $50,000 CRC per verified player)
+    const totalRevenue = (verifiedPlayers || 0) * 50000
 
     const stats = {
       total_players: totalPlayers || 0,
@@ -67,6 +77,7 @@ export async function GET() {
       pending_players: pendingPlayers,
       total_revenue: totalRevenue,
       last_updated: new Date().toISOString(),
+      cache_busted: timestamp,
     }
 
     console.log("📈 API Tournament Stats: Successfully calculated stats:", stats)
@@ -78,9 +89,11 @@ export async function GET() {
       },
       {
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
           Pragma: "no-cache",
           Expires: "0",
+          "Surrogate-Control": "no-store",
+          "CDN-Cache-Control": "no-store",
         },
       },
     )
@@ -95,9 +108,11 @@ export async function GET() {
       {
         status: 500,
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
           Pragma: "no-cache",
           Expires: "0",
+          "Surrogate-Control": "no-store",
+          "CDN-Cache-Control": "no-store",
         },
       },
     )
