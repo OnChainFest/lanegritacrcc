@@ -10,17 +10,18 @@ export async function POST(request: NextRequest) {
   console.log("🎯 === PLAYER REGISTRATION START ===")
 
   try {
-    console.log("🎳 Registration API called")
-
     const body = await request.json()
     console.log("📝 Registration data received:", {
       name: body.name,
       email: body.email,
       nationality: body.nationality,
+      categories: body.categories,
+      extras: body.extras,
+      total_cost: body.total_cost,
     })
 
     // Validate required fields
-    const requiredFields = ["name", "email", "nationality", "passport", "league", "gender", "country"]
+    const requiredFields = ["name", "email", "nationality", "passport", "league", "gender"]
     const missingFields = requiredFields.filter((field) => !body[field] || body[field].toString().trim() === "")
 
     if (missingFields.length > 0) {
@@ -90,21 +91,18 @@ export async function POST(request: NextRequest) {
       league: body.league.trim(),
       played_in_2024: Boolean(body.played_in_2024),
       gender: body.gender,
-      country: body.country,
+      country: body.country || "national",
       total_cost: body.total_cost || 0,
       currency: body.currency || "USD",
       payment_status: body.payment_status || "pending",
-      // Categories as individual boolean fields
+      // Categories
       handicap: Boolean(categories.handicap),
+      senior: Boolean(categories.senior),
       scratch: Boolean(categories.scratch),
-      senior_m: Boolean(categories.seniorM),
-      senior_f: Boolean(categories.seniorF),
-      marathon: Boolean(categories.marathon),
-      desperate: Boolean(categories.desperate),
-      reenganche_3: Boolean(categories.reenganche3),
-      reenganche_4: Boolean(categories.reenganche4),
-      reenganche_5: Boolean(categories.reenganche5),
-      reenganche_8: Boolean(categories.reenganche8),
+      // Extras
+      reenganche: Boolean(body.extras?.reenganche),
+      marathon: Boolean(body.extras?.marathon),
+      desperate: Boolean(body.extras?.desperate),
       created_at: new Date().toISOString(),
     }
 
@@ -113,16 +111,15 @@ export async function POST(request: NextRequest) {
       email: playerData.email,
       categories: {
         handicap: playerData.handicap,
+        senior: playerData.senior,
         scratch: playerData.scratch,
-        senior_m: playerData.senior_m,
-        senior_f: playerData.senior_f,
+      },
+      extras: {
+        reenganche: playerData.reenganche,
         marathon: playerData.marathon,
         desperate: playerData.desperate,
-        reenganche_3: playerData.reenganche_3,
-        reenganche_4: playerData.reenganche_4,
-        reenganche_5: playerData.reenganche_5,
-        reenganche_8: playerData.reenganche_8,
       },
+      total_cost: playerData.total_cost,
     })
 
     // Insert the player
@@ -148,6 +145,7 @@ export async function POST(request: NextRequest) {
       id: insertedPlayer.id,
       name: insertedPlayer.name,
       email: insertedPlayer.email,
+      total_cost: insertedPlayer.total_cost,
     })
 
     return NextResponse.json({
@@ -157,6 +155,7 @@ export async function POST(request: NextRequest) {
         id: insertedPlayer.id,
         name: insertedPlayer.name,
         email: insertedPlayer.email,
+        total_cost: insertedPlayer.total_cost,
       },
     })
   } catch (error: any) {
@@ -177,5 +176,8 @@ export async function GET() {
     message: "Player registration endpoint",
     method: "POST",
     status: "active",
+    tournament_dates: "2 al 9 de agosto 2025",
+    early_bird_price: "$70 hasta 19 de julio",
+    regular_price: "$80 después del 19 de julio",
   })
 }
