@@ -7,27 +7,39 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function GET() {
-  console.log("🔍 === DEBUG REGISTRATION SCHEMA ===")
+  console.log("🔍 === DEBUG REGISTRATION SCHEMA START ===")
 
   try {
-    // Test basic connection
-    console.log("Testing Supabase connection...")
-    const { data: testData, error: testError } = await supabase.from("players").select("*").limit(1)
+    // Test 1: Check Supabase connection
+    console.log("🔗 Testing Supabase connection...")
+    const { data: connectionTest, error: connectionError } = await supabase
+      .from("players")
+      .select("count", { count: "exact", head: true })
 
-    if (testError) {
-      console.error("❌ Connection test failed:", testError)
+    if (connectionError) {
+      console.error("❌ Connection failed:", connectionError)
       return NextResponse.json({
         success: false,
         error: "Connection failed",
-        details: testError,
+        details: connectionError,
       })
     }
 
-    console.log("✅ Connection successful")
+    console.log("✅ Connection successful, player count:", connectionTest)
 
-    // Get table schema by trying to insert with minimal data
-    console.log("Testing minimal insert...")
-    const minimalData = {
+    // Test 2: Get table schema
+    console.log("📋 Getting table schema...")
+    const { data: schemaData, error: schemaError } = await supabase.rpc("get_table_schema", {
+      table_name: "players",
+    })
+
+    if (schemaError) {
+      console.log("⚠️ Schema query failed (this is normal):", schemaError.message)
+    }
+
+    // Test 3: Try minimal insert
+    console.log("🧪 Testing minimal insert...")
+    const testData = {
       name: "Test Player",
       email: "test@example.com",
       nationality: "Nacional",
@@ -37,45 +49,36 @@ export async function GET() {
       country: "national",
     }
 
-    const { data: insertTest, error: insertError } = await supabase.from("players").insert([minimalData]).select()
+    const { data: insertResult, error: insertError } = await supabase
+      .from("players")
+      .insert([testData])
+      .select("id, name, email")
+      .single()
 
     if (insertError) {
-      console.error("❌ Minimal insert failed:", {
-        message: insertError.message,
-        details: insertError.details,
-        hint: insertError.hint,
-        code: insertError.code,
-      })
-
+      console.error("❌ Insert test failed:", insertError)
       return NextResponse.json({
         success: false,
         error: "Insert test failed",
-        details: {
-          message: insertError.message,
-          details: insertError.details,
-          hint: insertError.hint,
-          code: insertError.code,
-        },
-        attempted_data: minimalData,
+        details: insertError,
+        attempted_data: testData,
       })
     }
 
-    console.log("✅ Minimal insert successful:", insertTest)
+    console.log("✅ Insert test successful:", insertResult)
 
     // Clean up test data
-    if (insertTest && insertTest[0]?.id) {
-      await supabase.from("players").delete().eq("id", insertTest[0].id)
-      console.log("🧹 Test data cleaned up")
-    }
+    await supabase.from("players").delete().eq("id", insertResult.id)
 
     return NextResponse.json({
       success: true,
-      message: "Schema test successful",
-      test_data: minimalData,
-      result: insertTest,
+      message: "All tests passed",
+      connection_test: connectionTest,
+      schema_data: schemaData,
+      insert_test: insertResult,
     })
   } catch (error: any) {
-    console.error("💥 Debug error:", error)
+    console.error("💥 Debug schema error:", error)
     return NextResponse.json({
       success: false,
       error: "Debug failed",

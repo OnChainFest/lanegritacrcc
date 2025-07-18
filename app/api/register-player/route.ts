@@ -87,104 +87,107 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 4: Prepare minimal player data first
-    const minimalPlayerData = {
+    // Step 4: Prepare complete player data including total_cost
+    const playerData = {
       name: body.name.trim(),
       email: body.email.toLowerCase().trim(),
       nationality: body.nationality.trim(),
       passport: body.passport.trim(),
       league: body.league.trim(),
+      played_in_2024: Boolean(body.played_in_2024),
       gender: body.gender,
       country: body.country,
+      total_cost: Number(body.total_cost) || 0, // Include total_cost in initial insert
+      currency: body.currency || "USD",
+      payment_status: "pending",
+      // Categories as boolean fields
+      handicap: Boolean(categories.handicap),
+      senior: Boolean(categories.senior),
+      scratch: Boolean(categories.scratch),
+      // Extras as boolean fields
+      reenganche: Boolean(body.extras?.reenganche),
+      marathon: Boolean(body.extras?.marathon),
+      desperate: Boolean(body.extras?.desperate),
     }
 
-    console.log("💾 Attempting minimal insert first:", minimalPlayerData)
+    console.log("💾 Attempting to insert complete player data:", {
+      name: playerData.name,
+      email: playerData.email,
+      nationality: playerData.nationality,
+      country: playerData.country,
+      total_cost: playerData.total_cost,
+      categories: {
+        handicap: playerData.handicap,
+        senior: playerData.senior,
+        scratch: playerData.scratch,
+      },
+      extras: {
+        reenganche: playerData.reenganche,
+        marathon: playerData.marathon,
+        desperate: playerData.desperate,
+      },
+    })
 
-    // Try minimal insert first
+    // Insert the complete player data in one go
     try {
-      const { data: minimalResult, error: minimalError } = await supabase
+      const { data: insertedPlayer, error: insertError } = await supabase
         .from("players")
-        .insert([minimalPlayerData])
-        .select("id, name, email")
+        .insert([playerData])
+        .select("id, name, email, total_cost, country")
         .single()
 
-      if (minimalError) {
-        console.error("❌ Minimal insert failed:", {
-          message: minimalError.message,
-          details: minimalError.details,
-          hint: minimalError.hint,
-          code: minimalError.code,
+      if (insertError) {
+        console.error("❌ Insert failed:", {
+          message: insertError.message,
+          details: insertError.details,
+          hint: insertError.hint,
+          code: insertError.code,
         })
+
+        // More specific error handling
+        if (insertError.code === "23505") {
+          return NextResponse.json(
+            {
+              success: false,
+              error: "Email already registered",
+              duplicate: true,
+            },
+            { status: 409 },
+          )
+        }
 
         return NextResponse.json(
           {
             success: false,
-            error: "Failed to register player (minimal data)",
+            error: "Failed to register player",
             details: {
-              message: minimalError.message,
-              details: minimalError.details,
-              hint: minimalError.hint,
-              code: minimalError.code,
+              message: insertError.message,
+              details: insertError.details,
+              hint: insertError.hint,
+              code: insertError.code,
             },
-            attempted_data: minimalPlayerData,
+            attempted_data: playerData,
           },
           { status: 500 },
         )
       }
 
-      console.log("✅ Minimal insert successful:", minimalResult)
-
-      // Now update with additional fields
-      const additionalData = {
-        played_in_2024: Boolean(body.played_in_2024),
-        total_cost: Number(body.total_cost) || 0,
-        currency: body.currency || "USD",
-        payment_status: "pending",
-        handicap: Boolean(categories.handicap),
-        senior: Boolean(categories.senior),
-        scratch: Boolean(categories.scratch),
-        reenganche: Boolean(body.extras?.reenganche),
-        marathon: Boolean(body.extras?.marathon),
-        desperate: Boolean(body.extras?.desperate),
-      }
-
-      console.log("🔄 Updating with additional data:", additionalData)
-
-      const { data: updatedPlayer, error: updateError } = await supabase
-        .from("players")
-        .update(additionalData)
-        .eq("id", minimalResult.id)
-        .select("id, name, email, total_cost, country")
-        .single()
-
-      if (updateError) {
-        console.error("❌ Update failed:", updateError)
-        // Player was created but update failed - still return success with basic info
-        return NextResponse.json({
-          success: true,
-          message: "Player registered successfully (basic info only)",
-          data: {
-            id: minimalResult.id,
-            name: minimalResult.name,
-            email: minimalResult.email,
-            total_cost: body.total_cost,
-            country: body.country,
-          },
-          warning: "Some additional fields could not be saved",
-        })
-      }
-
-      console.log("✅ Player fully registered:", updatedPlayer)
+      console.log("✅ Player registered successfully:", {
+        id: insertedPlayer.id,
+        name: insertedPlayer.name,
+        email: insertedPlayer.email,
+        total_cost: insertedPlayer.total_cost,
+      })
 
       return NextResponse.json({
         success: true,
         message: "Player registered successfully",
         data: {
-          id: updatedPlayer.id,
-          name: updatedPlayer.name,
-          email: updatedPlayer.email,
-          total_cost: updatedPlayer.total_cost,
-          country: updatedPlayer.country,
+          id: insertedPlayer.id,
+          name: insertedPlayer.name,
+          email: insertedPlayer.email,
+          total_cost: insertedPlayer.total_cost,
+          country: insertedPlayer.country,
         },
       })
     } catch (insertError: any) {
