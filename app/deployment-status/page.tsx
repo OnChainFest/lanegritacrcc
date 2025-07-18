@@ -19,37 +19,10 @@ import {
 } from "lucide-react"
 
 export default function DeploymentStatusPage() {
-  const [currentUrl, setCurrentUrl] = useState("")
-  const [deploymentTime, setDeploymentTime] = useState("")
-  const [isClient, setIsClient] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    // Marcar que estamos en el cliente para evitar problemas de hidratación
-    setIsClient(true)
-
-    // Configurar URL y tiempo de deployment de forma segura
-    try {
-      if (typeof window !== "undefined") {
-        setCurrentUrl(window.location.origin)
-        setDeploymentTime(
-          new Date().toLocaleString("es-CR", {
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            second: "2-digit",
-          }),
-        )
-      }
-    } catch (error) {
-      console.error("Error setting up page:", error)
-      setCurrentUrl("https://tu-app.vercel.app")
-      setDeploymentTime("Ahora")
-    } finally {
-      setLoading(false)
-    }
+    setMounted(true)
   }, [])
 
   const deploymentFeatures = [
@@ -83,56 +56,56 @@ export default function DeploymentStatusPage() {
     },
   ]
 
-  const getAppUrls = () => {
-    if (!currentUrl) return []
-
-    return [
-      {
-        name: "Página Principal",
-        url: currentUrl,
-        description: "Landing page del torneo",
-        icon: <Globe className="w-4 h-4" />,
-      },
-      {
-        name: "Registro de Jugadores",
-        url: `${currentUrl}/register`,
-        description: "Formulario de inscripción",
-        icon: <Users className="w-4 h-4" />,
-      },
-      {
-        name: "Panel de Administración",
-        url: `${currentUrl}/admin`,
-        description: "Gestión del torneo",
-        icon: <Settings className="w-4 h-4" />,
-      },
-      {
-        name: "Brackets del Torneo",
-        url: `${currentUrl}/brackets`,
-        description: "Visualización de llaves",
-        icon: <Trophy className="w-4 h-4" />,
-      },
-    ]
-  }
-
-  const testApp = async (url: string) => {
-    try {
-      if (typeof window !== "undefined") {
-        window.open(url, "_blank", "noopener,noreferrer")
-      }
-    } catch (error) {
-      console.error("Error opening URL:", error)
-      // Fallback: copiar URL al clipboard
-      try {
-        await navigator.clipboard.writeText(url)
-        alert(`URL copiada al portapapeles: ${url}`)
-      } catch (clipboardError) {
-        alert(`Visita manualmente: ${url}`)
-      }
+  const getCurrentUrl = () => {
+    if (typeof window !== "undefined") {
+      return window.location.origin
     }
+    return "https://tu-app.vercel.app"
   }
 
-  // Mostrar loading mientras se inicializa
-  if (loading || !isClient) {
+  const getCurrentTime = () => {
+    return new Date().toLocaleString("es-CR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  }
+
+  const appUrls = [
+    {
+      name: "Página Principal",
+      path: "/",
+      description: "Landing page del torneo",
+      icon: <Globe className="w-4 h-4" />,
+    },
+    {
+      name: "Registro de Jugadores",
+      path: "/register",
+      description: "Formulario de inscripción",
+      icon: <Users className="w-4 h-4" />,
+    },
+    {
+      name: "Panel de Administración",
+      path: "/admin",
+      description: "Gestión del torneo",
+      icon: <Settings className="w-4 h-4" />,
+    },
+    {
+      name: "Brackets del Torneo",
+      path: "/brackets",
+      description: "Visualización de llaves",
+      icon: <Trophy className="w-4 h-4" />,
+    },
+  ]
+
+  const handleTestApp = (path: string) => {
+    const url = getCurrentUrl() + path
+    window.open(url, "_blank", "noopener,noreferrer")
+  }
+
+  if (!mounted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center">
         <div className="text-center">
@@ -142,8 +115,6 @@ export default function DeploymentStatusPage() {
       </div>
     )
   }
-
-  const appUrls = getAppUrls()
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-4 md:p-8">
@@ -171,7 +142,7 @@ export default function DeploymentStatusPage() {
                 <p className="text-green-600 text-lg">
                   Tu aplicación está <strong>LIVE</strong> y funcionando perfectamente
                 </p>
-                {deploymentTime && <p className="text-sm text-green-500 mt-1">Último deployment: {deploymentTime}</p>}
+                <p className="text-sm text-green-500 mt-1">Último deployment: {getCurrentTime()}</p>
               </div>
             </div>
           </CardContent>
@@ -217,40 +188,41 @@ export default function DeploymentStatusPage() {
         </Card>
 
         {/* URLs Funcionales */}
-        {appUrls.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="w-5 h-5" />
-                Prueba tu Aplicación (URLs Activas)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-gray-700">
-                Todas estas URLs están funcionando <strong>AHORA MISMO</strong>. Haz clic para probarlas:
-              </p>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="w-5 h-5" />
+              Prueba tu Aplicación (URLs Activas)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-gray-700">
+              Todas estas URLs están funcionando <strong>AHORA MISMO</strong>. Haz clic para probarlas:
+            </p>
 
-              <div className="grid grid-cols-1 gap-3">
-                {appUrls.map((url, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
-                    <div className="flex items-center gap-3">
-                      {url.icon}
-                      <div>
-                        <h3 className="font-semibold">{url.name}</h3>
-                        <p className="text-sm text-gray-600">{url.description}</p>
-                        <code className="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{url.url}</code>
-                      </div>
+            <div className="grid grid-cols-1 gap-3">
+              {appUrls.map((url, index) => (
+                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border">
+                  <div className="flex items-center gap-3">
+                    {url.icon}
+                    <div>
+                      <h3 className="font-semibold">{url.name}</h3>
+                      <p className="text-sm text-gray-600">{url.description}</p>
+                      <code className="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">
+                        {getCurrentUrl()}
+                        {url.path}
+                      </code>
                     </div>
-                    <Button size="sm" onClick={() => testApp(url.url)} className="bg-green-600 hover:bg-green-700">
-                      <ExternalLink className="w-4 h-4 mr-1" />
-                      Probar Ahora
-                    </Button>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+                  <Button size="sm" onClick={() => handleTestApp(url.path)} className="bg-green-600 hover:bg-green-700">
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    Probar Ahora
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* ¿Qué significa "Desplegado"? */}
         <Card>

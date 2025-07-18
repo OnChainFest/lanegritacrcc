@@ -137,7 +137,7 @@ export default function TorneoLaNegritaLanding() {
     { name: "FIFCO", src: "/images/sponsors/fifco.png" },
     { name: "Subway", src: "/images/sponsors/subway.png" },
     { name: "PRO", src: "/images/sponsors/pro.png" },
-    { name: "Quarzein Technologies", src: "/images/sponsors/quarzein.png" },
+    { name: "Quarzein Technologies", src: "/images/sponsors/quarzein.png", small: true },
     { name: "Delizia", src: "/images/sponsors/delizia.png" },
     { name: "Renovart", src: "/images/sponsors/renovart.png" },
     { name: "Müller JG", src: "/images/sponsors/muller-large.png", large: true },
@@ -441,8 +441,8 @@ export default function TorneoLaNegritaLanding() {
                     <Image
                       src={sponsor.src || "/placeholder.svg"}
                       alt={sponsor.name}
-                      width={sponsor.extraLarge ? 220 : sponsor.large ? 200 : 160}
-                      height={sponsor.extraLarge ? 110 : sponsor.large ? 100 : 80}
+                      width={sponsor.extraLarge ? 220 : sponsor.large ? 200 : sponsor.small ? 140 : 160}
+                      height={sponsor.extraLarge ? 110 : sponsor.large ? 100 : sponsor.small ? 70 : 80}
                       className="sponsor-image"
                     />
                   </div>
@@ -453,8 +453,8 @@ export default function TorneoLaNegritaLanding() {
                     <Image
                       src={sponsor.src || "/placeholder.svg"}
                       alt={sponsor.name}
-                      width={sponsor.extraLarge ? 220 : sponsor.large ? 200 : 160}
-                      height={sponsor.extraLarge ? 110 : sponsor.large ? 100 : 80}
+                      width={sponsor.extraLarge ? 220 : sponsor.large ? 200 : sponsor.small ? 140 : 160}
+                      height={sponsor.extraLarge ? 110 : sponsor.large ? 100 : sponsor.small ? 70 : 80}
                       className="sponsor-image"
                     />
                   </div>
@@ -465,8 +465,8 @@ export default function TorneoLaNegritaLanding() {
                     <Image
                       src={sponsor.src || "/placeholder.svg"}
                       alt={sponsor.name}
-                      width={sponsor.extraLarge ? 220 : sponsor.large ? 200 : 160}
-                      height={sponsor.extraLarge ? 110 : sponsor.large ? 100 : 80}
+                      width={sponsor.extraLarge ? 220 : sponsor.large ? 200 : sponsor.small ? 140 : 160}
+                      height={sponsor.extraLarge ? 110 : sponsor.large ? 100 : sponsor.small ? 70 : 80}
                       className="sponsor-image"
                     />
                   </div>
