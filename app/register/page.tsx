@@ -175,17 +175,33 @@ export default function RegisterPage() {
         }
       } else {
         console.error("❌ Registration failed:", result.error)
-        toast({
-          title: "Error en el registro",
-          description: result.error || "No se pudo completar el registro",
-          variant: "destructive",
-        })
+
+        // Handle specific error types
+        if (result.duplicateType === "email") {
+          toast({
+            title: "Email ya registrado",
+            description: `El email ${playerData.email} ya está registrado en el torneo`,
+            variant: "destructive",
+          })
+        } else if (result.duplicateType === "passport") {
+          toast({
+            title: "Documento ya registrado",
+            description: `El pasaporte/cédula ${playerData.passport} ya está registrado`,
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "Error en el registro",
+            description: result.error || "No se pudo completar el registro",
+            variant: "destructive",
+          })
+        }
       }
     } catch (error) {
       console.error("💥 Registration error:", error)
       toast({
         title: "Error de conexión",
-        description: "Verifica tu internet e intenta de nuevo",
+        description: "Verifica tu internet e intenta de nuevo. Si el problema persiste, contacta al administrador.",
         variant: "destructive",
       })
     } finally {
