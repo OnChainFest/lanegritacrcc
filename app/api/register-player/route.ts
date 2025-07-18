@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 4: Prepare complete player data including total_cost
+    // Step 4: Prepare complete player data with individual columns
     const playerData = {
       name: body.name.trim(),
       email: body.email.toLowerCase().trim(),
@@ -97,14 +97,14 @@ export async function POST(request: NextRequest) {
       played_in_2024: Boolean(body.played_in_2024),
       gender: body.gender,
       country: body.country,
-      total_cost: Number(body.total_cost) || 0, // Include total_cost in initial insert
+      total_cost: Number(body.total_cost) || 0,
       currency: body.currency || "USD",
       payment_status: "pending",
-      // Categories as boolean fields
+      // Individual category columns (now they exist!)
       handicap: Boolean(categories.handicap),
       senior: Boolean(categories.senior),
       scratch: Boolean(categories.scratch),
-      // Extras as boolean fields
+      // Individual extra columns
       reenganche: Boolean(body.extras?.reenganche),
       marathon: Boolean(body.extras?.marathon),
       desperate: Boolean(body.extras?.desperate),
@@ -128,12 +128,12 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Insert the complete player data in one go
+    // Insert the complete player data
     try {
       const { data: insertedPlayer, error: insertError } = await supabase
         .from("players")
         .insert([playerData])
-        .select("id, name, email, total_cost, country")
+        .select("id, name, email, total_cost, country, handicap, senior, scratch, reenganche, marathon, desperate")
         .single()
 
       if (insertError) {
@@ -177,6 +177,16 @@ export async function POST(request: NextRequest) {
         name: insertedPlayer.name,
         email: insertedPlayer.email,
         total_cost: insertedPlayer.total_cost,
+        categories: {
+          handicap: insertedPlayer.handicap,
+          senior: insertedPlayer.senior,
+          scratch: insertedPlayer.scratch,
+        },
+        extras: {
+          reenganche: insertedPlayer.reenganche,
+          marathon: insertedPlayer.marathon,
+          desperate: insertedPlayer.desperate,
+        },
       })
 
       return NextResponse.json({

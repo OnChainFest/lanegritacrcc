@@ -7,14 +7,12 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function GET() {
-  console.log("🔍 === DEBUG REGISTRATION SCHEMA START ===")
+  console.log("🔍 === DEBUG REGISTRATION SCHEMA ===")
 
   try {
     // Test 1: Check Supabase connection
-    console.log("🔗 Testing Supabase connection...")
-    const { data: connectionTest, error: connectionError } = await supabase
-      .from("players")
-      .select("count", { count: "exact", head: true })
+    console.log("1. Testing Supabase connection...")
+    const { data: connectionTest, error: connectionError } = await supabase.from("players").select("count").limit(1)
 
     if (connectionError) {
       console.error("❌ Connection failed:", connectionError)
@@ -25,35 +23,41 @@ export async function GET() {
       })
     }
 
-    console.log("✅ Connection successful, player count:", connectionTest)
+    console.log("✅ Connection successful")
 
-    // Test 2: Get table schema
-    console.log("📋 Getting table schema...")
-    const { data: schemaData, error: schemaError } = await supabase.rpc("get_table_schema", {
-      table_name: "players",
-    })
+    // Test 2: Get sample data to see structure
+    console.log("2. Getting sample data structure...")
+    const { data: sampleData, error: selectError } = await supabase.from("players").select("*").limit(1)
 
-    if (schemaError) {
-      console.log("⚠️ Schema query failed (this is normal):", schemaError.message)
+    if (selectError) {
+      console.error("❌ Select failed:", selectError)
+    } else {
+      console.log("✅ Sample data structure:", sampleData)
     }
 
-    // Test 3: Try minimal insert
-    console.log("🧪 Testing minimal insert...")
+    // Test 3: Try minimal insert with all required fields
+    console.log("3. Testing complete insert...")
     const testData = {
-      name: "Test Player",
-      email: "test@example.com",
+      name: "Test Player Schema",
+      email: `test-schema-${Date.now()}@example.com`,
       nationality: "Nacional",
-      passport: "123456789",
+      passport: "TEST123456",
       league: "Test League",
       gender: "M",
       country: "national",
+      total_cost: 70,
+      currency: "USD",
+      payment_status: "pending",
+      played_in_2024: false,
+      handicap: true,
+      senior: false,
+      scratch: false,
+      reenganche: false,
+      marathon: false,
+      desperate: false,
     }
 
-    const { data: insertResult, error: insertError } = await supabase
-      .from("players")
-      .insert([testData])
-      .select("id, name, email")
-      .single()
+    const { data: insertResult, error: insertError } = await supabase.from("players").insert([testData]).select()
 
     if (insertError) {
       console.error("❌ Insert test failed:", insertError)
@@ -68,17 +72,20 @@ export async function GET() {
     console.log("✅ Insert test successful:", insertResult)
 
     // Clean up test data
-    await supabase.from("players").delete().eq("id", insertResult.id)
+    if (insertResult && insertResult[0]) {
+      await supabase.from("players").delete().eq("id", insertResult[0].id)
+      console.log("🧹 Test data cleaned up")
+    }
 
     return NextResponse.json({
       success: true,
-      message: "All tests passed",
-      connection_test: connectionTest,
-      schema_data: schemaData,
+      message: "All schema tests passed",
+      sample_data: sampleData,
       insert_test: insertResult,
+      test_data_used: testData,
     })
   } catch (error: any) {
-    console.error("💥 Debug schema error:", error)
+    console.error("💥 Debug error:", error)
     return NextResponse.json({
       success: false,
       error: "Debug failed",
