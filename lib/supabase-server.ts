@@ -4,22 +4,19 @@ let supabaseInstance: any = null
 
 export function getSupabase() {
   if (!supabaseInstance) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://pybfjonqjzlhilknrmbh.supabase.co"
+    const supabaseKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5YmZqb25xanpsaGlsa25ybWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4Mzc4MjksImV4cCI6MjA2NTQxMzgyOX0.TErykfq_jF16DB4sQ57qcnR7mRv07hrj8euv7DOXB8M"
 
-    if (!supabaseUrl || !supabaseKey) {
-      console.error("❌ Missing Supabase environment variables")
-      throw new Error("Missing Supabase configuration")
-    }
-
-    supabaseInstance = createClient(supabaseUrl, supabaseKey)
-    console.log("✅ Supabase client created successfully")
+    supabaseInstance = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false },
+    })
   }
-
   return supabaseInstance
 }
 
 export function resetSupabaseConnection() {
   supabaseInstance = null
-  console.log("🔄 Supabase connection reset")
+  return getSupabase()
 }

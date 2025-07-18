@@ -1,28 +1,21 @@
-import { NextResponse } from "next/server"
-
 export async function GET(request) {
   try {
-    console.log("📊 API Players: Starting request at", new Date().toISOString())
+    console.log("🔍 Players API called at:", new Date().toISOString())
 
-    // Get timestamp from URL to force fresh data
-    const { searchParams } = new URL(request.url)
-    const timestamp = searchParams.get("t") || Date.now()
-    const playerId = searchParams.get("id") // For individual player lookup
-    console.log("🔄 Cache-busting timestamp:", timestamp)
-
-    // Import Supabase client
     const { createClient } = await import("@supabase/supabase-js")
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://pybfjonqjzlhilknrmbh.supabase.co"
+    const supabaseKey =
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5YmZqb25xanpsaGlsa25ybWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4Mzc4MjksImV4cCI6MjA2NTQxMzgyOX0.TErykfq_jF16DB4sQ57qcnR7mRv07hrj8euv7DOXB8M"
 
     if (!supabaseUrl || !supabaseKey) {
-      console.error("❌ Missing Supabase environment variables")
-      return NextResponse.json(
+      console.error("❌ Missing Supabase credentials")
+      return Response.json(
         {
           success: false,
-          error: "Database configuration error",
-          timestamp: new Date().toISOString(),
+          error: "Missing database configuration",
+          players: [],
         },
         { status: 500 },
       )
@@ -32,81 +25,49 @@ export async function GET(request) {
       auth: { persistSession: false },
     })
 
-    let query = supabase
+    console.log("📡 Fetching players from database...")
+
+    const { data: players, error } = await supabase
       .from("players")
-      .select(
-        "id, name, email, payment_status, created_at, phone, emergency_contact, emergency_phone, wallet_address, nationality, passport, league, played_in_2024, gender, country, categories, total_cost, currency",
-      )
+      .select("*")
       .order("created_at", { ascending: false })
 
-    // If looking for specific player
-    if (playerId) {
-      query = query.eq("id", playerId)
-    }
-
-    const { data, error } = await query
-
     if (error) {
-      console.error("❌ Supabase error in /api/players:", error)
-      return NextResponse.json(
+      console.error("❌ Database error:", error)
+      return Response.json(
         {
           success: false,
-          error: `Database error: ${error.message}`,
-          timestamp: new Date().toISOString(),
+          error: error.message,
+          players: [],
         },
         { status: 500 },
       )
     }
 
-    // Format data for admin UI compatibility
-    const players = (data ?? []).map((p) => ({
-      id: p.id,
-      name: p.name ?? "Sin nombre",
-      email: p.email ?? "Sin email",
-      phone: p.phone ?? "Sin teléfono",
-      emergency_contact: p.emergency_contact ?? "Sin contacto",
-      emergency_phone: p.emergency_phone ?? "Sin teléfono",
-      payment_status: p.payment_status ?? "pending",
-      created_at: p.created_at,
-      qr_validated: false,
-      wallet_address: p.wallet_address ?? null,
-      nationality: p.nationality,
-      passport: p.passport,
-      league: p.league,
-      played_in_2024: p.played_in_2024,
-      gender: p.gender,
-      country: p.country,
-      categories: p.categories,
-      total_cost: p.total_cost,
-      currency: p.currency,
-    }))
+    console.log(`✅ Found ${players?.length || 0} players`)
 
-    console.log(`📊 API Players: Successfully returned ${players.length} players at ${new Date().toISOString()}`)
-
-    return NextResponse.json(
+    return Response.json(
       {
         success: true,
-        players,
-        timestamp: new Date().toISOString(),
-        count: players.length,
-        cache_busted: timestamp,
+        players: players || [],
+        count: players?.length || 0,
       },
       {
+        status: 200,
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
           Pragma: "no-cache",
           Expires: "0",
         },
       },
     )
-  } catch (err) {
-    console.error("❌ Unexpected error in /api/players:", err)
-    return NextResponse.json(
+  } catch (error) {
+    console.error("💥 Unexpected error in players API:", error)
+    return Response.json(
       {
         success: false,
-        error: `Server error: ${err.message}`,
-        timestamp: new Date().toISOString(),
-        stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+        error: "Internal server error",
+        players: [],
       },
       { status: 500 },
     )
