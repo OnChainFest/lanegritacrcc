@@ -4,18 +4,15 @@ let supabaseInstance: ReturnType<typeof createClient> | null = null
 
 export function getSupabase() {
   if (!supabaseInstance) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://pybfjonqjzlhilknrmbh.supabase.co"
-    const supabaseKey =
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5YmZqb25xanpsaGlsa25ybWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4Mzc4MjksImV4cCI6MjA2NTQxMzgyOX0.TErykfq_jF16DB4sQ57qcnR7mRv07hrj8euv7DOXB8M"
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    console.log("🔗 Creating Supabase client at", new Date().toISOString())
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error("Missing Supabase environment variables")
+    }
 
     supabaseInstance = createClient(supabaseUrl, supabaseKey, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-      },
+      auth: { persistSession: false, autoRefreshToken: false },
       global: {
         headers: {
           "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -24,14 +21,15 @@ export function getSupabase() {
         },
       },
     })
-
-    console.log("✅ Supabase client created successfully")
   }
-
   return supabaseInstance
 }
 
+/**
+ * Resets the stored Supabase client so that a fresh
+ * connection can be created on the next call to getSupabase().
+ * Useful for debugging or after environment-variable changes.
+ */
 export function resetSupabaseConnection() {
-  console.log("🔄 Resetting Supabase connection...")
   supabaseInstance = null
 }

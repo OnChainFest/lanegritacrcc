@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { CheckCircle, Clock, User, Mail, Phone, MapPin, Calendar, AlertCircle } from "lucide-react"
+import { CheckCircle, Clock, User, Mail, Phone, MapPin, Calendar, AlertCircle, RefreshCw } from "lucide-react"
 import Image from "next/image"
 
 interface Player {
@@ -19,6 +19,15 @@ interface Player {
   payment_status: "pending" | "verified"
   created_at: string
   wallet_address?: string
+  nationality?: string
+  passport?: string
+  league?: string
+  played_in_2024?: boolean
+  gender?: "M" | "F"
+  country?: "national" | "international"
+  categories?: any
+  total_cost?: number
+  currency?: string
 }
 
 export default function PlayerDashboard() {
@@ -39,32 +48,39 @@ export default function PlayerDashboard() {
       setLoading(true)
       setError(null)
 
-      // Try to get player data from the players API
-      const response = await fetch(`/api/players?id=${playerId}`, {
+      console.log("🔍 Fetching player data for ID:", playerId)
+
+      // Try to get player data from the players API with specific ID
+      const response = await fetch(`/api/players?id=${playerId}&t=${Date.now()}`, {
         method: "GET",
         headers: {
-          "Cache-Control": "no-cache",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
         },
       })
 
+      console.log("📡 API Response status:", response.status)
+
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error("❌ API Error:", response.status, errorText)
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
       const data = await response.json()
+      console.log("📊 API Response data:", data)
 
-      if (data.success && data.players) {
-        const foundPlayer = data.players.find((p: Player) => p.id === playerId)
-        if (foundPlayer) {
-          setPlayer(foundPlayer)
-        } else {
-          setError("Jugador no encontrado")
-        }
+      if (data.success && data.players && data.players.length > 0) {
+        const foundPlayer = data.players.find((p: Player) => p.id === playerId) || data.players[0]
+        console.log("✅ Player found:", foundPlayer)
+        setPlayer(foundPlayer)
       } else {
-        setError(data.error || "Error al cargar datos del jugador")
+        console.log("❌ No player found in response")
+        setError("Jugador no encontrado")
       }
     } catch (err) {
-      console.error("Error fetching player data:", err)
+      console.error("💥 Error fetching player data:", err)
       setError(err instanceof Error ? err.message : "Error de conexión")
     } finally {
       setLoading(false)
@@ -77,6 +93,7 @@ export default function PlayerDashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-amber-400 border-t-transparent mx-auto"></div>
           <p className="mt-4 text-slate-300">Cargando tu información...</p>
+          <p className="mt-2 text-slate-500 text-sm">ID: {playerId}</p>
         </div>
       </div>
     )
@@ -89,10 +106,17 @@ export default function PlayerDashboard() {
           <CardContent className="p-6 text-center">
             <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">Error</h2>
-            <p className="text-slate-300 mb-4">{error}</p>
-            <Button onClick={fetchPlayerData} className="bg-blue-600 hover:bg-blue-700">
-              Intentar de nuevo
-            </Button>
+            <p className="text-slate-300 mb-2">{error}</p>
+            <p className="text-slate-500 text-sm mb-4">ID: {playerId}</p>
+            <div className="space-y-2">
+              <Button onClick={fetchPlayerData} className="bg-blue-600 hover:bg-blue-700 w-full">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Intentar de nuevo
+              </Button>
+              <Button variant="outline" onClick={() => (window.location.href = "/")} className="w-full">
+                Volver al Inicio
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -106,7 +130,11 @@ export default function PlayerDashboard() {
           <CardContent className="p-6 text-center">
             <User className="h-12 w-12 text-slate-400 mx-auto mb-4" />
             <h2 className="text-xl font-bold text-white mb-2">Jugador no encontrado</h2>
-            <p className="text-slate-300">No se pudo encontrar la información del jugador.</p>
+            <p className="text-slate-300 mb-2">No se pudo encontrar la información del jugador.</p>
+            <p className="text-slate-500 text-sm mb-4">ID: {playerId}</p>
+            <Button variant="outline" onClick={() => (window.location.href = "/")} className="w-full">
+              Volver al Inicio
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -126,18 +154,24 @@ export default function PlayerDashboard() {
 
       <header className="relative z-50 bg-gradient-to-r from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-md shadow-2xl border-b border-gray-600/30">
         <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center space-x-2">
-            <Image
-              src="/images/country-club-logo-transparent.png"
-              alt="Country Club Costa Rica"
-              width={50}
-              height={50}
-              className="brightness-0 invert"
-            />
-            <div>
-              <h1 className="text-xl font-bold text-white">Mi Dashboard</h1>
-              <p className="text-sm text-gray-300">Torneo La Negrita 2025</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Image
+                src="/images/country-club-logo-transparent.png"
+                alt="Country Club Costa Rica"
+                width={50}
+                height={50}
+                className="brightness-0 invert"
+              />
+              <div>
+                <h1 className="text-xl font-bold text-white">Mi Dashboard</h1>
+                <p className="text-sm text-gray-300">Torneo La Negrita 2025</p>
+              </div>
             </div>
+            <Button onClick={fetchPlayerData} variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Actualizar
+            </Button>
           </div>
         </div>
       </header>
@@ -166,21 +200,39 @@ export default function PlayerDashboard() {
                       <p className="text-white">{player.email}</p>
                     </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-400">Teléfono</label>
-                    <div className="flex items-center gap-2">
-                      <Phone className="h-4 w-4 text-slate-400" />
-                      <p className="text-white">{player.phone}</p>
+                  {player.phone && (
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Teléfono</label>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-slate-400" />
+                        <p className="text-white">{player.phone}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-400">Contacto de Emergencia</label>
-                    <p className="text-white">{player.emergency_contact}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-slate-400">Teléfono de Emergencia</label>
-                    <p className="text-white">{player.emergency_phone}</p>
-                  </div>
+                  )}
+                  {player.nationality && (
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Nacionalidad</label>
+                      <p className="text-white">{player.nationality}</p>
+                    </div>
+                  )}
+                  {player.league && (
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Liga</label>
+                      <p className="text-white">{player.league}</p>
+                    </div>
+                  )}
+                  {player.emergency_contact && (
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Contacto de Emergencia</label>
+                      <p className="text-white">{player.emergency_contact}</p>
+                    </div>
+                  )}
+                  {player.emergency_phone && (
+                    <div>
+                      <label className="text-sm font-medium text-slate-400">Teléfono de Emergencia</label>
+                      <p className="text-white">{player.emergency_phone}</p>
+                    </div>
+                  )}
                   <div>
                     <label className="text-sm font-medium text-slate-400">Fecha de Registro</label>
                     <div className="flex items-center gap-2">
@@ -230,6 +282,19 @@ export default function PlayerDashboard() {
                   <h4 className="font-medium text-white">ID de Registro</h4>
                   <p className="text-xs text-slate-400 font-mono bg-slate-700/50 p-2 rounded">{player.id}</p>
                 </div>
+
+                {player.total_cost && (
+                  <>
+                    <Separator className="bg-slate-600" />
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-white">Costo Total</h4>
+                      <p className="text-lg font-bold text-green-400">
+                        {player.currency === "USD" ? "$" : "₡"}
+                        {player.total_cost.toLocaleString()}
+                      </p>
+                    </div>
+                  </>
+                )}
 
                 {player.wallet_address && (
                   <>

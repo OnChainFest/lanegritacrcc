@@ -1,120 +1,82 @@
 import { NextResponse } from "next/server"
-import { getSupabase } from "@/lib/supabase-server"
 
 export async function GET(request) {
   try {
     console.log("📈 API Tournament Stats: Starting request at", new Date().toISOString())
 
-    // Get timestamp from URL to force fresh data
-    const { searchParams } = new URL(request.url)
-    const timestamp = searchParams.get("t") || Date.now()
-    console.log("🔄 Stats cache-busting timestamp:", timestamp)
+    // Import Supabase client
+    const { createClient } = await import("@supabase/supabase-js")
 
-    const supabase = getSupabase()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    // Get total players count with fresh data
-    const { count: totalPlayers, error: countError } = await supabase
-      .from("players")
-      .select("*", { count: "exact", head: true })
-
-    if (countError) {
-      console.error("❌ Error getting total players:", countError)
+    if (!supabaseUrl || !supabaseKey) {
+      console.error("❌ Missing Supabase environment variables")
       return NextResponse.json(
         {
           success: false,
-          error: countError.message,
-          timestamp: new Date().toISOString(),
+          error: "Database configuration error",
         },
-        {
-          status: 500,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-            Pragma: "no-cache",
-            Expires: "0",
-            "Surrogate-Control": "no-store",
-            "CDN-Cache-Control": "no-store",
-          },
-        },
+        { status: 500 },
       )
     }
 
-    // Get verified players count
-    const { count: verifiedPlayers, error: verifiedError } = await supabase
-      .from("players")
-      .select("*", { count: "exact", head: true })
-      .eq("payment_status", "verified")
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: { persistSession: false },
+    })
 
-    if (verifiedError) {
-      console.error("❌ Error getting verified players:", verifiedError)
+    // Get all players to calculate stats
+    const { data: players, error } = await supabase.from("players").select("payment_status, total_cost, currency")
+
+    if (error) {
+      console.error("❌ Supabase error in tournament stats:", error)
       return NextResponse.json(
         {
           success: false,
-          error: verifiedError.message,
-          timestamp: new Date().toISOString(),
+          error: `Database error: ${error.message}`,
         },
-        {
-          status: 500,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-            Pragma: "no-cache",
-            Expires: "0",
-            "Surrogate-Control": "no-store",
-            "CDN-Cache-Control": "no-store",
-          },
-        },
+        { status: 500 },
       )
     }
 
-    // Calculate pending players
-    const pendingPlayers = (totalPlayers || 0) - (verifiedPlayers || 0)
+    const totalPlayers = players?.length || 0
+    const verifiedPlayers = players?.filter((p) => p.payment_status === "verified").length || 0
+    const pendingPlayers = totalPlayers - verifiedPlayers
 
-    // Calculate total revenue (assuming $50,000 CRC per verified player)
-    const totalRevenue = (verifiedPlayers || 0) * 50000
+    // Calculate total revenue (only from verified players)
+    const totalRevenue =
+      players
+        ?.filter((p) => p.payment_status === "verified")
+        .reduce((sum, p) => {
+          // Convert USD to CRC for unified calculation (approximate rate: 1 USD = 500 CRC)
+          const amount = p.currency === "USD" ? (p.total_cost || 0) * 500 : p.total_cost || 0
+          return sum + amount
+        }, 0) || 0
 
     const stats = {
-      total_players: totalPlayers || 0,
-      verified_players: verifiedPlayers || 0,
+      total_players: totalPlayers,
+      verified_players: verifiedPlayers,
       pending_players: pendingPlayers,
       total_revenue: totalRevenue,
-      last_updated: new Date().toISOString(),
-      cache_busted: timestamp,
     }
 
-    console.log("📈 API Tournament Stats: Successfully calculated stats:", stats)
+    console.log("📈 Tournament stats calculated:", stats)
 
-    return NextResponse.json(
-      {
-        success: true,
-        ...stats,
+    return NextResponse.json(stats, {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
+        Pragma: "no-cache",
+        Expires: "0",
       },
-      {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-          Pragma: "no-cache",
-          Expires: "0",
-          "Surrogate-Control": "no-store",
-          "CDN-Cache-Control": "no-store",
-        },
-      },
-    )
+    })
   } catch (err) {
     console.error("❌ Unexpected error in tournament stats:", err)
     return NextResponse.json(
       {
         success: false,
-        error: err.message,
-        timestamp: new Date().toISOString(),
+        error: `Server error: ${err.message}`,
       },
-      {
-        status: 500,
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
-          Pragma: "no-cache",
-          Expires: "0",
-          "Surrogate-Control": "no-store",
-          "CDN-Cache-Control": "no-store",
-        },
-      },
+      { status: 500 },
     )
   }
 }
