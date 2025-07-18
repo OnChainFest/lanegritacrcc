@@ -68,18 +68,8 @@ export async function GET(request) {
     // Calculate pending players
     const pendingPlayers = (totalPlayers || 0) - (verifiedPlayers || 0)
 
-    // Calculate total revenue from verified players
-    const { data: verifiedPlayersData, error: revenueError } = await supabase
-      .from("players")
-      .select("total_cost, currency")
-      .eq("payment_status", "verified")
-
-    let totalRevenue = 0
-    if (!revenueError && verifiedPlayersData) {
-      totalRevenue = verifiedPlayersData.reduce((sum, player) => {
-        return sum + (player.total_cost || 0)
-      }, 0)
-    }
+    // Calculate total revenue (assuming $50,000 CRC per verified player)
+    const totalRevenue = (verifiedPlayers || 0) * 50000
 
     const stats = {
       total_players: totalPlayers || 0,

@@ -1,295 +1,277 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, User, CreditCard, Trophy, Calendar, Loader2 } from "lucide-react"
-import Link from "next/link"
-import { createClient } from "@supabase/supabase-js"
-
-interface DashboardPageProps {
-  params: {
-    id: string
-  }
-}
+import { Separator } from "@/components/ui/separator"
+import { CheckCircle, Clock, User, Mail, Phone, MapPin, Calendar, AlertCircle } from "lucide-react"
+import Image from "next/image"
 
 interface Player {
   id: string
   name: string
   email: string
-  nationality: string
-  passport: string
-  league: string
-  played_in_2024: boolean
-  gender: "M" | "F"
-  country: "national" | "international"
-  categories: {
-    handicap: boolean
-    scratch: boolean
-    seniorM: boolean
-    seniorF: boolean
-    marathon: boolean
-    desperate: boolean
-    reenganche3: boolean
-    reenganche4: boolean
-    reenganche5: boolean
-    reenganche8: boolean
-  }
-  total_cost: number
-  currency: string
-  payment_status: "pending" | "verified" | "rejected"
+  phone: string
+  emergency_contact: string
+  emergency_phone: string
+  payment_status: "pending" | "verified"
   created_at: string
-  assigned_bracket?: string
+  wallet_address?: string
 }
 
-export default function DashboardPage({ params }: DashboardPageProps) {
+export default function PlayerDashboard() {
+  const params = useParams()
+  const playerId = params.id as string
   const [player, setPlayer] = useState<Player | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string>("")
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const fetchPlayer = async () => {
-      try {
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://pybfjonqjzlhilknrmbh.supabase.co"
-        const supabaseKey =
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB5YmZqb25xanpsaGlsa25ybWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4Mzc4MjksImV4cCI6MjA2NTQxMzgyOX0.TErykfq_jF16DB4sQ57qcnR7mRv07hrj8euv7DOXB8M"
+    if (playerId) {
+      fetchPlayerData()
+    }
+  }, [playerId])
 
-        const supabase = createClient(supabaseUrl, supabaseKey)
+  const fetchPlayerData = async () => {
+    try {
+      setLoading(true)
+      setError(null)
 
-        console.log("🔍 Fetching player with ID:", params.id)
+      // Try to get player data from the players API
+      const response = await fetch(`/api/players?id=${playerId}`, {
+        method: "GET",
+        headers: {
+          "Cache-Control": "no-cache",
+        },
+      })
 
-        const { data, error } = await supabase.from("players").select("*").eq("id", params.id).single()
-
-        if (error) {
-          console.error("❌ Error fetching player:", error)
-          setError("No se pudo encontrar el jugador")
-          return
-        }
-
-        if (!data) {
-          setError("Jugador no encontrado")
-          return
-        }
-
-        console.log("✅ Player found:", data)
-        setPlayer(data)
-      } catch (err) {
-        console.error("❌ Unexpected error:", err)
-        setError("Error inesperado al cargar los datos")
-      } finally {
-        setLoading(false)
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
-    }
 
-    if (params.id) {
-      fetchPlayer()
+      const data = await response.json()
+
+      if (data.success && data.players) {
+        const foundPlayer = data.players.find((p: Player) => p.id === playerId)
+        if (foundPlayer) {
+          setPlayer(foundPlayer)
+        } else {
+          setError("Jugador no encontrado")
+        }
+      } else {
+        setError(data.error || "Error al cargar datos del jugador")
+      }
+    } catch (err) {
+      console.error("Error fetching player data:", err)
+      setError(err instanceof Error ? err.message : "Error de conexión")
+    } finally {
+      setLoading(false)
     }
-  }, [params.id])
+  }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-50">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="animate-spin h-12 w-12 text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando información...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-4 border-amber-400 border-t-transparent mx-auto"></div>
+          <p className="mt-4 text-slate-300">Cargando tu información...</p>
         </div>
       </div>
     )
   }
 
-  if (error || !player) {
+  if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 via-white to-slate-50">
-        <Card className="max-w-md mx-auto">
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-slate-800 border-slate-700">
           <CardContent className="p-6 text-center">
-            <h2 className="text-xl font-bold mb-2 text-red-600">Error</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <Link href="/">
-              <Button>Volver al inicio</Button>
-            </Link>
+            <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Error</h2>
+            <p className="text-slate-300 mb-4">{error}</p>
+            <Button onClick={fetchPlayerData} className="bg-blue-600 hover:bg-blue-700">
+              Intentar de nuevo
+            </Button>
           </CardContent>
         </Card>
       </div>
     )
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "verified":
-        return "bg-green-100 text-green-800"
-      case "pending":
-        return "bg-yellow-100 text-yellow-800"
-      case "rejected":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "verified":
-        return "Verificado"
-      case "pending":
-        return "Pendiente"
-      case "rejected":
-        return "Rechazado"
-      default:
-        return "Desconocido"
-    }
-  }
-
-  const getCategoriesSelected = () => {
-    if (!player.categories) return 0
-    return Object.entries(player.categories).filter(([_, value]) => value).length
+  if (!player) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-slate-800 border-slate-700">
+          <CardContent className="p-6 text-center">
+            <User className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Jugador no encontrado</h2>
+            <p className="text-slate-300">No se pudo encontrar la información del jugador.</p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 relative">
-      {/* Background Pattern */}
-      <div className="fixed inset-0 opacity-5 pointer-events-none z-0">
-        <div
-          className="w-full h-full"
-          style={{
-            backgroundImage: `url('/images/tournament-logo-bg.png')`,
-            backgroundSize: "200px 150px",
-            backgroundRepeat: "repeat",
-            backgroundPosition: "0 0",
-          }}
-        />
-      </div>
+    <div className="min-h-screen bg-slate-900">
+      <div
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url('/images/hero-bowling.png')`,
+          backgroundAttachment: "fixed",
+        }}
+      />
+      <div className="absolute inset-0 bg-slate-900/85 backdrop-blur-sm" />
 
-      <div className="container mx-auto px-4 py-8 relative z-10">
-        <div className="mb-6">
-          <Link href="/">
-            <Button
-              variant="outline"
-              className="inline-flex items-center gap-2 bg-white hover:bg-gray-100 text-gray-900 px-6 py-2 font-semibold shadow-lg border-gray-300"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Regresar
-            </Button>
-          </Link>
+      <header className="relative z-50 bg-gradient-to-r from-gray-900/95 via-black/95 to-gray-900/95 backdrop-blur-md shadow-2xl border-b border-gray-600/30">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <Image
+              src="/images/country-club-logo-transparent.png"
+              alt="Country Club Costa Rica"
+              width={50}
+              height={50}
+              className="brightness-0 invert"
+            />
+            <div>
+              <h1 className="text-xl font-bold text-white">Mi Dashboard</h1>
+              <p className="text-sm text-gray-300">Torneo La Negrita 2025</p>
+            </div>
+          </div>
         </div>
+      </header>
 
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Card className="bg-white/95 backdrop-blur-sm shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-6 h-6" />
-                Dashboard Personal - {player.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className={`p-4 rounded-lg ${getStatusColor(player.payment_status)}`}>
-                  <h4 className="font-semibold flex items-center gap-2">
-                    <CreditCard className="w-4 h-4" />
-                    Estado de Pago
-                  </h4>
-                  <p className="font-medium">{getStatusText(player.payment_status)}</p>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-green-800 flex items-center gap-2">
-                    <Trophy className="w-4 h-4" />
-                    Categorías
-                  </h4>
-                  <p className="text-green-600">{getCategoriesSelected()} seleccionadas</p>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-purple-800 flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    Registro
-                  </h4>
-                  <p className="text-purple-600">{new Date(player.created_at).toLocaleDateString()}</p>
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-lg">Información Personal</h4>
-                  <div className="space-y-2 text-sm">
-                    <p>
-                      <strong>Email:</strong> {player.email}
-                    </p>
-                    <p>
-                      <strong>Nacionalidad:</strong> {player.nationality}
-                    </p>
-                    <p>
-                      <strong>Liga:</strong> {player.league}
-                    </p>
-                    <p>
-                      <strong>Género:</strong> {player.gender === "M" ? "Masculino" : "Femenino"}
-                    </p>
-                    <p>
-                      <strong>Jugó en 2024:</strong> {player.played_in_2024 ? "Sí" : "No"}
-                    </p>
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Player Info Card */}
+          <div className="lg:col-span-2">
+            <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-white">
+                  <User className="h-5 w-5" />
+                  Información del Jugador
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-slate-400">Nombre Completo</label>
+                    <p className="text-white font-medium">{player.name}</p>
                   </div>
-                </div>
-
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-lg">Participación</h4>
-                  <div className="space-y-2">
+                  <div>
+                    <label className="text-sm font-medium text-slate-400">Email</label>
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary">Hándicap</Badge>
-                      <span className="text-green-600">✓</span>
+                      <Mail className="h-4 w-4 text-slate-400" />
+                      <p className="text-white">{player.email}</p>
                     </div>
-                    {player.categories?.scratch && (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Scratch</Badge>
-                        <span className="text-green-600">✓</span>
-                      </div>
-                    )}
-                    {player.categories?.seniorM && (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Senior Masculino</Badge>
-                        <span className="text-green-600">✓</span>
-                      </div>
-                    )}
-                    {player.categories?.seniorF && (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Senior Femenino</Badge>
-                        <span className="text-green-600">✓</span>
-                      </div>
-                    )}
-                    {player.categories?.marathon && (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Maratón de Strikes</Badge>
-                        <span className="text-green-600">✓</span>
-                      </div>
-                    )}
-                    {player.categories?.desperate && (
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">Desesperado</Badge>
-                        <span className="text-green-600">✓</span>
-                      </div>
-                    )}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-400">Teléfono</label>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-slate-400" />
+                      <p className="text-white">{player.phone}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-400">Contacto de Emergencia</label>
+                    <p className="text-white">{player.emergency_contact}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-400">Teléfono de Emergencia</label>
+                    <p className="text-white">{player.emergency_phone}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-slate-400">Fecha de Registro</label>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4 text-slate-400" />
+                      <p className="text-white">
+                        {new Date(player.created_at).toLocaleDateString("es-CR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          </div>
 
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <h4 className="font-semibold text-blue-800 mb-2">Información de Pago</h4>
-                <p className="text-blue-700">
-                  Total: {player.currency === "CRC" ? "₡" : "$"}
-                  {player.total_cost.toLocaleString()}
-                </p>
-                <p className="text-sm text-blue-600 mt-2">
-                  ID de Registro: <code className="bg-white px-2 py-1 rounded">{player.id}</code>
-                </p>
-              </div>
-
-              {player.assigned_bracket && (
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-yellow-800 mb-2">Llave Asignada</h4>
-                  <p className="text-yellow-700">{player.assigned_bracket}</p>
+          {/* Status Card */}
+          <div>
+            <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-white">Estado del Registro</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  {player.payment_status === "verified" ? (
+                    <>
+                      <CheckCircle className="h-12 w-12 text-green-400 mx-auto mb-2" />
+                      <Badge className="bg-green-900/50 text-green-300 border-green-700">✅ Verificado</Badge>
+                      <p className="text-sm text-slate-300 mt-2">
+                        Tu pago ha sido verificado. ¡Estás listo para el torneo!
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-12 w-12 text-amber-400 mx-auto mb-2" />
+                      <Badge className="bg-amber-900/50 text-amber-300 border-amber-700">⏳ Pendiente</Badge>
+                      <p className="text-sm text-slate-300 mt-2">Tu registro está pendiente de verificación de pago.</p>
+                    </>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                <Separator className="bg-slate-600" />
+
+                <div className="space-y-2">
+                  <h4 className="font-medium text-white">ID de Registro</h4>
+                  <p className="text-xs text-slate-400 font-mono bg-slate-700/50 p-2 rounded">{player.id}</p>
+                </div>
+
+                {player.wallet_address && (
+                  <>
+                    <Separator className="bg-slate-600" />
+                    <div className="space-y-2">
+                      <h4 className="font-medium text-white">Wallet Address</h4>
+                      <p className="text-xs text-slate-400 font-mono bg-slate-700/50 p-2 rounded break-all">
+                        {player.wallet_address}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
+
+        {/* Tournament Info */}
+        <Card className="mt-8 bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-white">Información del Torneo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <Calendar className="h-8 w-8 text-blue-400 mx-auto mb-2" />
+                <h4 className="font-medium text-white">Fecha</h4>
+                <p className="text-slate-300">25 de Enero, 2025</p>
+              </div>
+              <div className="text-center">
+                <MapPin className="h-8 w-8 text-green-400 mx-auto mb-2" />
+                <h4 className="font-medium text-white">Ubicación</h4>
+                <p className="text-slate-300">Country Club Costa Rica</p>
+              </div>
+              <div className="text-center">
+                <Clock className="h-8 w-8 text-amber-400 mx-auto mb-2" />
+                <h4 className="font-medium text-white">Hora</h4>
+                <p className="text-slate-300">8:00 AM</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

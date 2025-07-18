@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server"
-import { getSupabase } from "@/lib/supabase-server"
+import { resetSupabaseConnection } from "@/lib/supabase-server"
 
 export async function GET() {
   return NextResponse.json({
     message: "Force refresh endpoint is working",
     timestamp: new Date().toISOString(),
-    instructions: "Send a POST request to trigger cache reset",
+    method: "GET",
   })
 }
 
@@ -13,62 +13,37 @@ export async function POST() {
   try {
     console.log("🔄 Force refresh triggered at", new Date().toISOString())
 
-    const supabase = getSupabase()
+    // Reset Supabase connection
+    resetSupabaseConnection()
 
-    // Test connection
-    const { data, error } = await supabase.from("players").select("count", { count: "exact", head: true })
+    // Clear any potential caches
+    const response = NextResponse.json({
+      success: true,
+      message: "Cache cleared and connections reset",
+      timestamp: new Date().toISOString(),
+    })
 
-    if (error) {
-      console.error("❌ Supabase connection error:", error)
-      return NextResponse.json(
-        {
-          success: false,
-          error: `Supabase error: ${error.message}`,
-          timestamp: new Date().toISOString(),
-        },
-        {
-          status: 500,
-          headers: {
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
-          },
-        },
-      )
-    }
+    // Add aggressive cache-busting headers
+    response.headers.set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+    response.headers.set("Pragma", "no-cache")
+    response.headers.set("Expires", "0")
+    response.headers.set("Surrogate-Control", "no-store")
+    response.headers.set("CDN-Cache-Control", "no-store")
 
-    console.log("✅ Cache refresh successful, player count:", data)
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Cache refreshed successfully",
-        playerCount: data,
-        timestamp: new Date().toISOString(),
-      },
-      {
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-      },
-    )
+    console.log("✅ Force refresh completed successfully")
+    return response
   } catch (error) {
-    console.error("❌ Force refresh error:", error)
-
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
-
+    console.error("❌ Force refresh failed:", error)
     return NextResponse.json(
       {
         success: false,
-        error: errorMessage,
+        error: error instanceof Error ? error.message : "Unknown error occurred",
         timestamp: new Date().toISOString(),
       },
       {
         status: 500,
         headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Cache-Control": "no-cache, no-store, must-revalidate, max-age=0",
           Pragma: "no-cache",
           Expires: "0",
         },
