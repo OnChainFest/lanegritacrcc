@@ -2,20 +2,18 @@ import { type NextRequest, NextResponse } from "next/server"
 import { getSupabaseClient } from "@/lib/supabase-client"
 
 export async function POST(request: NextRequest) {
-  console.log("🎳 === PLAYER REGISTRATION API CALLED ===")
-  console.log("📅 Timestamp:", new Date().toISOString())
+  console.log("🎯 === PLAYER REGISTRATION START ===")
 
   try {
     const body = await request.json()
     console.log("📝 Registration data received:", {
       name: body.name,
       email: body.email,
-      phone: body.phone,
       nationality: body.nationality,
     })
 
     // Validate required fields
-    const requiredFields = ["name", "email", "phone", "nationality"]
+    const requiredFields = ["name", "email", "nationality", "passport", "league"]
     const missingFields = requiredFields.filter((field) => !body[field])
 
     if (missingFields.length > 0) {
@@ -32,20 +30,20 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseClient()
 
-    // Check for existing email
-    console.log("🔍 Checking for existing email...")
+    // Check for duplicate email
+    console.log("🔍 Checking for duplicate email...")
     const { data: existingPlayer, error: checkError } = await supabase
       .from("players")
       .select("id, email")
       .eq("email", body.email)
       .limit(1)
 
-    if (checkError) {
-      console.error("❌ Error checking existing email:", checkError)
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("❌ Error checking for duplicates:", checkError)
       return NextResponse.json(
         {
           success: false,
-          error: "Database error while checking email",
+          error: "Database error while checking duplicates",
           details: checkError.message,
         },
         { status: 500 },
@@ -53,35 +51,45 @@ export async function POST(request: NextRequest) {
     }
 
     if (existingPlayer && existingPlayer.length > 0) {
-      console.log("⚠️ Email already exists:", body.email)
+      console.log("⚠️ Duplicate email found:", body.email)
       return NextResponse.json(
         {
           success: false,
           error: "Email already registered",
-          message: "Este email ya está registrado en el torneo",
+          duplicateType: "email",
         },
         { status: 409 },
       )
     }
 
-    // Prepare player data
+    // Prepare player data using the correct database schema
     const playerData = {
       name: body.name.trim(),
       email: body.email.toLowerCase().trim(),
-      phone: body.phone.trim(),
       nationality: body.nationality.trim(),
-      average_score: Number.parseInt(body.average_score) || 0,
-      payment_status: "pending",
+      passport: body.passport.trim(),
+      league: body.league.trim(),
+      played_in_2024: Boolean(body.played_in_2024),
+      gender: body.gender || "M",
+      country: body.country || "national",
+      categories: body.categories || {},
+      total_cost: Number(body.total_cost) || 0,
+      currency: body.currency || "USD",
+      payment_status: body.payment_status || "pending",
       created_at: new Date().toISOString(),
     }
 
-    console.log("💾 Inserting player data:", playerData)
+    console.log("💾 Inserting player data...")
 
     // Insert new player
-    const { data: newPlayer, error: insertError } = await supabase.from("players").insert([playerData]).select()
+    const { data: insertedPlayer, error: insertError } = await supabase
+      .from("players")
+      .insert([playerData])
+      .select()
+      .single()
 
     if (insertError) {
-      console.error("❌ Error inserting player:", insertError)
+      console.error("❌ Insert error:", insertError)
       return NextResponse.json(
         {
           success: false,
@@ -92,18 +100,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("✅ Player registered successfully:", newPlayer)
+    console.log("✅ Player registered successfully:", insertedPlayer.id)
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Player registered successfully",
-        player: newPlayer[0],
-      },
-      { status: 201 },
-    )
+    return NextResponse.json({
+      success: true,
+      message: "Player registered successfully",
+      data: insertedPlayer,
+    })
   } catch (error: any) {
-    console.error("💥 Registration API error:", error)
+    console.error("💥 Registration error:", error)
     return NextResponse.json(
       {
         success: false,
@@ -113,4 +118,12 @@ export async function POST(request: NextRequest) {
       { status: 500 },
     )
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    message: "Player registration endpoint",
+    method: "POST",
+    status: "active",
+  })
 }

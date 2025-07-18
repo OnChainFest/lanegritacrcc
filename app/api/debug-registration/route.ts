@@ -3,16 +3,9 @@ import { getSupabaseClient, getSupabaseConfig } from "@/lib/supabase-client"
 
 export async function GET() {
   console.log("🔧 === DEBUG REGISTRATION API CALLED ===")
-  console.log("📅 Timestamp:", new Date().toISOString())
 
   try {
-    // Check environment variables
     const config = getSupabaseConfig()
-    console.log("🔧 Supabase config:", {
-      hasUrl: config.hasUrl,
-      hasKey: config.hasKey,
-      urlPreview: config.url ? `${config.url.substring(0, 30)}...` : "missing",
-    })
 
     const debugInfo = {
       timestamp: new Date().toISOString(),
@@ -20,7 +13,7 @@ export async function GET() {
       supabase: {
         url: config.hasUrl,
         key: config.hasKey,
-        urlValue: config.url || "missing",
+        urlValue: config.url ? `${config.url.substring(0, 30)}...` : "missing",
       },
       connection: null as any,
       tableAccess: null as any,
@@ -32,7 +25,6 @@ export async function GET() {
       const supabase = getSupabaseClient()
       console.log("🔧 Testing basic connection...")
 
-      // Simple query to test connection
       const { data: testData, error: testError } = await supabase.from("players").select("id").limit(1)
 
       if (testError) {
@@ -56,13 +48,12 @@ export async function GET() {
       }
     }
 
-    // Test table access and get count
+    // Test table access
     if (debugInfo.connection?.success) {
       try {
         const supabase = getSupabaseClient()
         console.log("🔧 Testing table access...")
 
-        // Get all players to count them manually (avoiding count syntax issues)
         const { data: allPlayers, error: playersError } = await supabase
           .from("players")
           .select("id, name, email, created_at")
@@ -82,7 +73,6 @@ export async function GET() {
             hasData: (allPlayers?.length || 0) > 0,
           }
 
-          // Get sample data (last 5 records)
           debugInfo.sampleData = allPlayers?.slice(0, 5) || []
         }
       } catch (tableError: any) {
@@ -94,15 +84,7 @@ export async function GET() {
       }
     }
 
-    console.log("🔧 Debug info compiled:", debugInfo)
-
-    return NextResponse.json(debugInfo, {
-      headers: {
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-    })
+    return NextResponse.json(debugInfo)
   } catch (error: any) {
     console.error("💥 Debug API error:", error)
     return NextResponse.json(
@@ -123,13 +105,29 @@ export async function POST() {
   try {
     const supabase = getSupabaseClient()
 
-    // Create test player data
     const testPlayer = {
       name: `Test Player ${Date.now()}`,
       email: `test${Date.now()}@example.com`,
-      phone: "+1234567890",
-      nationality: "Test Country",
-      average_score: 150,
+      nationality: "Costa Rica",
+      passport: `TEST-${Date.now()}`,
+      league: "Test League",
+      played_in_2024: false,
+      gender: "M",
+      country: "national",
+      categories: {
+        handicap: true,
+        scratch: false,
+        seniorM: false,
+        seniorF: false,
+        marathon: false,
+        desperate: false,
+        reenganche3: false,
+        reenganche4: false,
+        reenganche5: false,
+        reenganche8: false,
+      },
+      total_cost: 50,
+      currency: "USD",
       payment_status: "pending",
       created_at: new Date().toISOString(),
     }

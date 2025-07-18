@@ -8,113 +8,200 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/hooks/use-toast"
-import { CheckCircle, Loader2, User, Mail, Phone, Globe, Trophy } from "lucide-react"
+import { ArrowLeft, User, CreditCard, Loader2 } from "lucide-react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import Image from "next/image"
 
-const countries = [
-  "Costa Rica",
-  "Nicaragua",
-  "Guatemala",
-  "Honduras",
-  "El Salvador",
-  "Panamá",
-  "México",
-  "Estados Unidos",
-  "Canadá",
-  "Colombia",
-  "Venezuela",
-  "Ecuador",
-  "Perú",
-  "Brasil",
-  "Argentina",
-  "Chile",
-  "Uruguay",
-  "Paraguay",
-  "Bolivia",
-  "España",
-  "Otro",
-]
+interface UserData {
+  name: string
+  nationality: string
+  email: string
+  passport: string
+  league: string
+  played_in_2024: boolean
+  gender: "M" | "F" | ""
+  country: "national" | "international" | ""
+}
+
+interface Categories {
+  handicap: boolean
+  scratch: boolean
+  seniorM: boolean
+  seniorF: boolean
+  marathon: boolean
+  desperate: boolean
+  reenganche3: boolean
+  reenganche4: boolean
+  reenganche5: boolean
+  reenganche8: boolean
+}
+
+interface PlayerData {
+  name: string
+  nationality: string
+  email: string
+  passport: string
+  league: string
+  played_in_2024: boolean
+  gender: "M" | "F" | ""
+  country: "national" | "international" | ""
+  categories: Categories
+  total_cost: number
+  currency: string
+  payment_status: "pending"
+}
 
 export default function RegisterPage() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    nationality: "",
-    average_score: "",
-  })
+  const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
   const { toast } = useToast()
+  const router = useRouter()
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({
+  const [playerData, setPlayerData] = useState<PlayerData>({
+    name: "",
+    nationality: "",
+    email: "",
+    passport: "",
+    league: "",
+    played_in_2024: false,
+    gender: "",
+    country: "",
+    categories: {
+      handicap: false,
+      scratch: false,
+      seniorM: false,
+      seniorF: false,
+      marathon: false,
+      desperate: false,
+      reenganche3: false,
+      reenganche4: false,
+      reenganche5: false,
+      reenganche8: false,
+    },
+    total_cost: 0,
+    currency: "USD",
+    payment_status: "pending",
+  })
+
+  const nextStep = () => {
+    setStep(step + 1)
+  }
+
+  const prevStep = () => {
+    setStep(step - 1)
+  }
+
+  const handleInputChange = (field: keyof UserData, value: string | boolean) => {
+    setPlayerData((prev) => ({
       ...prev,
       [field]: value,
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleCategoryChange = (category: keyof Categories, value: boolean) => {
+    setPlayerData((prev) => ({
+      ...prev,
+      categories: {
+        ...prev.categories,
+        [category]: value,
+      },
+    }))
+  }
+
+  const calculateTotal = () => {
+    let total = 50 // Base price
+
+    // Early bird discount until December 31, 2024
+    const now = new Date()
+    const earlyBirdDeadline = new Date("2024-12-31")
+    if (now <= earlyBirdDeadline) {
+      total = 40
+    }
+
+    // Category add-ons
+    if (playerData.categories.handicap) total += 10
+    if (playerData.categories.scratch) total += 15
+    if (playerData.categories.seniorM) total += 20
+    if (playerData.categories.seniorF) total += 20
+    if (playerData.categories.marathon) total += 25
+    if (playerData.categories.desperate) total += 30
+    if (playerData.categories.reenganche3) total += 35
+    if (playerData.categories.reenganche4) total += 40
+    if (playerData.categories.reenganche5) total += 45
+    if (playerData.categories.reenganche8) total += 50
+
+    setPlayerData((prev) => ({
+      ...prev,
+      total_cost: total,
+    }))
+
+    return total
+  }
+
+  const handleRegistration = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      console.log("🎳 Submitting registration:", formData)
+      console.log("🚀 Submitting registration:", playerData.email)
 
       const response = await fetch("/api/register-player", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(playerData),
       })
 
       const result = await response.json()
-      console.log("🎳 Registration response:", result)
+      console.log("📝 Registration response:", result)
 
       if (result.success) {
-        setSuccess(true)
         toast({
           title: "¡Registro exitoso!",
-          description: "Te has registrado correctamente para el torneo. Recibirás información sobre el pago pronto.",
+          description: "Te has registrado correctamente al torneo",
         })
 
-        // Reset form
-        setFormData({
-          name: "",
-          email: "",
-          phone: "",
-          nationality: "",
-          average_score: "",
-        })
+        // Redirect to dashboard with player ID
+        if (result.data?.id) {
+          console.log("🎯 Redirecting to dashboard with ID:", result.data.id)
+          router.push(`/dashboard/${result.data.id}`)
+        } else {
+          // Fallback to home page
+          router.push("/")
+        }
       } else {
-        // Handle specific error cases
-        if (result.error === "Email already registered") {
+        console.error("❌ Registration failed:", result.error)
+
+        // Handle specific error types
+        if (result.duplicateType === "email") {
           toast({
             title: "Email ya registrado",
-            description: "Este email ya está registrado en el torneo. Si tienes problemas, contacta al organizador.",
+            description: `El email ${playerData.email} ya está registrado en el torneo`,
             variant: "destructive",
           })
-        } else if (result.missingFields) {
+        } else if (result.duplicateType === "passport") {
           toast({
-            title: "Campos requeridos",
-            description: `Por favor completa: ${result.missingFields.join(", ")}`,
+            title: "Documento ya registrado",
+            description: `El pasaporte/cédula ${playerData.passport} ya está registrado`,
             variant: "destructive",
           })
         } else {
           toast({
             title: "Error en el registro",
-            description: result.details || result.error || "Hubo un problema al registrarte. Intenta de nuevo.",
+            description: result.error || "No se pudo completar el registro",
             variant: "destructive",
           })
         }
       }
-    } catch (error: any) {
-      console.error("Registration error:", error)
+    } catch (error) {
+      console.error("💥 Registration error:", error)
       toast({
         title: "Error de conexión",
-        description: "No se pudo conectar con el servidor. Verifica tu conexión e intenta de nuevo.",
+        description: "Verifica tu internet e intenta de nuevo. Si el problema persiste, contacta al administrador.",
         variant: "destructive",
       })
     } finally {
@@ -122,185 +209,432 @@ export default function RegisterPage() {
     }
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-slate-800/90 border-slate-700 backdrop-blur-sm">
-          <CardContent className="text-center py-8">
-            <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">¡Registro Exitoso!</h2>
-            <p className="text-slate-300 mb-6">
-              Te has registrado correctamente para el Torneo La Negrita 2025. Recibirás información sobre el proceso de
-              pago por email.
-            </p>
-            <Button onClick={() => setSuccess(false)} className="bg-blue-600 hover:bg-blue-700 text-white">
-              Registrar otro jugador
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  const renderForm = () => {
+    switch (step) {
+      case 1:
+        return <Step1 playerData={playerData} handleInputChange={handleInputChange} nextStep={nextStep} />
+      case 2:
+        return (
+          <Step2
+            playerData={playerData}
+            handleInputChange={handleInputChange}
+            prevStep={prevStep}
+            nextStep={nextStep}
+          />
+        )
+      case 3:
+        return (
+          <Step3
+            playerData={playerData}
+            handleCategoryChange={handleCategoryChange}
+            calculateTotal={calculateTotal}
+            prevStep={prevStep}
+            nextStep={nextStep}
+          />
+        )
+      case 4:
+        return (
+          <Step4
+            playerData={playerData}
+            handleRegistration={handleRegistration}
+            loading={loading}
+            prevStep={prevStep}
+          />
+        )
+      default:
+        return null
+    }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8 pt-8">
-          <div className="flex justify-center items-center gap-4 mb-6">
-            <Image
-              src="/images/country-club-logo-transparent.png"
-              alt="Country Club Logo"
-              width={80}
-              height={80}
-              className="rounded-full"
-            />
-            <Image
-              src="/images/tournament-logo.png"
-              alt="Tournament Logo"
-              width={100}
-              height={80}
-              className="rounded-lg"
-            />
-          </div>
-          <h1 className="text-4xl font-bold text-white mb-2">Torneo La Negrita 2025</h1>
-          <p className="text-xl text-blue-300">Registro de Participantes</p>
-        </div>
-
-        {/* Registration Form */}
-        <Card className="bg-slate-800/90 border-slate-700 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Información del Jugador
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-slate-200 flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    Nombre Completo *
-                  </Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => handleInputChange("name", e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    placeholder="Tu nombre completo"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-200 flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Email *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleInputChange("email", e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    placeholder="tu@email.com"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-slate-200 flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    Teléfono *
-                  </Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => handleInputChange("phone", e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    placeholder="+506 8888-8888"
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="nationality" className="text-slate-200 flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    Nacionalidad *
-                  </Label>
-                  <Select
-                    value={formData.nationality}
-                    onValueChange={(value) => handleInputChange("nationality", value)}
-                  >
-                    <SelectTrigger className="bg-slate-700 border-slate-600 text-white">
-                      <SelectValue placeholder="Selecciona tu país" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-slate-700 border-slate-600">
-                      {countries.map((country) => (
-                        <SelectItem key={country} value={country} className="text-white hover:bg-slate-600">
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="average_score" className="text-slate-200 flex items-center gap-2">
-                    <Trophy className="w-4 h-4" />
-                    Promedio de Bolos (opcional)
-                  </Label>
-                  <Input
-                    id="average_score"
-                    type="number"
-                    min="0"
-                    max="300"
-                    value={formData.average_score}
-                    onChange={(e) => handleInputChange("average_score", e.target.value)}
-                    className="bg-slate-700 border-slate-600 text-white placeholder-slate-400"
-                    placeholder="Ej: 150"
-                  />
-                  <p className="text-sm text-slate-400">
-                    Tu promedio actual de bolos (esto nos ayuda a organizar mejor el torneo)
-                  </p>
-                </div>
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-gray-900 via-black to-gray-900 backdrop-blur-md shadow-2xl border-b border-gray-600/30">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-2">
+              <Image
+                src="/images/country-club-logo-transparent.png"
+                alt="Country Club Costa Rica"
+                width={55}
+                height={55}
+                className="brightness-0 invert"
+              />
+              <div>
+                <h1 className="text-xl font-heading font-bold text-white tracking-tight">Torneo La Negrita 2025</h1>
+                <p className="text-sm text-gray-300 font-body font-medium">Registro de Participantes</p>
               </div>
+            </div>
 
-              <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4">
-                <h3 className="text-blue-300 font-semibold mb-2">Información Importante:</h3>
-                <ul className="text-sm text-blue-200 space-y-1">
-                  <li>• El torneo se realizará del 15-16 de febrero de 2025</li>
-                  <li>• Costo de inscripción: $50 USD</li>
-                  <li>• Recibirás información de pago por email</li>
-                  <li>• Cupos limitados - ¡regístrate pronto!</li>
-                </ul>
-              </div>
-
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Registrando...
-                  </>
-                ) : (
-                  "Registrarme en el Torneo"
-                )}
+            <Link href="/">
+              <Button variant="ghost" className="text-gray-300 hover:text-white hover:bg-white/10">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Volver al Inicio
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Footer */}
-        <div className="text-center mt-8 text-slate-400">
-          <p>¿Tienes preguntas? Contacta al organizador del torneo</p>
+            </Link>
+          </div>
         </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto">
+          <Card className="shadow-xl border-0">
+            <CardHeader className="bg-gradient-to-r from-red-600 to-red-700 text-white rounded-t-lg">
+              <CardTitle className="text-2xl font-heading flex items-center gap-2">
+                <User className="w-6 h-6" />
+                Registro al Torneo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-8">{renderForm()}</CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface Step1Props {
+  playerData: PlayerData
+  handleInputChange: (field: keyof UserData, value: string | boolean) => void
+  nextStep: () => void
+}
+
+const Step1: React.FC<Step1Props> = ({ playerData, handleInputChange, nextStep }) => {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">Información Personal</h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="name" className="font-body font-medium">
+            Nombre Completo *
+          </Label>
+          <Input
+            id="name"
+            type="text"
+            required
+            value={playerData.name}
+            onChange={(e) => handleInputChange("name", e.target.value)}
+            className="font-body"
+            placeholder="Tu nombre completo"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="nationality" className="font-body font-medium">
+            Nacionalidad *
+          </Label>
+          <Input
+            id="nationality"
+            type="text"
+            required
+            value={playerData.nationality}
+            onChange={(e) => handleInputChange("nationality", e.target.value)}
+            className="font-body"
+            placeholder="Tu nacionalidad"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="email" className="font-body font-medium">
+            Email *
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            required
+            value={playerData.email}
+            onChange={(e) => handleInputChange("email", e.target.value)}
+            className="font-body"
+            placeholder="tu@email.com"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="passport" className="font-body font-medium">
+            Pasaporte/Cédula *
+          </Label>
+          <Input
+            id="passport"
+            type="text"
+            required
+            value={playerData.passport}
+            onChange={(e) => handleInputChange("passport", e.target.value)}
+            className="font-body"
+            placeholder="Número de identificación"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="league" className="font-body font-medium">
+            Liga *
+          </Label>
+          <Input
+            id="league"
+            type="text"
+            required
+            value={playerData.league}
+            onChange={(e) => handleInputChange("league", e.target.value)}
+            className="font-body"
+            placeholder="Tu liga"
+          />
+        </div>
+
+        <div>
+          <Label htmlFor="gender" className="font-body font-medium">
+            Género *
+          </Label>
+          <Select value={playerData.gender} onValueChange={(value) => handleInputChange("gender", value)}>
+            <SelectTrigger className="font-body">
+              <SelectValue placeholder="Seleccionar género" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="M">Masculino</SelectItem>
+              <SelectItem value="F">Femenino</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="played_in_2024"
+          checked={playerData.played_in_2024}
+          onCheckedChange={(checked) => handleInputChange("played_in_2024", checked as boolean)}
+        />
+        <Label htmlFor="played_in_2024" className="font-body font-medium">
+          ¿Jugó en 2024?
+        </Label>
+      </div>
+
+      <Button onClick={nextStep} className="w-full bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading">
+        Siguiente
+      </Button>
+    </div>
+  )
+}
+
+interface Step2Props {
+  playerData: PlayerData
+  handleInputChange: (field: keyof UserData, value: string | boolean) => void
+  prevStep: () => void
+  nextStep: () => void
+}
+
+const Step2: React.FC<Step2Props> = ({ playerData, handleInputChange, prevStep, nextStep }) => {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">País de Residencia</h3>
+
+      <div>
+        <Label htmlFor="country" className="font-body font-medium">
+          Tipo de Participante *
+        </Label>
+        <Select value={playerData.country} onValueChange={(value) => handleInputChange("country", value)}>
+          <SelectTrigger className="font-body">
+            <SelectValue placeholder="Seleccionar tipo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="national">Nacional</SelectItem>
+            <SelectItem value="international">Internacional</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Anterior
+        </Button>
+        <Button onClick={nextStep} className="bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading">
+          Siguiente
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+interface Step3Props {
+  playerData: PlayerData
+  handleCategoryChange: (category: keyof Categories, value: boolean) => void
+  calculateTotal: () => number
+  prevStep: () => void
+  nextStep: () => void
+}
+
+const Step3: React.FC<Step3Props> = ({ playerData, handleCategoryChange, calculateTotal, prevStep, nextStep }) => {
+  const total = calculateTotal()
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">Selección de Categorías</h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="handicap"
+            checked={playerData.categories.handicap}
+            onCheckedChange={(checked) => handleCategoryChange("handicap", checked as boolean)}
+          />
+          <Label htmlFor="handicap" className="font-body font-medium">
+            Handicap
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="scratch"
+            checked={playerData.categories.scratch}
+            onCheckedChange={(checked) => handleCategoryChange("scratch", checked as boolean)}
+          />
+          <Label htmlFor="scratch" className="font-body font-medium">
+            Scratch
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="seniorM"
+            checked={playerData.categories.seniorM}
+            onCheckedChange={(checked) => handleCategoryChange("seniorM", checked as boolean)}
+          />
+          <Label htmlFor="seniorM" className="font-body font-medium">
+            Senior Masculino
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="seniorF"
+            checked={playerData.categories.seniorF}
+            onCheckedChange={(checked) => handleCategoryChange("seniorF", checked as boolean)}
+          />
+          <Label htmlFor="seniorF" className="font-body font-medium">
+            Senior Femenino
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="marathon"
+            checked={playerData.categories.marathon}
+            onCheckedChange={(checked) => handleCategoryChange("marathon", checked as boolean)}
+          />
+          <Label htmlFor="marathon" className="font-body font-medium">
+            Maratón
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="desperate"
+            checked={playerData.categories.desperate}
+            onCheckedChange={(checked) => handleCategoryChange("desperate", checked as boolean)}
+          />
+          <Label htmlFor="desperate" className="font-body font-medium">
+            Desesperado
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="reenganche3"
+            checked={playerData.categories.reenganche3}
+            onCheckedChange={(checked) => handleCategoryChange("reenganche3", checked as boolean)}
+          />
+          <Label htmlFor="reenganche3" className="font-body font-medium">
+            Reenganche 3
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="reenganche4"
+            checked={playerData.categories.reenganche4}
+            onCheckedChange={(checked) => handleCategoryChange("reenganche4", checked as boolean)}
+          />
+          <Label htmlFor="reenganche4" className="font-body font-medium">
+            Reenganche 4
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="reenganche5"
+            checked={playerData.categories.reenganche5}
+            onCheckedChange={(checked) => handleCategoryChange("reenganche5", checked as boolean)}
+          />
+          <Label htmlFor="reenganche5" className="font-body font-medium">
+            Reenganche 5
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="reenganche8"
+            checked={playerData.categories.reenganche8}
+            onCheckedChange={(checked) => handleCategoryChange("reenganche8", checked as boolean)}
+          />
+          <Label htmlFor="reenganche8" className="font-body font-medium">
+            Reenganche 8
+          </Label>
+        </div>
+      </div>
+
+      <div className="text-lg font-heading font-semibold text-gray-900">Total a pagar: ${total} USD</div>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Anterior
+        </Button>
+        <Button onClick={nextStep} className="bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading">
+          Siguiente
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+interface Step4Props {
+  playerData: PlayerData
+  handleRegistration: (e: React.FormEvent) => Promise<void>
+  loading: boolean
+  prevStep: () => void
+}
+
+const Step4: React.FC<Step4Props> = ({ playerData, handleRegistration, loading, prevStep }) => {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-heading font-semibold text-gray-900 border-b pb-2">Confirmación de Registro</h3>
+
+      <p className="font-body text-gray-700">
+        Una vez completado el registro, recibirás información sobre el proceso de pago por correo electrónico.
+      </p>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Anterior
+        </Button>
+        <Button
+          onClick={handleRegistration}
+          disabled={loading}
+          className="bg-red-600 hover:bg-red-700 text-white py-3 text-lg font-heading"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Registrando...
+            </>
+          ) : (
+            <>
+              <CreditCard className="w-5 h-5 mr-2" />
+              Registrarse al Torneo
+            </>
+          )}
+        </Button>
       </div>
     </div>
   )

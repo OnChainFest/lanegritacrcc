@@ -3,9 +3,7 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useToast } from "@/hooks/use-toast"
-import { CheckCircle, XCircle, RefreshCw, Database, Users, TestTube, Activity, AlertTriangle } from "lucide-react"
+import { CheckCircle, XCircle, Loader2, RefreshCw } from "lucide-react"
 
 interface DebugInfo {
   timestamp: string
@@ -22,33 +20,28 @@ interface DebugInfo {
   } | null
   tableAccess: {
     success: boolean
+    error?: string
     count?: number
     hasData?: boolean
-    error?: string
   } | null
-  sampleData?: any[]
+  sampleData: any[]
 }
 
 export default function DebugProductionPage() {
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [testLoading, setTestLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const { toast } = useToast()
+  const [testLoading, setTestLoading] = useState(false)
+  const [testResult, setTestResult] = useState<any>(null)
 
-  const runDebug = async () => {
-    setLoading(true)
-    setError(null)
-
+  const fetchDebugInfo = async () => {
     try {
-      console.log("🔧 Running debug check...")
+      setLoading(true)
+      setError(null)
 
       const response = await fetch("/api/debug-registration", {
         method: "GET",
-        headers: {
-          "Cache-Control": "no-cache",
-          "Content-Type": "application/json",
-        },
+        cache: "no-cache",
       })
 
       if (!response.ok) {
@@ -56,39 +49,19 @@ export default function DebugProductionPage() {
       }
 
       const data = await response.json()
-      console.log("🔧 Debug response:", data)
-
       setDebugInfo(data)
-
-      if (data.connection?.success) {
-        toast({
-          title: "✅ Conexión exitosa",
-          description: "La base de datos está funcionando correctamente",
-        })
-      } else {
-        toast({
-          title: "❌ Error de conexión",
-          description: data.connection?.error || "No se pudo conectar a la base de datos",
-          variant: "destructive",
-        })
-      }
-    } catch (error: any) {
-      console.error("Debug error:", error)
-      setError(error.message)
-      toast({
-        title: "Error",
-        description: `No se pudo ejecutar el diagnóstico: ${error.message}`,
-        variant: "destructive",
-      })
+    } catch (err: any) {
+      console.error("Debug fetch error:", err)
+      setError(err.message || "Failed to fetch debug info")
     } finally {
       setLoading(false)
     }
   }
 
   const runTestRegistration = async () => {
-    setTestLoading(true)
     try {
-      console.log("🧪 Running test registration...")
+      setTestLoading(true)
+      setTestResult(null)
 
       const response = await fetch("/api/debug-registration", {
         method: "POST",
@@ -97,33 +70,14 @@ export default function DebugProductionPage() {
         },
       })
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
       const result = await response.json()
-      console.log("🧪 Test result:", result)
-
-      if (result.success) {
-        toast({
-          title: "✅ Prueba exitosa",
-          description: "El registro de prueba funcionó correctamente",
-        })
-        // Refresh debug info
-        await runDebug()
-      } else {
-        toast({
-          title: "❌ Prueba fallida",
-          description: result.error || "La prueba de registro falló",
-          variant: "destructive",
-        })
-      }
-    } catch (error: any) {
-      console.error("Test error:", error)
-      toast({
-        title: "Error",
-        description: `No se pudo ejecutar la prueba: ${error.message}`,
-        variant: "destructive",
+      setTestResult(result)
+    } catch (err: any) {
+      console.error("Test registration error:", err)
+      setTestResult({
+        success: false,
+        error: "Test failed",
+        details: err.message,
       })
     } finally {
       setTestLoading(false)
@@ -131,203 +85,234 @@ export default function DebugProductionPage() {
   }
 
   useEffect(() => {
-    runDebug()
+    fetchDebugInfo()
   }, [])
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto mb-4" />
+          <p className="text-white">Cargando información del sistema...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-red-900/20 border-red-500">
+          <CardContent className="text-center py-8">
+            <XCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-white mb-2">Error de conexión</h2>
+            <p className="text-red-300 mb-4">{error}</p>
+            <Button onClick={fetchDebugInfo} className="bg-red-600 hover:bg-red-700">
+              Reintentar
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-slate-900 p-6">
+    <div className="min-h-screen bg-slate-900 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Debug de Producción</h1>
+          <p className="text-slate-400">Estado del sistema de registro del torneo</p>
+          <Button onClick={fetchDebugInfo} variant="outline" className="mt-4 bg-transparent">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Actualizar
+          </Button>
+        </div>
+
+        {/* Environment Info */}
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Información del Entorno</CardTitle>
+          </CardHeader>
+          <CardContent className="text-slate-300">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <strong>Entorno:</strong> {debugInfo?.environment || "unknown"}
+              </div>
+              <div>
+                <strong>Timestamp:</strong> {debugInfo?.timestamp || "unknown"}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Supabase Configuration */}
         <Card className="bg-slate-800 border-slate-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Activity className="w-5 h-5" />
-              Diagnóstico de Producción - Torneo La Negrita
+              <div
+                className={`w-3 h-3 rounded-full ${debugInfo?.supabase?.url && debugInfo?.supabase?.key ? "bg-green-500" : "bg-red-500"}`}
+              />
+              Configuración de Supabase
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex gap-4">
-              <Button onClick={runDebug} disabled={loading} className="bg-blue-600 hover:bg-blue-700">
-                {loading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Diagnosticando...
-                  </>
-                ) : (
-                  <>
-                    <Database className="w-4 h-4 mr-2" />
-                    Ejecutar Diagnóstico
-                  </>
-                )}
-              </Button>
-
-              <Button
-                onClick={runTestRegistration}
-                disabled={testLoading || !debugInfo?.connection?.success}
-                variant="outline"
-                className="border-green-600 text-green-400 hover:bg-green-600 hover:text-white bg-transparent"
-              >
-                {testLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    Probando...
-                  </>
-                ) : (
-                  <>
-                    <TestTube className="w-4 h-4 mr-2" />
-                    Probar Registro
-                  </>
-                )}
-              </Button>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              {debugInfo?.supabase?.url ? (
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500" />
+              )}
+              <span className="text-slate-300">URL: {debugInfo?.supabase?.url ? "Configurada" : "Faltante"}</span>
             </div>
+            <div className="flex items-center gap-2">
+              {debugInfo?.supabase?.key ? (
+                <CheckCircle className="w-5 h-5 text-green-500" />
+              ) : (
+                <XCircle className="w-5 h-5 text-red-500" />
+              )}
+              <span className="text-slate-300">API Key: {debugInfo?.supabase?.key ? "Configurada" : "Faltante"}</span>
+            </div>
+            {debugInfo?.supabase?.urlValue && (
+              <div className="text-sm text-slate-400">URL Preview: {debugInfo.supabase.urlValue}</div>
+            )}
+          </CardContent>
+        </Card>
 
-            {error && (
-              <div className="bg-red-900/20 border border-red-700 rounded p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <AlertTriangle className="w-5 h-5 text-red-400" />
-                  <span className="text-red-300 font-medium">Error de Diagnóstico</span>
+        {/* Database Connection */}
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <div
+                className={`w-3 h-3 rounded-full ${debugInfo?.connection?.success ? "bg-green-500" : "bg-red-500"}`}
+              />
+              Conexión a Base de Datos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {debugInfo?.connection?.success ? (
+              <div className="flex items-center gap-2 text-green-400">
+                <CheckCircle className="w-5 h-5" />
+                <span>Conexión exitosa</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-red-400">
+                  <XCircle className="w-5 h-5" />
+                  <span>Error de conexión</span>
                 </div>
-                <p className="text-red-300 text-sm">{error}</p>
+                {debugInfo?.connection?.error && (
+                  <div className="bg-red-900/20 border border-red-500 rounded p-3">
+                    <p className="text-red-300 text-sm">{debugInfo.connection.error}</p>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
         </Card>
 
-        {debugInfo && (
-          <>
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Estado del Sistema</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-300">Entorno:</span>
-                    <Badge variant="outline" className="text-blue-400 border-blue-400">
-                      {debugInfo.environment || "unknown"}
-                    </Badge>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-300">URL Supabase:</span>
-                    {debugInfo.supabase?.url ? (
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-400" />
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-300">API Key:</span>
-                    {debugInfo.supabase?.key ? (
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                    ) : (
-                      <XCircle className="w-5 h-5 text-red-400" />
-                    )}
-                  </div>
+        {/* Table Access */}
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <div
+                className={`w-3 h-3 rounded-full ${debugInfo?.tableAccess?.success ? "bg-green-500" : "bg-red-500"}`}
+              />
+              Acceso a Tabla de Jugadores
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {debugInfo?.tableAccess?.success ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-green-400">
+                  <CheckCircle className="w-5 h-5" />
+                  <span>Acceso exitoso</span>
                 </div>
-
-                {debugInfo.supabase?.urlValue && (
-                  <div className="text-xs text-slate-500">URL: {debugInfo.supabase.urlValue}</div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Conexión a Base de Datos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 mb-4">
-                  {debugInfo.connection?.success ? (
-                    <>
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                      <span className="text-green-400">Conexión exitosa</span>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-5 h-5 text-red-400" />
-                      <span className="text-red-400">Error de conexión</span>
-                    </>
-                  )}
+                <div className="text-slate-300">
+                  <p>Jugadores registrados: {debugInfo.tableAccess.count || 0}</p>
+                  <p>Tiene datos: {debugInfo.tableAccess.hasData ? "Sí" : "No"}</p>
                 </div>
-
-                {debugInfo.connection?.error && (
-                  <div className="bg-red-900/20 border border-red-700 rounded p-3">
-                    <p className="text-red-300 text-sm">{debugInfo.connection.error}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Acceso a Tabla de Jugadores</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-2 mb-4">
-                  {debugInfo.tableAccess?.success ? (
-                    <>
-                      <CheckCircle className="w-5 h-5 text-green-400" />
-                      <span className="text-green-400">Acceso exitoso</span>
-                      <Badge variant="outline" className="text-blue-400 border-blue-400">
-                        <Users className="w-3 h-3 mr-1" />
-                        {debugInfo.tableAccess.count || 0} registros
-                      </Badge>
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="w-5 h-5 text-red-400" />
-                      <span className="text-red-400">Error de acceso</span>
-                    </>
-                  )}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-red-400">
+                  <XCircle className="w-5 h-5" />
+                  <span>Error de acceso</span>
                 </div>
-
-                {debugInfo.tableAccess?.error && (
-                  <div className="bg-red-900/20 border border-red-700 rounded p-3">
+                {debugInfo?.tableAccess?.error && (
+                  <div className="bg-red-900/20 border border-red-500 rounded p-3">
                     <p className="text-red-300 text-sm">{debugInfo.tableAccess.error}</p>
                   </div>
                 )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-                {debugInfo.sampleData && debugInfo.sampleData.length > 0 && (
-                  <div className="mt-4">
-                    <h4 className="text-slate-300 font-medium mb-2">Últimos registros:</h4>
-                    <div className="space-y-2">
-                      {debugInfo.sampleData.map((player, index) => (
-                        <div key={index} className="bg-slate-700/50 rounded p-2 text-sm">
-                          <div className="text-white">{player.name}</div>
-                          <div className="text-slate-400">{player.email}</div>
-                          <div className="text-slate-500 text-xs">
-                            {player.created_at ? new Date(player.created_at).toLocaleString() : "No date"}
-                          </div>
-                        </div>
-                      ))}
+        {/* Sample Data */}
+        {debugInfo?.sampleData && debugInfo.sampleData.length > 0 && (
+          <Card className="bg-slate-800 border-slate-700">
+            <CardHeader>
+              <CardTitle className="text-white">Datos de Muestra</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {debugInfo.sampleData.map((player, index) => (
+                  <div key={index} className="bg-slate-700 rounded p-3">
+                    <div className="text-slate-300">
+                      <p>
+                        <strong>Nombre:</strong> {player.name}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {player.email}
+                      </p>
+                      <p>
+                        <strong>Fecha:</strong> {new Date(player.created_at).toLocaleString()}
+                      </p>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-slate-800 border-slate-700">
-              <CardHeader>
-                <CardTitle className="text-white">Información de Diagnóstico</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-xs text-slate-400">
-                  Última actualización:{" "}
-                  {debugInfo.timestamp ? new Date(debugInfo.timestamp).toLocaleString() : "No disponible"}
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        {!debugInfo && !loading && !error && (
-          <Card className="bg-slate-800 border-slate-700">
-            <CardContent className="text-center py-8">
-              <p className="text-slate-400">Haz clic en "Ejecutar Diagnóstico" para comenzar</p>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
+
+        {/* Test Registration */}
+        <Card className="bg-slate-800 border-slate-700">
+          <CardHeader>
+            <CardTitle className="text-white">Prueba de Registro</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={runTestRegistration} disabled={testLoading} className="bg-blue-600 hover:bg-blue-700">
+              {testLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Probando...
+                </>
+              ) : (
+                "Ejecutar Prueba de Registro"
+              )}
+            </Button>
+
+            {testResult && (
+              <div
+                className={`border rounded p-3 ${testResult.success ? "border-green-500 bg-green-900/20" : "border-red-500 bg-red-900/20"}`}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  {testResult.success ? (
+                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-400" />
+                  )}
+                  <span className={testResult.success ? "text-green-400" : "text-red-400"}>
+                    {testResult.success ? "Prueba exitosa" : "Prueba fallida"}
+                  </span>
+                </div>
+                {testResult.error && <p className="text-red-300 text-sm">{testResult.error}</p>}
+                {testResult.details && <p className="text-slate-400 text-sm">{testResult.details}</p>}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

@@ -1,17 +1,28 @@
 import { createClient } from "@supabase/supabase-js"
 
-let supabaseClient: ReturnType<typeof createClient> | null = null
+let supabaseClient: any = null
+
+export function getSupabaseConfig() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  return {
+    url,
+    key,
+    hasUrl: !!url,
+    hasKey: !!key,
+  }
+}
 
 export function getSupabaseClient() {
   if (!supabaseClient) {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    const config = getSupabaseConfig()
 
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error("Missing Supabase environment variables")
+    if (!config.url || !config.key) {
+      throw new Error("Missing Supabase configuration")
     }
 
-    supabaseClient = createClient(supabaseUrl, supabaseKey, {
+    supabaseClient = createClient(config.url, config.key, {
       auth: {
         persistSession: false,
       },
@@ -21,11 +32,26 @@ export function getSupabaseClient() {
   return supabaseClient
 }
 
-export function getSupabaseConfig() {
-  return {
-    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+export async function testSupabaseConnection() {
+  try {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase.from("players").select("id").limit(1)
+
+    if (error) {
+      return {
+        success: false,
+        error: error.message,
+      }
+    }
+
+    return {
+      success: true,
+      data,
+    }
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message,
+    }
   }
 }
