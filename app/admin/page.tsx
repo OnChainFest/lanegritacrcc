@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { SimpleAuthGuard } from "@/components/simple-auth-guard"
@@ -65,7 +64,7 @@ export default function AdminPage() {
           const playersData = await playersRes.json()
           const statsData = await statsRes.json()
 
-          setPlayers(playersData)
+          setPlayers(playersData.players || [])
           setStats(statsData)
 
           if (silent) {
@@ -170,16 +169,16 @@ export default function AdminPage() {
 
   const getPaymentStatusBadge = (status: string) => {
     switch (status) {
-      case "confirmed":
+      case "verified":
         return (
-          <Badge className="bg-green-500">
+          <Badge className="bg-green-500 text-white">
             <CheckCircle className="w-3 h-3 mr-1" />
-            Confirmado
+            Verificado
           </Badge>
         )
       case "pending":
         return (
-          <Badge variant="outline">
+          <Badge variant="outline" className="border-orange-500 text-orange-600">
             <Clock className="w-3 h-3 mr-1" />
             Pendiente
           </Badge>
@@ -245,20 +244,16 @@ export default function AdminPage() {
                 </div>
 
                 {/* Refresh interval */}
-                <Select
-                  value={refreshInterval.toString()}
-                  onValueChange={(value) => setRefreshInterval(Number.parseInt(value))}
+                <select
+                  value={refreshInterval}
+                  onChange={(e) => setRefreshInterval(Number(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-md text-sm"
                 >
-                  <SelectTrigger className="w-24">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="30">30s</SelectItem>
-                    <SelectItem value="60">1min</SelectItem>
-                    <SelectItem value="120">2min</SelectItem>
-                    <SelectItem value="300">5min</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value={30}>30s</option>
+                  <option value={60}>1min</option>
+                  <option value={120}>2min</option>
+                  <option value={300}>5min</option>
+                </select>
 
                 {/* Manual refresh button */}
                 <Button onClick={handleManualRefresh} disabled={refreshing} variant="outline" size="sm">
@@ -294,7 +289,7 @@ export default function AdminPage() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pagos Confirmados</CardTitle>
+                  <CardTitle className="text-sm font-medium">Pagos Verificados</CardTitle>
                   <CheckCircle className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
@@ -356,9 +351,9 @@ export default function AdminPage() {
                             <Button size="sm" variant="outline" onClick={() => setSelectedPlayer(player)}>
                               <Eye className="w-4 h-4" />
                             </Button>
-                            {player.payment_status !== "confirmed" && (
-                              <Button size="sm" onClick={() => updatePaymentStatus(player.id, "confirmed")}>
-                                Confirmar Pago
+                            {player.payment_status !== "verified" && (
+                              <Button size="sm" onClick={() => updatePaymentStatus(player.id, "verified")}>
+                                Verificar Pago
                               </Button>
                             )}
                           </div>
@@ -425,7 +420,7 @@ export default function AdminPage() {
                 <CardContent>
                   <div className="space-y-4">
                     {players
-                      .filter((p) => p.payment_status !== "confirmed")
+                      .filter((p) => p.payment_status !== "verified")
                       .map((player) => (
                         <div key={player.id} className="flex items-center justify-between p-4 border rounded-lg">
                           <div>
@@ -438,8 +433,8 @@ export default function AdminPage() {
                           <div className="flex items-center gap-4">
                             {getPaymentStatusBadge(player.payment_status)}
                             <div className="flex gap-2">
-                              <Button size="sm" onClick={() => updatePaymentStatus(player.id, "confirmed")}>
-                                Confirmar
+                              <Button size="sm" onClick={() => updatePaymentStatus(player.id, "verified")}>
+                                Verificar
                               </Button>
                               <Button
                                 size="sm"

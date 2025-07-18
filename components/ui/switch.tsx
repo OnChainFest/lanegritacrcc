@@ -3,41 +3,42 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 
-export interface SwitchProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  /**
-   * Texto opcional que se muestra a la derecha del interruptor.
-   */
-  label?: React.ReactNode
+export interface SwitchProps {
+  checked?: boolean
+  onCheckedChange?: (checked: boolean) => void
+  disabled?: boolean
+  className?: string
+  id?: string
 }
 
-/**
- * Switch accesible sin dependencias externas.
- *
- *   <Switch checked={autoRefresh} onChange={e => setAutoRefresh(e.target.checked)} />
- */
-export const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(({ className, label, ...props }, ref) => {
-  return (
-    <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-      <input type="checkbox" ref={ref} className="peer sr-only" {...props} />
-      {/* Track */}
-      <span
+const Switch = React.forwardRef<HTMLButtonElement, SwitchProps>(
+  ({ className, checked = false, onCheckedChange, disabled = false, id, ...props }, ref) => {
+    return (
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        disabled={disabled}
+        id={id}
+        ref={ref}
         className={cn(
-          "w-10 h-6 rounded-full transition-colors",
-          "peer-checked:bg-blue-600 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-blue-500",
-          "bg-gray-300 dark:bg-gray-600",
+          "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
+          checked ? "bg-primary" : "bg-input",
           className,
         )}
+        onClick={() => onCheckedChange?.(!checked)}
+        {...props}
       >
-        {/* Thumb */}
         <span
           className={cn(
-            "block w-4 h-4 bg-white rounded-full shadow transition-transform translate-x-1 translate-y-1",
-            "peer-checked:translate-x-5",
+            "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform",
+            checked ? "translate-x-5" : "translate-x-0",
           )}
         />
-      </span>
-      {label && <span className="text-sm">{label}</span>}
-    </label>
-  )
-})
+      </button>
+    )
+  },
+)
 Switch.displayName = "Switch"
+
+export { Switch }
