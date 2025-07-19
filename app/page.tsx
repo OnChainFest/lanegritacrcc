@@ -61,8 +61,8 @@ export default function TorneoLaNegritaLanding() {
         title: "Precios de Inscripción",
         national: "Jugadores Nacionales",
         international: "Jugadores Extranjeros",
-        earlyBird: "Hasta el 19 de Julio",
-        regular: "Después del 20 de Julio",
+        earlyBird: "Hasta el 23 de Julio",
+        regular: "Después del 24 de Julio",
         includes: "Incluye 2 series de 3 juegos cada una",
       },
       sponsors: {

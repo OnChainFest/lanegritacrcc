@@ -770,11 +770,11 @@ const Step2: React.FC<Step2Props> = ({
             <p className="text-blue-800 text-sm">
               {isEarlyBird ? (
                 <>
-                  Precio hasta el 19 de julio: <strong>₡36,000</strong> (incluye 2 series)
+                  Precio hasta el 23 de julio: <strong>₡36,000</strong> (incluye 2 series)
                 </>
               ) : (
                 <>
-                  Precio después del 19 de julio: <strong>₡42,000</strong> (incluye 2 series)
+                  Precio después del 24 de julio: <strong>₡42,000</strong> (incluye 2 series)
                 </>
               )}
             </p>
@@ -785,11 +785,11 @@ const Step2: React.FC<Step2Props> = ({
             <p className="text-blue-800 text-sm">
               {isEarlyBird ? (
                 <>
-                  Precio hasta el 19 de julio: <strong>$70 USD</strong> (incluye 2 series)
+                  Precio hasta el 23 de julio: <strong>$70 USD</strong> (incluye 2 series)
                 </>
               ) : (
                 <>
-                  Precio después del 19 de julio: <strong>$80 USD</strong> (incluye 2 series)
+                  Precio después del 24 de julio: <strong>$80 USD</strong> (incluye 2 series)
                 </>
               )}
             </p>
