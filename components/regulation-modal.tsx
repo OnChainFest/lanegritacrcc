@@ -31,7 +31,7 @@ REGLAMENTO TORNEO LA NEGRITA 2025
    • 1era línea de 300 o línea más alta del torneo
    • Serie alta y ganador maratón de strikes
 
-4. Precio inscripción $70 hasta el 23 de julio.
+4. Precio inscripción $70 hasta el 19 de julio.
    Posterior a esta fecha $80. Incluye jugar 2 series.
    Participación en categoría scratch cuesta $22 adicionales.
 
@@ -100,25 +100,25 @@ Al realizar el pago incluir en el detalle de la transferencia la siguiente infor
 Agradecemos su puntualidad y colaboración.
 
 PAQUETES PARA JUGADORES DE COSTA RICA:
-HASTA 23 JULIO:
+HASTA 20 JULIO:
 • INSCRIPCIÓN: ¢36,000 (Incluye 2 series, 3 juegos c/u)
 • INSC + 3 REENGANCHES: ¢65,000
 • INSC + 4 REENGANCHES: ¢72,000
 
-DESPUÉS 24 JULIO:
+DESPUÉS 20 JULIO:
 • INSCRIPCIÓN: ¢42,000 (Incluye 2 series, 3 juegos c/u)
 • INSC + 3 REENGANCHES: ¢71,000
 • INSC + 4 REENGANCHES: ¢78,000
 
 PAQUETES PARA JUGADORES EXTRANJEROS:
-HASTA 23 JULIO:
+HASTA 20 JULIO:
 • INSCRIPCIÓN: $70 (Incluye 2 series, 3 juegos c/u)
 • INSC + 3 REENGANCHES: $122
 • INSC + 5 REENGANCHES: $153
 • INSC + 8 REENGANCHES: $201
 • +DESESPERADO: Agregar $22
 
-DESPUÉS 24 JULIO:
+DESPUÉS 20 JULIO:
 • INSCRIPCIÓN: $80 (Incluye 2 series, 3 juegos c/u)
 • INSC + 3 REENGANCHES: $132
 • INSC + 5 REENGANCHES: $163

@@ -232,10 +232,10 @@ export async function GET() {
     status: "active",
     tournament_dates: "2 al 9 de agosto 2025",
     pricing: {
-      early_bird_usd: "$70 hasta 23 de julio",
-      regular_usd: "$80 después del 24 de julio",
-      early_bird_crc: "₡36,000 hasta 23 de julio",
-      regular_crc: "₡42,000 después del 24 de julio",
+      early_bird_usd: "$70 hasta 19 de julio",
+      regular_usd: "$80 después del 19 de julio",
+      early_bird_crc: "₡36,000 hasta 19 de julio",
+      regular_crc: "₡42,000 después del 19 de julio",
     },
   })
 }

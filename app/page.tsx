@@ -62,7 +62,7 @@ export default function TorneoLaNegritaLanding() {
         national: "Jugadores Nacionales",
         international: "Jugadores Extranjeros",
         earlyBird: "Hasta el 23 de Julio",
-        regular: "Después del 24 de Julio",
+        regular: "Después del 23 de Julio",
         includes: "Incluye 2 series de 3 juegos cada una",
       },
       sponsors: {
@@ -114,8 +114,8 @@ export default function TorneoLaNegritaLanding() {
         title: "Registration Prices",
         national: "National Players",
         international: "International Players",
-        earlyBird: "Until July 19th",
-        regular: "After July 20th",
+        earlyBird: "Until July 23th",
+        regular: "After July 23th",
         includes: "Includes 2 series of 3 games each",
       },
       sponsors: {
@@ -144,6 +144,11 @@ export default function TorneoLaNegritaLanding() {
     { name: "Sastrería Scaglietti", src: "/images/sponsors/scaglietti-large.png", large: true, extraLarge: true },
     { name: "Timsun", src: "/images/sponsors/timsun-2.png" },
     { name: "OnchainFest", src: "/images/sponsors/onchain-fest-3.png" },
+    { name: "Tropical", src: "/images/sponsors/tropical.png" },
+    { name: "Cristal", src: "/images/sponsors/cristal.png" },
+    { name: "MAXXX ENERGI", src: "/images/sponsors/maxxx-energi.png" },
+    { name: "Facio&Cañas", src: "/images/sponsors/facio-canas.png" },
+    { name: "Bavaria", src: "/images/sponsors/bavaria.png" },
   ]
 
   return (
@@ -522,7 +527,7 @@ export default function TorneoLaNegritaLanding() {
               transform: translateX(0);
             }
             100% {
-              transform: translateX(calc(-200px * 14 - 40px * 14)); /* width + margin per sponsor * number of sponsors */
+              transform: translateX(calc(-200px * 19 - 40px * 19)); /* width + margin per sponsor * number of sponsors */
             }
           }
 
@@ -543,7 +548,7 @@ export default function TorneoLaNegritaLanding() {
                 transform: translateX(0);
               }
               100% {
-                transform: translateX(calc(-150px * 14 - 30px * 14));
+                transform: translateX(calc(-150px * 19 - 30px * 19));
               }
             }
           }
@@ -564,7 +569,7 @@ export default function TorneoLaNegritaLanding() {
                 transform: translateX(0);
               }
               100% {
-                transform: translateX(calc(-120px * 14 - 20px * 14));
+                transform: translateX(calc(-120px * 19 - 20px * 19));
               }
             }
           }

@@ -7,11 +7,11 @@ import { QrCode, Share2, Copy, Facebook, Twitter, Mail, MessageCircle, X, Send, 
 import Image from "next/image"
 
 interface QRShareModalProps {
-  language: "es" | "en"
+  language?: "es" | "en"
   children?: ReactNode
 }
 
-export function QRShareModal({ language, children }: QRShareModalProps) {
+export function QRShareModal({ language = "es", children }: QRShareModalProps) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [qrCodeUrl, setQrCodeUrl] = useState("")
@@ -35,7 +35,9 @@ export function QRShareModal({ language, children }: QRShareModalProps) {
     },
   }
 
-  const t = content[language]
+  // Safe language fallback
+  const lang = language === "en" ? "en" : "es"
+  const t = content[lang]
   const currentUrl = typeof window !== "undefined" ? window.location.href : "https://torneo-la-negrita.vercel.app"
 
   // Generate QR code URL using QR Server API
