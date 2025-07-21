@@ -5,17 +5,28 @@ export async function POST(request: NextRequest) {
     console.log("🔐 Simple Login: Iniciando proceso...")
 
     const body = await request.json()
-    const { username } = body
+    const { username, password } = body
 
     console.log("🔐 Simple Login: Username recibido:", username)
+    console.log("🔐 Simple Login: Password recibido:", password ? "***" : "no password")
 
-    if (!username) {
-      return NextResponse.json({ success: false, error: "Username es requerido" }, { status: 400 })
+    if (!username || !password) {
+      return NextResponse.json({ success: false, error: "Username y password son requeridos" }, { status: 400 })
     }
 
-    // Verificación simple - solo username "admin"
-    if (username.toLowerCase() !== "admin") {
-      return NextResponse.json({ success: false, error: "Usuario incorrecto" }, { status: 401 })
+    // Verificación con las credenciales exactas del environment
+    const adminUsername = process.env.ADMIN_USERNAME || "admin"
+    const adminPassword = process.env.ADMIN_PASSWORD || "supersecreto"
+
+    console.log("🔐 Simple Login: Comparando con admin username:", adminUsername)
+    console.log("🔐 Simple Login: Admin password configurado:", adminPassword ? "SI" : "NO")
+
+    // Verificación exacta de credenciales
+    if (username !== adminUsername || password !== adminPassword) {
+      console.log("🔐 Simple Login: Credenciales incorrectas")
+      console.log("🔐 Simple Login: Username match:", username === adminUsername)
+      console.log("🔐 Simple Login: Password match:", password === adminPassword)
+      return NextResponse.json({ success: false, error: "Credenciales incorrectas" }, { status: 401 })
     }
 
     console.log("🔐 Simple Login: Credenciales válidas")

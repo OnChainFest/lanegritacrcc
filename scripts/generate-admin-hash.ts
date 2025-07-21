@@ -1,21 +1,22 @@
-// Script para generar el hash de la contraseña del administrador
 import bcrypt from "bcryptjs"
 
-async function generateAdminHash() {
-  const password = "TorneoLaNegrita2025!" // Cambiar por la contraseña deseada
+async function generateHash() {
+  const password = "supersecreto"
   const saltRounds = 12
 
-  const hash = await bcrypt.hash(password, saltRounds)
+  try {
+    const hash = await bcrypt.hash(password, saltRounds)
+    console.log("Password:", password)
+    console.log("Hash:", hash)
 
-  console.log("=".repeat(50))
-  console.log("ADMIN PASSWORD HASH GENERATOR")
-  console.log("=".repeat(50))
-  console.log(`Password: ${password}`)
-  console.log(`Hash: ${hash}`)
-  console.log("=".repeat(50))
-  console.log("Add this to your .env file:")
-  console.log(`ADMIN_PASSWORD_HASH=${hash}`)
-  console.log("=".repeat(50))
+    // Verify the hash works
+    const isValid = await bcrypt.compare(password, hash)
+    console.log("Hash verification:", isValid)
+
+    return hash
+  } catch (error) {
+    console.error("Error generating hash:", error)
+  }
 }
 
-generateAdminHash().catch(console.error)
+generateHash()
