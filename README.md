@@ -47,7 +47,7 @@ Plataforma oficial para la gestión del Torneo de Boliche **La Negrita 2025** de
 
 ## 🔧 Instalación Local
 
-```bash
+\`\`\`bash
 # Clonar el repositorio
 git clone https://github.com/OnChainFest/lanegritacrcc.git
 cd lanegritacrcc
@@ -62,7 +62,7 @@ cp .env.example .env.local
 # Ejecutar aplicación en modo desarrollo
 npm run dev
 
-```
+\`\`\`
 
 ## 🚀 Despliegue en Producción (Vercel)
 
