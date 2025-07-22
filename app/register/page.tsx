@@ -112,21 +112,21 @@ export default function RegisterPage() {
     }))
   }
 
-  // Pricing calculation with guaranteed July 23rd deadline
+  // Pricing calculation with guaranteed July 22nd deadline
   const calculateTotal = () => {
     const now = new Date()
-    const earlyBirdDeadline = new Date("2025-07-23T23:59:59") // Explicit time to ensure it works until end of July 23rd
+    const earlyBirdDeadline = new Date("2025-07-22T23:59:59")
 
     // Count total reenganches
     let totalReenganches = 0
-    if (playerData.extras.reenganche) totalReenganches += 3 // Base reenganche package is 3
-    if (playerData.extras.marathon) totalReenganches += 2 // Marathon adds 2 more (total 5)
-    if (playerData.extras.desperate) totalReenganches += 3 // Desperate adds 3 more (total 8)
+    if (playerData.extras.reenganche) totalReenganches = 3 // Base reenganche package is 3
+    if (playerData.extras.marathon) totalReenganches = 5 // Marathon is 5 total (for internationals)
+    if (playerData.extras.desperate) totalReenganches = 8 // Desperate is 8 total (only for internationals)
 
-    // Base inscription price in USD - guaranteed pricing structure
+    // Base inscription price in USD
     const basePrice = now <= earlyBirdDeadline ? 70 : 80
 
-    // Package pricing for internationals (USD) - these prices are locked in
+    // Package pricing for internationals (USD) - matching the image exactly
     if (totalReenganches === 0) {
       // Just inscription
       let total = basePrice
@@ -135,17 +135,29 @@ export default function RegisterPage() {
       }
       return total
     } else if (totalReenganches === 3) {
-      // INSC + 3 reenganches - guaranteed package price
-      return now <= earlyBirdDeadline ? 122 : 132
+      // INSC + 3 reenganches package
+      let total = now <= earlyBirdDeadline ? 122 : 132
+      if (playerData.categories.scratch) {
+        total += 22
+      }
+      return total
     } else if (totalReenganches === 5) {
-      // INSC + 5 reenganches - guaranteed package price
-      return now <= earlyBirdDeadline ? 153 : 163
+      // INSC + 5 reenganches package
+      let total = now <= earlyBirdDeadline ? 153 : 163
+      if (playerData.categories.scratch) {
+        total += 22
+      }
+      return total
     } else if (totalReenganches === 8) {
-      // INSC + 8 reenganches (desesperado) - guaranteed package price
-      return now <= earlyBirdDeadline ? 201 : 210
+      // INSC + 8 reenganches (desesperado) package
+      let total = now <= earlyBirdDeadline ? 201 : 210
+      if (playerData.categories.scratch) {
+        total += 22
+      }
+      return total
     }
 
-    // Fallback to base price + scratch if selected
+    // Fallback
     let totalUSD = basePrice
     if (playerData.categories.scratch) {
       totalUSD += 22
@@ -155,17 +167,18 @@ export default function RegisterPage() {
 
   const calculateTotalCRC = () => {
     const now = new Date()
-    const earlyBirdDeadline = new Date("2025-07-23T23:59:59") // Explicit time to ensure it works until end of July 23rd
+    const earlyBirdDeadline = new Date("2025-07-22T23:59:59")
 
     // Count total reenganches
     let totalReenganches = 0
-    if (playerData.extras.reenganche) totalReenganches += 3
-    if (playerData.extras.marathon) totalReenganches += 2
+    if (playerData.extras.reenganche) totalReenganches = 3
+    if (playerData.extras.marathon) totalReenganches = 4 // Marathon is 4 reenganches (not 5)
+    // Note: desperate package is not available for nationals
 
-    // Base inscription price in CRC - guaranteed pricing structure
+    // Base inscription price in CRC
     const basePrice = now <= earlyBirdDeadline ? 36000 : 42000
 
-    // Package pricing for nationals (CRC) - these prices are locked in
+    // Package pricing for nationals (CRC) - matching the image exactly
     if (totalReenganches === 0) {
       // Just inscription
       let total = basePrice
@@ -174,14 +187,22 @@ export default function RegisterPage() {
       }
       return total
     } else if (totalReenganches === 3) {
-      // INSC + 3 reenganches - guaranteed package price
-      return now <= earlyBirdDeadline ? 65000 : 71000
-    } else if (totalReenganches === 5) {
-      // INSC + 5 reenganches - guaranteed package price
-      return now <= earlyBirdDeadline ? 72000 : 78000
+      // INSC + 3 reenganches package - exactly as shown in image
+      let total = now <= earlyBirdDeadline ? 65000 : 71000
+      if (playerData.categories.scratch) {
+        total += 11000
+      }
+      return total
+    } else if (totalReenganches === 4) {
+      // INSC + 4 reenganches package - exactly as shown in image
+      let total = now <= earlyBirdDeadline ? 72000 : 78000
+      if (playerData.categories.scratch) {
+        total += 11000
+      }
+      return total
     }
 
-    // Fallback to base price
+    // Fallback
     let total = basePrice
     if (playerData.categories.scratch) {
       total += 11000
@@ -792,7 +813,7 @@ const Step2: React.FC<Step2Props> = ({
   }
 
   const now = new Date()
-  const earlyBirdDeadline = new Date("2025-07-23T23:59:59") // Explicit time guarantee
+  const earlyBirdDeadline = new Date("2025-07-22T23:59:59") // Updated to July 22nd
   const isEarlyBird = now <= earlyBirdDeadline
 
   return (
@@ -804,50 +825,38 @@ const Step2: React.FC<Step2Props> = ({
         <h4 className="font-semibold text-blue-900 mb-2">Información de Precios</h4>
         <div className="bg-yellow-100 border border-yellow-300 rounded p-2 mb-3">
           <p className="text-xs text-yellow-800 font-medium">
-            ⏰ <strong>Precios garantizados hasta el 23 de julio de 2025 a las 11:59 PM</strong>
+            ⏰ <strong>Precios garantizados hasta el 22 de julio de 2025 a las 11:59 PM</strong>
           </p>
         </div>
+
         {playerData.country === "national" ? (
           <div className="space-y-2">
             <p className="text-blue-800 text-sm">
-              {isEarlyBird ? (
-                <>
-                  <strong>Hasta el 23 de julio:</strong>
-                </>
-              ) : (
-                <>
-                  <strong>Después del 23 de julio:</strong>
-                </>
-              )}
+              <strong>Precios para Nacionales (CRC):</strong>
             </p>
             <div className="text-sm space-y-1">
               <p>
-                • Inscripción: <strong>{isEarlyBird ? "₡36,000" : "₡42,000"}</strong> (incluye 2 series)
+                • Inscripción sola: <strong>{isEarlyBird ? "₡36,000" : "₡42,000"}</strong>
               </p>
               <p>
                 • Paquete 3 reenganches: <strong>{isEarlyBird ? "₡65,000" : "₡71,000"}</strong>
               </p>
               <p>
-                • Paquete 5 reenganches: <strong>{isEarlyBird ? "₡72,000" : "₡78,000"}</strong>
+                • Paquete 4 reenganches: <strong>{isEarlyBird ? "₡72,000" : "₡78,000"}</strong>
+              </p>
+              <p>
+                • Modalidad Scratch: <strong>+₡11,000</strong>
               </p>
             </div>
           </div>
         ) : (
           <div className="space-y-2">
             <p className="text-blue-800 text-sm">
-              {isEarlyBird ? (
-                <>
-                  <strong>Hasta el 23 de julio:</strong>
-                </>
-              ) : (
-                <>
-                  <strong>Después del 23 de julio:</strong>
-                </>
-              )}
+              <strong>Precios para Extranjeros (USD):</strong>
             </p>
             <div className="text-sm space-y-1">
               <p>
-                • Inscripción: <strong>{isEarlyBird ? "$70" : "$80"}</strong> (incluye 2 series)
+                • Inscripción sola: <strong>{isEarlyBird ? "$70" : "$80"}</strong>
               </p>
               <p>
                 • Paquete 3 reenganches: <strong>{isEarlyBird ? "$122" : "$132"}</strong>
@@ -858,14 +867,18 @@ const Step2: React.FC<Step2Props> = ({
               <p>
                 • Paquete 8 reenganches (desesperado): <strong>{isEarlyBird ? "$201" : "$210"}</strong>
               </p>
+              <p>
+                • Modalidad Scratch: <strong>+$22</strong>
+              </p>
             </div>
           </div>
         )}
-        <p className="text-blue-800 text-sm mt-2">Modalidad 700, series de 3 juegos</p>
-        <div className="mt-2 text-xs text-blue-700">
+        <div className="mt-3 text-xs text-blue-700 bg-blue-100 p-2 rounded">
           <p>
             <strong>Importante:</strong>
           </p>
+          <p>• Modalidad 700, series de 3 juegos</p>
+          <p>• La inscripción incluye 2 series</p>
           <p>• No se hace devolución de dinero</p>
           <p>• No se pueden pasar reenganches de un jugador a otro</p>
         </div>
@@ -932,8 +945,8 @@ const Step2: React.FC<Step2Props> = ({
             />
             <Label htmlFor="reenganche" className="font-body font-medium">
               {playerData.country === "national"
-                ? `Paquete 3 reenganches (${isEarlyBird ? "₡65,000" : "₡71,000"} total)`
-                : `Paquete 3 reenganches (${isEarlyBird ? "$122" : "$132"} total)`}
+                ? `Paquete 3 reenganches - Total: ${isEarlyBird ? "₡65,000" : "₡71,000"}`
+                : `Paquete 3 reenganches - Total: ${isEarlyBird ? "$122" : "$132"}`}
             </Label>
           </div>
 
@@ -944,7 +957,7 @@ const Step2: React.FC<Step2Props> = ({
               onCheckedChange={(checked) => {
                 handleExtraChange("marathon", checked as boolean)
                 if (checked) {
-                  // Marathon is 5 reenganches for both nationals and internationals
+                  // Marathon is 4 reenganches for nationals, 5 for internationals
                   handleExtraChange("reenganche", false)
                   handleExtraChange("desperate", false)
                 }
@@ -952,8 +965,8 @@ const Step2: React.FC<Step2Props> = ({
             />
             <Label htmlFor="marathon" className="font-body font-medium">
               {playerData.country === "national"
-                ? `Paquete 5 reenganches (${isEarlyBird ? "₡72,000" : "₡78,000"} total)`
-                : `Paquete 5 reenganches (${isEarlyBird ? "$153" : "$163"} total)`}
+                ? `Paquete 4 reenganches - Total: ${isEarlyBird ? "₡72,000" : "₡78,000"}`
+                : `Paquete 5 reenganches - Total: ${isEarlyBird ? "$153" : "$163"}`}
             </Label>
           </div>
 
@@ -973,15 +986,18 @@ const Step2: React.FC<Step2Props> = ({
                 }}
               />
               <Label htmlFor="desperate" className="font-body font-medium">
-                Paquete 8 reenganches - Desesperado ({isEarlyBird ? "$201" : "$210"} total)
+                Paquete 8 reenganches (Desesperado) - Total: {isEarlyBird ? "$201" : "$210"}
               </Label>
             </div>
           )}
         </div>
 
-        <div className="text-xs text-gray-600 mt-2">
+        <div className="text-xs text-gray-600 mt-2 bg-gray-50 p-2 rounded">
           <p>
             <strong>Nota:</strong> Los paquetes incluyen inscripción + reenganches. Solo puedes seleccionar un paquete.
+          </p>
+          <p>
+            <strong>Scratch:</strong> Se suma al precio del paquete seleccionado.
           </p>
         </div>
       </div>
@@ -1062,7 +1078,9 @@ const Step3: React.FC<Step3Props> = ({
             <h4 className="font-semibold text-gray-900">Paquetes Seleccionados</h4>
             <ul className="text-gray-700">
               {playerData.extras.reenganche && <li>• Paquete 3 reenganches</li>}
-              {playerData.extras.marathon && <li>• Paquete 5 reenganches</li>}
+              {playerData.extras.marathon && (
+                <li>• Paquete {playerData.country === "national" ? "4" : "5"} reenganches</li>
+              )}
               {playerData.extras.desperate && <li>• Paquete 8 reenganches (Desesperado)</li>}
             </ul>
           </div>
