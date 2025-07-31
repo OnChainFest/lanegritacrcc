@@ -12,10 +12,17 @@ export default async function PaymentsPage() {
   const supabase = getSupabase()
 
   // Ajusta los nombres de las columnas si son distintos en tu tabla `players`
-  const { data: players = [] } = await supabase
+  const { data: playersData, error } = await supabase
     .from("players")
     .select("id, full_name, nationality, package_size, scratch, created_at, amount_paid")
     .order("created_at", { ascending: true })
+
+  // Handle potential null data and errors
+  const players = playersData || []
+
+  if (error) {
+    console.error("Error fetching players:", error)
+  }
 
   return (
     <main className="p-6 max-w-screen-lg mx-auto">
