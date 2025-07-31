@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     console.log("📝 Full registration data received:", JSON.stringify(body, null, 2))
 
     // Step 1: Validate required fields
-    const requiredFields = ["name", "email", "nationality", "passport", "league", "gender", "country"]
+    const requiredFields = ["name", "email", "phone", "nationality", "passport", "league", "gender", "country"]
     const missingFields = requiredFields.filter((field) => !body[field] || body[field].toString().trim() === "")
 
     if (missingFields.length > 0) {
@@ -29,15 +29,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 2: Check categories
-    const categories = body.categories || {}
-    const hasCategory = Object.values(categories).some(Boolean)
-    if (!hasCategory) {
-      console.log("❌ No categories selected")
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(body.email)) {
       return NextResponse.json(
         {
           success: false,
-          error: "At least one category must be selected",
+          error: "Por favor ingresa un email válido",
         },
         { status: 400 },
       )
@@ -52,7 +50,7 @@ export async function POST(request: NextRequest) {
         .eq("email", body.email.toLowerCase().trim())
         .maybeSingle()
 
-      if (checkError) {
+      if (checkError && checkError.code !== "PGRST116") {
         console.error("❌ Error checking duplicates:", checkError)
         return NextResponse.json(
           {
@@ -87,23 +85,32 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Calculate amount due
+    const amountDue = calculatePlayerAmountDue(body)
+
     // Step 4: Prepare complete player data with individual columns
     const playerData = {
       name: body.name.trim(),
       email: body.email.toLowerCase().trim(),
+      phone: body.phone.trim(),
       nationality: body.nationality.trim(),
       passport: body.passport.trim(),
       league: body.league.trim(),
       played_in_2024: Boolean(body.played_in_2024),
       gender: body.gender,
       country: body.country,
+      categories: body.categories,
+      extras: body.extras,
       total_cost: Number(body.total_cost) || 0,
       currency: body.currency || "USD",
       payment_status: "pending",
+      amount_due: amountDue,
+      amount_paid: 0,
+      created_at: new Date().toISOString(),
       // Individual category columns (now they exist!)
-      handicap: Boolean(categories.handicap),
-      senior: Boolean(categories.senior),
-      scratch: Boolean(categories.scratch),
+      handicap: Boolean(body.categories?.handicap),
+      senior: Boolean(body.categories?.senior),
+      scratch: Boolean(body.categories?.scratch),
       // Individual extra columns
       reenganche: Boolean(body.extras?.reenganche),
       marathon: Boolean(body.extras?.marathon),
@@ -113,19 +120,15 @@ export async function POST(request: NextRequest) {
     console.log("💾 Attempting to insert complete player data:", {
       name: playerData.name,
       email: playerData.email,
+      phone: playerData.phone,
       nationality: playerData.nationality,
       country: playerData.country,
       total_cost: playerData.total_cost,
-      categories: {
-        handicap: playerData.handicap,
-        senior: playerData.senior,
-        scratch: playerData.scratch,
-      },
-      extras: {
-        reenganche: playerData.reenganche,
-        marathon: playerData.marathon,
-        desperate: playerData.desperate,
-      },
+      categories: playerData.categories,
+      extras: playerData.extras,
+      amount_due: playerData.amount_due,
+      amount_paid: playerData.amount_paid,
+      created_at: playerData.created_at,
     })
 
     // Insert the complete player data
@@ -133,7 +136,9 @@ export async function POST(request: NextRequest) {
       const { data: insertedPlayer, error: insertError } = await supabase
         .from("players")
         .insert([playerData])
-        .select("id, name, email, total_cost, country, handicap, senior, scratch, reenganche, marathon, desperate")
+        .select(
+          "id, name, email, phone, total_cost, country, handicap, senior, scratch, reenganche, marathon, desperate, amount_due, amount_paid, created_at",
+        )
         .single()
 
       if (insertError) {
@@ -176,17 +181,13 @@ export async function POST(request: NextRequest) {
         id: insertedPlayer.id,
         name: insertedPlayer.name,
         email: insertedPlayer.email,
+        phone: insertedPlayer.phone,
         total_cost: insertedPlayer.total_cost,
-        categories: {
-          handicap: insertedPlayer.handicap,
-          senior: insertedPlayer.senior,
-          scratch: insertedPlayer.scratch,
-        },
-        extras: {
-          reenganche: insertedPlayer.reenganche,
-          marathon: insertedPlayer.marathon,
-          desperate: insertedPlayer.desperate,
-        },
+        categories: insertedPlayer.categories,
+        extras: insertedPlayer.extras,
+        amount_due: insertedPlayer.amount_due,
+        amount_paid: insertedPlayer.amount_paid,
+        created_at: insertedPlayer.created_at,
       })
 
       return NextResponse.json({
@@ -196,6 +197,7 @@ export async function POST(request: NextRequest) {
           id: insertedPlayer.id,
           name: insertedPlayer.name,
           email: insertedPlayer.email,
+          phone: insertedPlayer.phone,
           total_cost: insertedPlayer.total_cost,
           country: insertedPlayer.country,
         },
@@ -238,4 +240,49 @@ export async function GET() {
       regular_crc: "₡42,000 después del 19 de julio",
     },
   })
+}
+
+function calculatePlayerAmountDue(playerData: any): number {
+  const registrationDate = new Date()
+  const earlyBirdDeadline = new Date("2025-07-22T23:59:59")
+  const isEarlyBird = registrationDate <= earlyBirdDeadline
+
+  // Check if player is national or international
+  const isNational = playerData.nationality === "Nacional" || playerData.country === "national"
+
+  let baseAmount = 0
+
+  if (isNational) {
+    // National pricing in CRC
+    if (playerData.extras?.reenganche) {
+      baseAmount = isEarlyBird ? 65000 : 71000
+    } else if (playerData.extras?.marathon) {
+      baseAmount = isEarlyBird ? 72000 : 78000
+    } else {
+      baseAmount = isEarlyBird ? 36000 : 42000
+    }
+
+    // Add scratch fee if applicable
+    if (playerData.categories?.scratch) {
+      baseAmount += 11000
+    }
+  } else {
+    // International pricing in USD
+    if (playerData.extras?.reenganche) {
+      baseAmount = isEarlyBird ? 122 : 132
+    } else if (playerData.extras?.marathon) {
+      baseAmount = isEarlyBird ? 153 : 163
+    } else if (playerData.extras?.desperate) {
+      baseAmount = isEarlyBird ? 201 : 210
+    } else {
+      baseAmount = isEarlyBird ? 70 : 80
+    }
+
+    // Add scratch fee if applicable
+    if (playerData.categories?.scratch) {
+      baseAmount += 22
+    }
+  }
+
+  return Math.round(baseAmount)
 }

@@ -1,22 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getSupabaseClient } from "@/lib/supabase-client"
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
 export async function GET(request: NextRequest) {
-  console.log("📊 Tournament stats API called")
+  console.log("📊 Tournament Stats API called")
 
   try {
-    const supabase = getSupabaseClient()
+    console.log("🔄 Fetching tournament stats...")
 
-    // Get all players to calculate stats
-    const { data: players, error } = await supabase.from("players").select("*")
+    // Get all players
+    const { data: players, error: playersError } = await supabase.from("players").select("*")
 
-    if (error) {
-      console.error("❌ Error fetching players for stats:", error)
+    if (playersError) {
+      console.error("❌ Error fetching players:", playersError)
       return NextResponse.json(
         {
           success: false,
-          error: "Failed to fetch tournament stats",
-          details: error.message,
+          error: playersError.message,
         },
         { status: 500 },
       )
@@ -24,25 +25,44 @@ export async function GET(request: NextRequest) {
 
     // Calculate stats
     const totalPlayers = players?.length || 0
-    const verifiedPlayers = players?.filter((p) => p.payment_status === "verified").length || 0
-    const pendingPlayers = players?.filter((p) => p.payment_status === "pending").length || 0
-    const totalRevenue = players?.reduce((sum, p) => sum + (p.total_cost || 0), 0) || 0
+    let verifiedPlayers = 0
+    let pendingPlayers = 0
+    let totalRevenueUSD = 0
 
-    const stats = {
-      total_players: totalPlayers,
-      verified_players: verifiedPlayers,
-      pending_players: pendingPlayers,
-      total_revenue: totalRevenue,
-    }
+    console.log(`📊 Processing ${totalPlayers} players...`)
 
-    console.log("📊 Tournament stats calculated:", stats)
+    players?.forEach((player) => {
+      // Count verified vs pending players
+      if (player.payment_status === "verified") {
+        verifiedPlayers++
+      } else {
+        pendingPlayers++
+      }
+
+      // Calculate revenue - count all payments with amount > 0
+      // All amounts are already in USD
+      const amountPaid = player.amount_paid || 0
+      if (amountPaid > 0) {
+        console.log(`💰 Player ${player.name}: $${amountPaid} USD (Status: ${player.payment_status})`)
+        totalRevenueUSD += amountPaid
+      }
+    })
+
+    console.log(`📊 Final Stats:`)
+    console.log(`   - Total players: ${totalPlayers}`)
+    console.log(`   - Verified: ${verifiedPlayers}`)
+    console.log(`   - Pending: ${pendingPlayers}`)
+    console.log(`   - Total revenue in USD: $${totalRevenueUSD.toLocaleString()}`)
 
     return NextResponse.json({
       success: true,
-      ...stats,
+      total_players: totalPlayers,
+      verified_players: verifiedPlayers,
+      pending_players: pendingPlayers,
+      total_revenue: totalRevenueUSD,
     })
   } catch (error: any) {
-    console.error("💥 Tournament stats error:", error)
+    console.error("💥 Tournament Stats API error:", error)
     return NextResponse.json(
       {
         success: false,

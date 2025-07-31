@@ -25,10 +25,13 @@ import {
   AlertCircle,
   Wifi,
   WifiOff,
+  Package,
 } from "lucide-react"
 import { TournamentResults } from "@/components/tournament-results"
 import { TournamentBrackets } from "@/components/tournament-brackets"
 import Image from "next/image"
+import { PaymentModal } from "@/components/payment-modal"
+import { determinePackageFromAmount, formatCurrency } from "@/lib/payment-utils"
 
 interface Player {
   id: string
@@ -37,10 +40,36 @@ interface Player {
   phone: string
   emergency_contact: string
   emergency_phone: string
-  payment_status: "pending" | "verified"
+  payment_status: "pending" | "verified" | "partial"
   created_at: string
   qr_validated: boolean
   wallet_address?: string
+  nationality?: string
+  country?: string
+  package_type?: string
+  scratch_mode?: boolean
+  amount_paid?: number
+  currency?: string
+  payment_method?: string
+  payment_notes?: string
+  payment_updated_at?: string
+  package_details?: string
+  category_details?: string
+  payment_display?: string
+  payment_details?: {
+    package_type: string
+    category: string
+    amount: number
+    currency: string
+    formatted_amount: string
+  }
+  category_a?: boolean
+  category_b?: boolean
+  category_c?: boolean
+  category_senior?: boolean
+  category_super_senior?: boolean
+  category_master?: boolean
+  category_female?: boolean
 }
 
 interface TournamentStats {
@@ -69,6 +98,7 @@ export default function AdminPage() {
   const [isOnline, setIsOnline] = useState(true)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const { toast } = useToast()
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
 
   // Monitor connection status
   useEffect(() => {
@@ -334,12 +364,142 @@ export default function AdminPage() {
     return name.toLowerCase().includes(search) || email.toLowerCase().includes(search) || phone.includes(searchTerm)
   })
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("es-CR", {
-      style: "currency",
-      currency: "CRC",
-    }).format(amount)
+  const formatPaymentAmount = (player: Player) => {
+    const amount = player.amount_paid || 0
+    if (amount === 0) return "$0.00"
+    return formatCurrency(amount)
   }
+
+  // Función para determinar qué paquete pagó realmente la persona
+  const getPaidPackageInfo = (player: Player) => {
+    const amount = player.amount_paid || 0
+    const currency = player.currency || "USD"
+    const isNational = player.nationality === "Nacional" || player.country === "national"
+
+    if (amount === 0) {
+      return {
+        type: "none",
+        name: "Sin Pago",
+        color: "bg-red-900/50 text-red-300 border-red-700",
+        description: "No ha realizado ningún pago",
+      }
+    }
+
+    const packageInfo = determinePackageFromAmount(amount, currency, isNational, player.created_at)
+
+    let color = "bg-blue-900/50 text-blue-300 border-blue-700"
+    if (packageInfo.type === "package8") color = "bg-purple-900/50 text-purple-300 border-purple-700"
+    else if (packageInfo.type === "package5") color = "bg-green-900/50 text-green-300 border-green-700"
+    else if (packageInfo.type === "package4") color = "bg-amber-900/50 text-amber-300 border-amber-700"
+    else if (packageInfo.type === "package3") color = "bg-blue-900/50 text-blue-300 border-blue-700"
+    else if (packageInfo.type === "basic") color = "bg-slate-600/50 text-slate-400 border-slate-500"
+    else if (packageInfo.type === "custom") color = "bg-orange-900/50 text-orange-300 border-orange-700"
+
+    return { ...packageInfo, color }
+  }
+
+  const getRegisteredPackageInfo = (player: Player) => {
+    const isNational = player.nationality === "Nacional" || player.country === "national"
+    const packageType = player.package_type || "basic"
+    const hasScratch = player.scratch_mode || false
+    const registrationDate = new Date(player.created_at)
+    const earlyBirdDeadline = new Date("2025-07-22T23:59:59.999Z")
+    const isEarlyBird = registrationDate <= earlyBirdDeadline
+
+    let packageInfo = {
+      name: "Básico",
+      description: "Paquete estándar",
+      type: "basic",
+    }
+
+    if (isNational) {
+      // Paquetes nacionales
+      switch (packageType) {
+        case "package3":
+          packageInfo = {
+            name: "3 Reenganches",
+            description: `Paquete con 3 oportunidades de reenganche (${isEarlyBird ? "Early Bird" : "Tarifa Regular"})`,
+            type: "package3",
+          }
+          break
+        case "package4":
+          packageInfo = {
+            name: "4 Reenganches",
+            description: `Paquete con 4 oportunidades de reenganche (${isEarlyBird ? "Early Bird" : "Tarifa Regular"})`,
+            type: "package4",
+          }
+          break
+        default:
+          packageInfo = {
+            name: "Básico Nacional",
+            description: `Paquete básico para jugadores nacionales (${isEarlyBird ? "Early Bird" : "Tarifa Regular"})`,
+            type: "basic",
+          }
+      }
+    } else {
+      // Paquetes internacionales
+      switch (packageType) {
+        case "package3":
+          packageInfo = {
+            name: "3 Reenganches",
+            description: `Paquete con 3 oportunidades de reenganche (${isEarlyBird ? "Early Bird" : "Tarifa Regular"})`,
+            type: "package3",
+          }
+          break
+        case "package5":
+          packageInfo = {
+            name: "5 Reenganches",
+            description: `Paquete con 5 oportunidades de reenganche (${isEarlyBird ? "Early Bird" : "Tarifa Regular"})`,
+            type: "package5",
+          }
+          break
+        case "package8":
+          packageInfo = {
+            name: "8 Reenganches (Desesperado)",
+            description: `Paquete máximo con 8 oportunidades de reenganche (${isEarlyBird ? "Early Bird" : "Tarifa Regular"})`,
+            type: "package8",
+          }
+          break
+        default:
+          packageInfo = {
+            name: "Básico Internacional",
+            description: `Paquete básico para jugadores internacionales (${isEarlyBird ? "Early Bird" : "Tarifa Regular"})`,
+            type: "basic",
+          }
+      }
+    }
+
+    // Agregar scratch si aplica
+    if (hasScratch) {
+      packageInfo.name += " + Scratch"
+      packageInfo.description += " + Modo Scratch"
+    }
+
+    return packageInfo
+  }
+
+  // Calcular totales localmente para verificar
+  const calculateLocalTotals = () => {
+    let totalRevenue = 0
+    let verifiedRevenue = 0
+    let pendingRevenue = 0
+
+    players.forEach((player) => {
+      const amount = player.amount_paid || 0
+      if (amount > 0) {
+        totalRevenue += amount
+        if (player.payment_status === "verified") {
+          verifiedRevenue += amount
+        } else {
+          pendingRevenue += amount
+        }
+      }
+    })
+
+    return { totalRevenue, verifiedRevenue, pendingRevenue }
+  }
+
+  const localTotals = calculateLocalTotals()
 
   if (loading) {
     return (
@@ -506,15 +666,48 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-heading font-bold text-white">
-                  {formatCurrency(stats.total_revenue || 0)}
+                  {formatCurrency(stats.total_revenue || localTotals.totalRevenue)}
                 </div>
                 <div className="flex items-center mt-2 text-sm text-slate-400">
                   <DollarSign className="h-4 w-4 mr-1 text-green-400" />
-                  <span className="font-body">Recaudado</span>
+                  <span className="font-body">Recaudado en USD</span>
                 </div>
+                {/* Mostrar desglose local si hay diferencia */}
+                {Math.abs((stats.total_revenue || 0) - localTotals.totalRevenue) > 0.01 && (
+                  <div className="mt-2 text-xs text-amber-400">Local: {formatCurrency(localTotals.totalRevenue)}</div>
+                )}
               </CardContent>
             </Card>
           </div>
+
+          {/* Mostrar desglose detallado de ingresos */}
+          <Card className="bg-slate-800/90 backdrop-blur-sm border-slate-700 shadow-xl mb-6">
+            <CardHeader>
+              <CardTitle className="font-heading text-white flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Desglose de Ingresos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-slate-700/50 p-4 rounded-lg">
+                  <div className="text-sm text-slate-400">Total Recaudado</div>
+                  <div className="text-2xl font-bold text-white">{formatCurrency(localTotals.totalRevenue)}</div>
+                  <div className="text-xs text-slate-500">Todos los pagos</div>
+                </div>
+                <div className="bg-green-900/20 p-4 rounded-lg border border-green-700/30">
+                  <div className="text-sm text-green-400">Pagos Verificados</div>
+                  <div className="text-2xl font-bold text-green-300">{formatCurrency(localTotals.verifiedRevenue)}</div>
+                  <div className="text-xs text-green-500">Confirmados</div>
+                </div>
+                <div className="bg-amber-900/20 p-4 rounded-lg border border-amber-700/30">
+                  <div className="text-sm text-amber-400">Pagos Pendientes</div>
+                  <div className="text-2xl font-bold text-amber-300">{formatCurrency(localTotals.pendingRevenue)}</div>
+                  <div className="text-xs text-amber-500">Por verificar</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           <Tabs defaultValue="players" className="space-y-6">
             <div className="flex justify-center">
@@ -578,88 +771,121 @@ export default function AdminPage() {
                           <th className="text-left p-4 font-heading font-semibold text-slate-300">Email</th>
                           <th className="text-left p-4 font-heading font-semibold text-slate-300">Teléfono</th>
                           <th className="text-left p-4 font-heading font-semibold text-slate-300">Estado Pago</th>
-                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Fecha Registro</th>
+                          <th className="text-left p-4 font-heading font-semibold text-slate-300">
+                            Paquete Registrado
+                          </th>
+                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Paquete Pagado</th>
+                          <th className="text-left p-4 font-heading font-semibold text-slate-300">Monto Pagado</th>
                           <th className="text-left p-4 font-heading font-semibold text-slate-300">Acciones</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredPlayers.map((player, index) => (
-                          <tr
-                            key={player.id}
-                            className={`border-b border-slate-700 hover:bg-slate-700/50 transition-colors ${
-                              index % 2 === 0 ? "bg-slate-800/50" : "bg-slate-800/30"
-                            }`}
-                          >
-                            <td className="p-4 font-body font-medium text-white">{player.name}</td>
-                            <td className="p-4 text-sm text-slate-300 font-body">{player.email}</td>
-                            <td className="p-4 text-sm text-slate-300 font-body">{player.phone}</td>
-                            <td className="p-4">
-                              <Badge
-                                variant={player.payment_status === "verified" ? "default" : "secondary"}
-                                className={
-                                  player.payment_status === "verified"
-                                    ? "bg-green-900/50 text-green-300 border-green-700 font-accent"
-                                    : "bg-amber-900/50 text-amber-300 border-amber-700 font-accent"
-                                }
-                              >
-                                {player.payment_status === "verified" ? (
-                                  <>
-                                    <CheckCircle className="w-3 h-3 mr-1" />
-                                    Verificado
-                                  </>
-                                ) : (
-                                  <>
-                                    <AlertCircle className="w-3 h-3 mr-1" />
-                                    Pendiente
-                                  </>
-                                )}
-                              </Badge>
-                            </td>
-                            <td className="p-4 text-sm text-slate-300 font-body">
-                              {new Date(player.created_at).toLocaleDateString("es-CR", {
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                              })}
-                            </td>
-                            <td className="p-4">
-                              <div className="flex gap-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setSelectedPlayer(player)
-                                    setShowPlayerDetails(true)
-                                  }}
-                                  className="bg-slate-700/80 hover:bg-slate-600 border-slate-600 text-slate-300 hover:text-white font-accent backdrop-blur-sm"
-                                  title="Ver detalles"
+                        {filteredPlayers.map((player, index) => {
+                          const registeredPackage = getRegisteredPackageInfo(player)
+                          const paidPackage = getPaidPackageInfo(player)
+                          return (
+                            <tr
+                              key={player.id}
+                              className={`border-b border-slate-700 hover:bg-slate-700/50 transition-colors ${
+                                index % 2 === 0 ? "bg-slate-800/50" : "bg-slate-800/30"
+                              }`}
+                            >
+                              <td className="p-4 font-body font-medium text-white">{player.name}</td>
+                              <td className="p-4 text-sm text-slate-300 font-body">{player.email}</td>
+                              <td className="p-4 text-sm text-slate-300 font-body">{player.phone}</td>
+                              <td className="p-4">
+                                <Badge
+                                  variant={player.payment_status === "verified" ? "default" : "secondary"}
+                                  className={
+                                    player.payment_status === "verified"
+                                      ? "bg-green-900/50 text-green-300 border-green-700 font-accent"
+                                      : "bg-amber-900/50 text-amber-300 border-amber-700 font-accent"
+                                  }
                                 >
-                                  <Eye className="h-4 w-4" />
-                                </Button>
+                                  {player.payment_status === "verified" ? (
+                                    <>
+                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                      Verificado
+                                    </>
+                                  ) : (
+                                    <>
+                                      <AlertCircle className="w-3 h-3 mr-1" />
+                                      Pendiente
+                                    </>
+                                  )}
+                                </Badge>
+                              </td>
+                              <td className="p-4 text-sm text-slate-300 font-body">
+                                <div className="flex items-center">
+                                  <Package className="w-3 h-3 mr-1 text-blue-400" />
+                                  {registeredPackage.name}
+                                </div>
+                              </td>
+                              <td className="p-4 text-sm font-body">
+                                <Badge className={paidPackage.color}>{paidPackage.name}</Badge>
+                              </td>
+                              <td className="p-4 text-sm text-slate-300 font-body font-semibold">
+                                <div className="flex flex-col">
+                                  <span className="text-white font-bold">{formatPaymentAmount(player)}</span>
+                                </div>
+                              </td>
+                              <td className="p-4">
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedPlayer(player)
+                                      setShowPlayerDetails(true)
+                                    }}
+                                    className="bg-slate-700/80 hover:bg-slate-600 border-slate-600 text-slate-300 hover:text-white font-accent backdrop-blur-sm"
+                                    title="Ver detalles"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
 
-                                {player.payment_status === "pending" ? (
+                                  {player.payment_status === "pending" ? (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => updatePaymentStatus(player.id, "verified")}
+                                      className="bg-green-700/80 hover:bg-green-600 text-white border-0 font-accent backdrop-blur-sm"
+                                      title="Verificar pago"
+                                    >
+                                      <CheckCircle className="h-4 w-4" />
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      onClick={() => updatePaymentStatus(player.id, "pending")}
+                                      className="bg-red-700/80 hover:bg-red-600 text-white border-0 font-accent backdrop-blur-sm"
+                                      title="Marcar como pendiente"
+                                    >
+                                      <XCircle className="h-4 w-4" />
+                                    </Button>
+                                  )}
                                   <Button
                                     size="sm"
-                                    onClick={() => updatePaymentStatus(player.id, "verified")}
-                                    className="bg-green-700/80 hover:bg-green-600 text-white border-0 font-accent backdrop-blur-sm"
-                                    title="Verificar pago"
+                                    variant="outline"
+                                    onClick={() => {
+                                      setSelectedPlayer({
+                                        ...player,
+                                        amount_paid: player.amount_paid || 0,
+                                        currency: "USD",
+                                        package_details: registeredPackage.name,
+                                        category_details: player.category_details || "No especificada",
+                                      })
+                                      setShowPaymentModal(true)
+                                    }}
+                                    className="bg-blue-700/80 hover:bg-blue-600 text-white border-0 font-accent backdrop-blur-sm"
+                                    title="Registrar pago"
                                   >
-                                    <CheckCircle className="h-4 w-4" />
+                                    <DollarSign className="h-4 w-4" />
                                   </Button>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => updatePaymentStatus(player.id, "pending")}
-                                    className="bg-red-700/80 hover:bg-red-600 text-white border-0 font-accent backdrop-blur-sm"
-                                    title="Marcar como pendiente"
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
 
@@ -693,8 +919,8 @@ export default function AdminPage() {
             <CardHeader className="bg-gradient-to-r from-slate-700/95 to-slate-800/95 text-white border-b border-slate-600">
               <div className="flex justify-between items-center">
                 <CardTitle className="font-heading flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Detalles del Jugador
+                  <DollarSign className="h-5 w-5" />
+                  Información de Pago - {selectedPlayer.name}
                 </CardTitle>
                 <Button
                   variant="ghost"
@@ -707,94 +933,174 @@ export default function AdminPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6 p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Nombre Completo</Label>
-                  <Input
-                    value={selectedPlayer.name}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
+              {/* Paquete Registrado */}
+              <div className="border-b border-slate-600 pb-4">
+                <h3 className="font-heading font-semibold text-white mb-4 flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Paquete Registrado
+                </h3>
+                <div className="bg-slate-700/80 backdrop-blur-sm border border-slate-600 rounded-md p-4">
+                  {(() => {
+                    const registeredPackage = getRegisteredPackageInfo(selectedPlayer)
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Package className="w-5 h-5 text-blue-400" />
+                            <span className="font-body text-white font-bold text-lg">{registeredPackage.name}</span>
+                          </div>
+                          <Badge variant="outline" className="bg-blue-900/50 text-blue-300 border-blue-700">
+                            {registeredPackage.type}
+                          </Badge>
+                        </div>
+                        <div className="text-sm text-slate-300 bg-slate-800/50 p-3 rounded">
+                          <strong>Descripción:</strong> {registeredPackage.description}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="bg-slate-800/50 p-3 rounded">
+                            <div className="text-slate-400">Nacionalidad:</div>
+                            <div className="text-white font-semibold">
+                              {selectedPlayer.nationality === "Nacional" ? "🇨🇷 Nacional" : "🌍 Internacional"}
+                            </div>
+                          </div>
+                          <div className="bg-slate-800/50 p-3 rounded">
+                            <div className="text-slate-400">Scratch Mode:</div>
+                            <div className="text-white font-semibold">
+                              {selectedPlayer.scratch_mode ? (
+                                <span className="text-amber-400">✓ Incluido</span>
+                              ) : (
+                                <span className="text-slate-500">✗ No incluido</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Email</Label>
-                  <Input
-                    value={selectedPlayer.email}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
+              </div>
+
+              {/* Paquete que realmente pagó */}
+              <div className="border-b border-slate-600 pb-4">
+                <h3 className="font-heading font-semibold text-white mb-4 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Paquete Pagado (Basado en Monto)
+                </h3>
+                <div className="bg-slate-700/80 backdrop-blur-sm border border-slate-600 rounded-md p-4">
+                  {(() => {
+                    const paidPackage = getPaidPackageInfo(selectedPlayer)
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-5 h-5 text-green-400" />
+                            <span className="font-body text-white font-bold text-lg">{paidPackage.name}</span>
+                          </div>
+                          <Badge className={paidPackage.color}>{paidPackage.type}</Badge>
+                        </div>
+                        <div className="text-sm text-slate-300 bg-slate-800/50 p-3 rounded">
+                          <strong>Descripción:</strong>{" "}
+                          {paidPackage.description || "Paquete determinado por el monto pagado"}
+                        </div>
+                        <div className="bg-slate-800/50 p-3 rounded">
+                          <div className="text-slate-400 mb-2">Monto Pagado:</div>
+                          <div className="text-2xl font-bold text-green-400">{formatPaymentAmount(selectedPlayer)}</div>
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Teléfono</Label>
-                  <Input
-                    value={selectedPlayer.phone}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Contacto de Emergencia</Label>
-                  <Input
-                    value={selectedPlayer.emergency_contact}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Teléfono de Emergencia</Label>
-                  <Input
-                    value={selectedPlayer.emergency_phone}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Estado de Pago</Label>
-                  <Badge
-                    variant={selectedPlayer.payment_status === "verified" ? "default" : "secondary"}
-                    className={
-                      selectedPlayer.payment_status === "verified"
-                        ? "bg-green-900/50 text-green-300 border-green-700 font-accent"
-                        : "bg-amber-900/50 text-amber-300 border-amber-700 font-accent"
-                    }
-                  >
-                    {selectedPlayer.payment_status === "verified" ? (
-                      <>
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Verificado
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        Pendiente
-                      </>
-                    )}
-                  </Badge>
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Fecha de Registro</Label>
-                  <Input
-                    value={new Date(selectedPlayer.created_at).toLocaleDateString("es-CR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
-                </div>
-                <div>
-                  <Label className="font-heading font-semibold text-slate-300">Dirección de Wallet</Label>
-                  <Input
-                    value={selectedPlayer.wallet_address || "No disponible"}
-                    readOnly
-                    className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
-                  />
+              </div>
+
+              {/* Información de Pago */}
+              <div>
+                <h3 className="font-heading font-semibold text-white mb-4 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5" />
+                  Información de Pago
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-heading font-semibold text-slate-300">Estado de Pago</Label>
+                    <div className="bg-slate-700/80 backdrop-blur-sm border border-slate-600 rounded-md p-3">
+                      <Badge
+                        variant={selectedPlayer.payment_status === "verified" ? "default" : "secondary"}
+                        className={
+                          selectedPlayer.payment_status === "verified"
+                            ? "bg-green-900/50 text-green-300 border-green-700 font-accent"
+                            : "bg-amber-900/50 text-amber-300 border-amber-700 font-accent"
+                        }
+                      >
+                        {selectedPlayer.payment_status === "verified" ? (
+                          <>
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Verificado
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Pendiente
+                          </>
+                        )}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="font-heading font-semibold text-slate-300">Monto Pagado</Label>
+                    <div className="bg-slate-700/80 backdrop-blur-sm border border-slate-600 rounded-md p-3">
+                      <div className="text-2xl font-bold text-white">{formatPaymentAmount(selectedPlayer)}</div>
+                      <div className="text-sm text-slate-400 mt-1">Moneda: USD</div>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="font-heading font-semibold text-slate-300">Método de Pago</Label>
+                    <Input
+                      value={selectedPlayer.payment_method || "No registrado"}
+                      readOnly
+                      className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
+                    />
+                  </div>
+                  <div>
+                    <Label className="font-heading font-semibold text-slate-300">Última Actualización</Label>
+                    <Input
+                      value={
+                        selectedPlayer.payment_updated_at
+                          ? new Date(selectedPlayer.payment_updated_at).toLocaleDateString("es-CR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "No actualizado"
+                      }
+                      readOnly
+                      className="font-body bg-slate-700/80 backdrop-blur-sm border-slate-600 text-white"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label className="font-heading font-semibold text-slate-300">Notas del Pago</Label>
+                    <div className="bg-slate-700/80 backdrop-blur-sm border border-slate-600 rounded-md p-3 min-h-[60px]">
+                      <span className="font-body text-white">
+                        {selectedPlayer.payment_notes || "Sin notas adicionales"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
+      )}
+      {showPaymentModal && selectedPlayer && (
+        <PaymentModal
+          player={selectedPlayer}
+          isOpen={showPaymentModal}
+          onClose={() => setShowPaymentModal(false)}
+          onPaymentUpdated={() => {
+            fetchData(true)
+            setShowPaymentModal(false)
+          }}
+        />
       )}
     </div>
   )
