@@ -1,0 +1,50 @@
+{
+  "name": "Torneo La Negrita CRCC 2025",
+  "short_name": "La Negrita 2025",
+  "description": "Torneo de Boliche La Negrita - Costa Rica Country Club",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/images/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "entertainment"],
+  "lang": "es-CR",
+  "dir": "ltr",
+  "shortcuts": [
+    {
+      "name": "Ver Brackets",
+      "short_name": "Brackets",
+      "description": "Ver brackets del torneo",
+      "url": "/brackets",
+      "icons": [{ "src": "/images/bracket-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Registrarse",
+      "short_name": "Registro",
+      "description": "Registrarse para el torneo",
+      "url": "/register",
+      "icons": [{ "src": "/images/register-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Admin",
+      "short_name": "Admin",
+      "description": "Panel de administración",
+      "url": "/admin",
+      "icons": [{ "src": "/images/admin-icon.png", "sizes": "96x96" }]
+    }
+  ]
+}

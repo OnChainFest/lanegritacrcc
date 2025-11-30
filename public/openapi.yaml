@@ -1,0 +1,197 @@
+openapi: 3.0.0
+info:
+  title: Torneo La Negrita CRCC 2025 API
+  description: API for managing bowling tournament registrations, brackets, and results
+  version: 1.0.0
+  contact:
+    name: Tournament Support
+    email: admin@lanegritacrcc.com
+
+servers:
+  - url: https://lanegritacrcc.vercel.app
+    description: Production server
+  - url: http://localhost:3000
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: Admin authentication endpoints
+  - name: Players
+    description: Player registration and management
+  - name: Brackets
+    description: Tournament bracket management
+  - name: Results
+    description: Game results and standings
+
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Admin login
+      description: Authenticate admin user and receive JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Successful authentication
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  expiresIn:
+                    type: string
+        '401':
+          description: Invalid credentials
+        '429':
+          description: Too many attempts
+
+  /api/register-player:
+    post:
+      tags:
+        - Players
+      summary: Register new player
+      description: Register a new player for the tournament
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlayerRegistration'
+      responses:
+        '200':
+          description: Player registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  player:
+                    $ref: '#/components/schemas/Player'
+
+  /api/players:
+    get:
+      tags:
+        - Players
+      summary: Get all players
+      description: Retrieve all registered players (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [verified, pending, all]
+      responses:
+        '200':
+          description: List of players
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  players:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Player'
+
+  /api/results/standings:
+    get:
+      tags:
+        - Results
+      summary: Get tournament standings
+      description: Retrieve current tournament standings
+      responses:
+        '200':
+          description: Current standings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  standings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Standing'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    PlayerRegistration:
+      type: object
+      required:
+        - name
+        - email
+        - nationality
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        nationality:
+          type: string
+          enum: [CR, INTL]
+        package_size:
+          type: integer
+          enum: [3, 4, 5, 8]
+
+    Player:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+        payment_status:
+          type: string
+          enum: [verified, pending, partial]
+        created_at:
+          type: string
+          format: date-time
+
+    Standing:
+      type: object
+      properties:
+        position:
+          type: integer
+        playerId:
+          type: string
+        playerName:
+          type: string
+        totalScore:
+          type: integer
+        gamesPlayed:
+          type: integer
+        average:
+          type: number
