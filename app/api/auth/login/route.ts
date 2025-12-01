@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
+import { rateLimit, getClientIp, RATE_LIMITS } from "@/lib/rate-limit"
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-change-in-production"
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "24h"
@@ -8,6 +9,28 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123"
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const clientIp = getClientIp(request)
+    const rateLimitResult = rateLimit(`login:${clientIp}`, RATE_LIMITS.AUTH_LOGIN)
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Too many login attempts. Please try again later.",
+        },
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "X-RateLimit-Limit": rateLimitResult.limit.toString(),
+            "X-RateLimit-Remaining": rateLimitResult.remaining.toString(),
+            "X-RateLimit-Reset": new Date(rateLimitResult.reset).toISOString(),
+          },
+        },
+      )
+    }
+
     console.log("🔐 API Login: Iniciando proceso de login...")
 
     let body

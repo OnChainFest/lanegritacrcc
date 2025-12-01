@@ -6,7 +6,10 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "next lint",
-    "start": "next start"
+    "start": "next start",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.0.5",
@@ -22,6 +25,7 @@
     "@radix-ui/react-slot": "^1.0.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "latest",
+    "@stripe/stripe-js": "^2.4.0",
     "@supabase/supabase-js": "latest",
     "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",
@@ -30,17 +34,23 @@
     "ethers": "latest",
     "jsonwebtoken": "latest",
     "lucide-react": "^0.454.0",
+    "micro": "^10.0.1",
     "next": "15.2.4",
     "nodemailer": "^6.9.8",
     "qrcode": "^1.5.3",
     "react": "^19",
     "react-dom": "^19",
     "resend": "latest",
+    "stripe": "^14.10.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jest": "^29.5.11",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^22",
     "@types/nodemailer": "^6.4.14",
@@ -50,6 +60,8 @@
     "autoprefixer": "^10.0.1",
     "eslint": "^8.0.0",
     "eslint-config-next": "^14.0.4",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8.5",
     "tailwindcss": "^3.3.0",
     "typescript": "^5"
