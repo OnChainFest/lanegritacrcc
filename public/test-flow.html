@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Flow - PadelFlow MVP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-900 text-white p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold mb-8">🧪 Test Flow - PadelFlow MVP</h1>
+
+        <div class="space-y-6">
+            <!-- Test Status -->
+            <div id="test-status" class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">Estado de Pruebas</h2>
+                <div id="test-results" class="space-y-2">
+                    <!-- Results will be added here -->
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">Enlaces de Prueba</h2>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <a href="index.html" target="_blank"
+                       class="bg-green-600 hover:bg-green-700 p-4 rounded-lg text-center font-semibold transition-all">
+                        1. Landing + Wizard
+                    </a>
+                    <a href="auth.html" target="_blank"
+                       class="bg-blue-600 hover:bg-blue-700 p-4 rounded-lg text-center font-semibold transition-all">
+                        2. Auth + Pago
+                    </a>
+                    <a href="dashboard.html" target="_blank"
+                       class="bg-purple-600 hover:bg-purple-700 p-4 rounded-lg text-center font-semibold transition-all">
+                        3. Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <!-- Manual Testing Checklist -->
+            <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">✅ Manual Testing Checklist</h2>
+
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-3 text-green-400">📄 Landing Page (index.html)</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Hero section carga correctamente con imagen de pádel</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Botón "Crear torneo" hace scroll al wizard</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Secciones "Cómo funciona" y "Beneficios" visibles</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Responsive en móvil, tablet y desktop</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-3 text-green-400">🎯 Wizard (4 pasos)</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span><strong>Paso 1:</strong> Completar datos básicos (nombre, ubicación, fechas, categorías)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span><strong>Paso 2:</strong> Seleccionar formato (Americano, Round Robin, Eliminación, Liga)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span><strong>Paso 2:</strong> Campos específicos del formato aparecen correctamente</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span><strong>Paso 3:</strong> Configurar premios (dinero o productos)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span><strong>Paso 4:</strong> Vista previa muestra todos los datos correctamente</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Navegación entre pasos funciona (Siguiente/Atrás)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Validación de campos obligatorios funciona</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Barra de progreso se actualiza correctamente</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Al finalizar, redirige a auth.html</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-3 text-blue-400">🔐 Auth Page (auth.html)</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Banner muestra información del torneo creado</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Formulario de registro funciona (nombre, email, contraseña)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Validación de campos (email válido, contraseña mínimo 6 chars)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Al enviar, muestra simulación de pago con progreso animado</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Después de 2 segundos, muestra pantalla de éxito</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Botón "Ir al Dashboard" redirige correctamente</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Indicador de pasos se actualiza (1→2→3)</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-3 text-purple-400">📊 Dashboard (dashboard.html)</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Muestra nombre de usuario en el saludo</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Quick stats muestran datos correctos</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Torneo creado aparece en la lista de activos</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Card del torneo muestra: nombre, formato, ubicación, fecha</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Botón "Ver detalle" abre modal con info completa</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Botón "Invitaciones" abre modal con link, QR y email</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Botón "Copiar link" funciona</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Sección "Próximamente" muestra features futuras</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Botón "Crear torneo" abre modal con opciones</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-3 text-yellow-400">💾 LocalStorage</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Torneo se guarda en localStorage después del wizard</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Usuario se guarda como autenticado en auth</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Dashboard lee datos correctamente desde localStorage</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Estado del torneo se actualiza a "active" después del pago</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-3 text-red-400">📱 Responsive Design</h3>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Mobile (< 640px): Todo funciona en pantallas pequeñas</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Tablet (768px - 1024px): Layout se adapta correctamente</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>Desktop (> 1024px): Aprovecha espacio disponible</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <input type="checkbox" class="mt-1">
+                                <span>No hay scroll horizontal en ninguna resolución</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LocalStorage Inspector -->
+            <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">🔍 LocalStorage Inspector</h2>
+                <button onclick="inspectLocalStorage()"
+                        class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-semibold mb-4">
+                    Inspeccionar LocalStorage
+                </button>
+                <pre id="localStorage-content" class="bg-gray-900 p-4 rounded-lg overflow-x-auto text-sm">
+Click el botón para ver el contenido de localStorage
+                </pre>
+            </div>
+
+            <!-- Clear Data -->
+            <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                <h2 class="text-2xl font-bold mb-4">🗑️ Limpiar Datos</h2>
+                <p class="text-gray-400 mb-4">
+                    Limpia localStorage para empezar de nuevo las pruebas
+                </p>
+                <button onclick="clearAllData()"
+                        class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-semibold">
+                    Limpiar Todo el LocalStorage
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Test Functions
+        function inspectLocalStorage() {
+            const data = {
+                tournaments: localStorage.getItem('padelflow_tournaments'),
+                lastTournament: localStorage.getItem('padelflow_last_tournament'),
+                authenticated: localStorage.getItem('padelflow_user_authenticated'),
+                userName: localStorage.getItem('padelflow_user_name'),
+                userEmail: localStorage.getItem('padelflow_user_email')
+            };
+
+            const formatted = JSON.stringify(data, null, 2);
+            document.getElementById('localStorage-content').textContent = formatted;
+
+            // Parse and show in a nicer format
+            if (data.lastTournament) {
+                const tournament = JSON.parse(data.lastTournament);
+                document.getElementById('localStorage-content').textContent += '\n\n=== ÚLTIMO TORNEO ===\n';
+                document.getElementById('localStorage-content').textContent += `Nombre: ${tournament.basicInfo.name}\n`;
+                document.getElementById('localStorage-content').textContent += `Formato: ${tournament.format.type}\n`;
+                document.getElementById('localStorage-content').textContent += `Estado: ${tournament.status}\n`;
+                document.getElementById('localStorage-content').textContent += `Ubicación: ${tournament.basicInfo.location}\n`;
+                document.getElementById('localStorage-content').textContent += `Fecha: ${tournament.basicInfo.startDate}\n`;
+            }
+        }
+
+        function clearAllData() {
+            if (confirm('¿Estás seguro de que quieres limpiar todos los datos de prueba?')) {
+                localStorage.clear();
+                alert('✅ LocalStorage limpiado. Puedes empezar de nuevo.');
+                document.getElementById('localStorage-content').textContent = 'LocalStorage vacío';
+            }
+        }
+
+        // Run automatic tests
+        function runTests() {
+            const results = [];
+
+            // Test 1: Check if app.js is loaded
+            try {
+                if (typeof scrollToWizard === 'function') {
+                    results.push({ name: 'app.js cargado', status: 'pass' });
+                } else {
+                    results.push({ name: 'app.js cargado', status: 'fail' });
+                }
+            } catch (e) {
+                results.push({ name: 'app.js cargado', status: 'fail', error: e.message });
+            }
+
+            // Test 2: Check localStorage functions
+            try {
+                if (typeof saveTournamentToLocalStorage === 'function' &&
+                    typeof getLastTournamentFromLocalStorage === 'function' &&
+                    typeof markUserAsAuthenticated === 'function' &&
+                    typeof isUserAuthenticated === 'function') {
+                    results.push({ name: 'Funciones de localStorage definidas', status: 'pass' });
+                } else {
+                    results.push({ name: 'Funciones de localStorage definidas', status: 'fail' });
+                }
+            } catch (e) {
+                results.push({ name: 'Funciones de localStorage definidas', status: 'fail', error: e.message });
+            }
+
+            // Test 3: Test tournament data structure
+            try {
+                const testTournament = {
+                    basicInfo: { name: 'Test', location: 'Test Location', city: 'Test City', startDate: '2025-12-01', endDate: '2025-12-10', courts: 2, currency: 'EUR', categories: ['Intermedio'] },
+                    format: { type: 'americano', details: {} },
+                    prizes: { type: 'dinero', amount: 1000 },
+                    invitations: { link: true }
+                };
+                saveTournamentToLocalStorage(testTournament);
+                const retrieved = getLastTournamentFromLocalStorage();
+                if (retrieved && retrieved.basicInfo.name === 'Test') {
+                    results.push({ name: 'Guardar/leer torneo de localStorage', status: 'pass' });
+                    // Clean up test data
+                    localStorage.removeItem('padelflow_tournaments');
+                    localStorage.removeItem('padelflow_last_tournament');
+                } else {
+                    results.push({ name: 'Guardar/leer torneo de localStorage', status: 'fail' });
+                }
+            } catch (e) {
+                results.push({ name: 'Guardar/leer torneo de localStorage', status: 'fail', error: e.message });
+            }
+
+            // Display results
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = results.map(result => {
+                const icon = result.status === 'pass' ? '✅' : '❌';
+                const color = result.status === 'pass' ? 'text-green-400' : 'text-red-400';
+                const error = result.error ? ` (${result.error})` : '';
+                return `<div class="${color}">${icon} ${result.name}${error}</div>`;
+            }).join('');
+        }
+
+        // Run tests on load
+        window.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>
