@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PadelFlow - Crea tu torneo de pádel en minutos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10B981',
+                        secondary: '#1F2937',
+                        accent: '#3B82F6'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-secondary text-white">
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full bg-secondary/95 backdrop-blur-md border-b border-gray-700 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <span class="text-2xl font-bold">Padel<span class="text-primary">Flow</span></span>
+                </div>
+                <button onclick="scrollToWizard()" class="bg-primary hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition-all">
+                    Crear Torneo
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-4 relative overflow-hidden">
+        <!-- Background Pattern -->
+        <div class="absolute inset-0 opacity-10">
+            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.4) 1px, transparent 0); background-size: 48px 48px;"></div>
+        </div>
+
+        <!-- Gradient Orbs -->
+        <div class="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
+        <div class="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse"></div>
+
+        <div class="max-w-7xl mx-auto relative z-10">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-block mb-4 px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-primary text-sm font-semibold">
+                        ⚡ Automatiza tu torneo
+                    </div>
+                    <h1 class="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
+                        Crea tu torneo de pádel en <span class="text-primary">minutos</span>
+                    </h1>
+                    <p class="text-xl text-gray-300 mb-8 leading-relaxed">
+                        Configura el formato, premios y participantes. Comparte por correo o QR.
+                        <span class="text-primary font-semibold">Paga solo cuando estés listo para lanzar.</span>
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="scrollToWizard()" class="bg-primary hover:bg-green-600 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all shadow-lg shadow-primary/25 flex items-center justify-center group">
+                            Crear mi primer torneo
+                            <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                            </svg>
+                        </button>
+                        <a href="#como-funciona" class="border-2 border-primary/50 text-primary hover:bg-primary/10 px-8 py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center">
+                            Ver cómo funciona
+                        </a>
+                    </div>
+
+                    <!-- Trust Indicators -->
+                    <div class="mt-12 grid grid-cols-3 gap-6">
+                        <div>
+                            <div class="text-3xl font-bold text-primary">100%</div>
+                            <div class="text-sm text-gray-400">Automatizado</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-primary">5min</div>
+                            <div class="text-sm text-gray-400">Para configurar</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-primary">∞</div>
+                            <div class="text-sm text-gray-400">Formatos</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Image -->
+                <div class="relative">
+                    <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&h=600&fit=crop"
+                         alt="Jugadores de pádel"
+                         class="rounded-2xl shadow-2xl border-4 border-gray-700">
+                    <div class="absolute -bottom-6 -left-6 bg-primary text-secondary px-6 py-4 rounded-xl shadow-xl">
+                        <div class="text-2xl font-bold">4 Formatos</div>
+                        <div class="text-sm">Americano • Round Robin • Eliminación • Liga</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cómo Funciona Section -->
+    <section id="como-funciona" class="py-20 px-4 bg-gray-900">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">¿Cómo funciona?</h2>
+                <p class="text-xl text-gray-400">Configura tu torneo en 3 simples pasos</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Step 1 -->
+                <div class="bg-secondary border border-gray-700 rounded-2xl p-8 hover:border-primary/50 transition-all">
+                    <div class="w-16 h-16 bg-primary/10 border border-primary rounded-2xl flex items-center justify-center text-primary text-2xl font-bold mb-6">
+                        1
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Configura el torneo</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Elige el formato (Americano, Round Robin, Eliminación o Liga),
+                        define fechas, categorías y número de participantes.
+                    </p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-secondary border border-gray-700 rounded-2xl p-8 hover:border-primary/50 transition-all">
+                    <div class="w-16 h-16 bg-primary/10 border border-primary rounded-2xl flex items-center justify-center text-primary text-2xl font-bold mb-6">
+                        2
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Define premios</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Configura el prize pool, distribución de premios y conecta
+                        tu wallet para recibir pagos (próximamente: smart contracts).
+                    </p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-secondary border border-gray-700 rounded-2xl p-8 hover:border-primary/50 transition-all">
+                    <div class="w-16 h-16 bg-primary/10 border border-primary rounded-2xl flex items-center justify-center text-primary text-2xl font-bold mb-6">
+                        3
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Comparte e invita</h3>
+                    <p class="text-gray-400 leading-relaxed">
+                        Paga, activa tu torneo y comparte el link o QR.
+                        Los jugadores se registran y todo se gestiona automáticamente.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beneficios Section -->
+    <section class="py-20 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">¿Por qué PadelFlow?</h2>
+                <p class="text-xl text-gray-400">La forma más moderna de organizar torneos</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <div class="text-3xl mb-4">⚡</div>
+                    <h3 class="text-xl font-bold mb-2">Ahorra tiempo</h3>
+                    <p class="text-gray-400 text-sm">Automatiza sorteos, calendarios y resultados</p>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <div class="text-3xl mb-4">🎯</div>
+                    <h3 class="text-xl font-bold mb-2">4 Formatos</h3>
+                    <p class="text-gray-400 text-sm">Americano, Round Robin, Eliminación y Liga</p>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <div class="text-3xl mb-4">💰</div>
+                    <h3 class="text-xl font-bold mb-2">Smart Contracts</h3>
+                    <p class="text-gray-400 text-sm">Pagos automáticos y transparentes (próximamente)</p>
+                </div>
+
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                    <div class="text-3xl mb-4">📱</div>
+                    <h3 class="text-xl font-bold mb-2">100% Digital</h3>
+                    <p class="text-gray-400 text-sm">Invitaciones por email, link o QR code</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Wizard Section -->
+    <section id="wizard" class="py-20 px-4 bg-gray-900">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl lg:text-5xl font-bold mb-4">Crea tu torneo ahora</h2>
+                <p class="text-xl text-gray-400">Sigue los pasos y lanza tu torneo en minutos</p>
+            </div>
+
+            <!-- Wizard Card -->
+            <div class="bg-secondary border border-gray-700 rounded-2xl p-8 shadow-2xl">
+                <!-- Progress Bar -->
+                <div class="mb-8">
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm font-semibold" id="step-indicator">Paso 1 de 4</span>
+                        <span class="text-sm text-gray-400" id="step-name">Datos básicos</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div id="progress-bar" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 25%"></div>
+                    </div>
+                </div>
+
+                <!-- Step 1: Datos Básicos -->
+                <div id="step-1" class="wizard-step">
+                    <h3 class="text-2xl font-bold mb-6">Datos básicos del torneo</h3>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Nombre del torneo *</label>
+                            <input type="text" id="tournament-name"
+                                   class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                   placeholder="Ej: Torneo Verano 2025">
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Club / Ubicación *</label>
+                                <input type="text" id="tournament-location"
+                                       class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                       placeholder="Nombre del club">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Ciudad / País *</label>
+                                <input type="text" id="tournament-city"
+                                       class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                       placeholder="Ej: Madrid, España">
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Fecha de inicio *</label>
+                                <input type="date" id="tournament-start"
+                                       class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Fecha de fin *</label>
+                                <input type="date" id="tournament-end"
+                                       class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Número de canchas *</label>
+                                <input type="number" id="tournament-courts" min="1" value="2"
+                                       class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Moneda *</label>
+                                <select id="tournament-currency"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                    <option value="ARS">ARS ($)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Categorías</label>
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                <button type="button" onclick="toggleCategory('Principiante')" data-category="Principiante"
+                                        class="category-chip px-4 py-2 bg-gray-800 border border-gray-600 rounded-full hover:border-primary transition-all">
+                                    Principiante
+                                </button>
+                                <button type="button" onclick="toggleCategory('Intermedio')" data-category="Intermedio"
+                                        class="category-chip px-4 py-2 bg-gray-800 border border-gray-600 rounded-full hover:border-primary transition-all">
+                                    Intermedio
+                                </button>
+                                <button type="button" onclick="toggleCategory('Avanzado')" data-category="Avanzado"
+                                        class="category-chip px-4 py-2 bg-gray-800 border border-gray-600 rounded-full hover:border-primary transition-all">
+                                    Avanzado
+                                </button>
+                                <button type="button" onclick="toggleCategory('Mixto')" data-category="Mixto"
+                                        class="category-chip px-4 py-2 bg-gray-800 border border-gray-600 rounded-full hover:border-primary transition-all">
+                                    Mixto
+                                </button>
+                            </div>
+                            <input type="hidden" id="tournament-categories" value="">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end mt-8">
+                        <button onclick="nextStep()" class="bg-primary hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 2: Formato -->
+                <div id="step-2" class="wizard-step hidden">
+                    <h3 class="text-2xl font-bold mb-6">Selecciona el formato del torneo</h3>
+
+                    <div class="grid md:grid-cols-2 gap-4 mb-8">
+                        <!-- Formato Americano -->
+                        <div onclick="selectFormat('americano')" data-format="americano"
+                             class="format-card cursor-pointer bg-gray-800 border-2 border-gray-600 rounded-xl p-6 hover:border-primary transition-all">
+                            <div class="flex items-start justify-between mb-3">
+                                <h4 class="text-xl font-bold">Formato Americano</h4>
+                                <div class="format-check hidden">
+                                    <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm">Cada pareja juega con y contra todos. Sistema de puntos por victoria/empate/derrota.</p>
+                        </div>
+
+                        <!-- Round Robin -->
+                        <div onclick="selectFormat('round-robin')" data-format="round-robin"
+                             class="format-card cursor-pointer bg-gray-800 border-2 border-gray-600 rounded-xl p-6 hover:border-primary transition-all">
+                            <div class="flex items-start justify-between mb-3">
+                                <h4 class="text-xl font-bold">Round Robin</h4>
+                                <div class="format-check hidden">
+                                    <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm">Liguilla por grupos. Los mejores de cada grupo pasan a cuadro final de eliminación directa.</p>
+                        </div>
+
+                        <!-- Eliminación Directa -->
+                        <div onclick="selectFormat('eliminacion')" data-format="eliminacion"
+                             class="format-card cursor-pointer bg-gray-800 border-2 border-gray-600 rounded-xl p-6 hover:border-primary transition-all">
+                            <div class="flex items-start justify-between mb-3">
+                                <h4 class="text-xl font-bold">Eliminación Directa</h4>
+                                <div class="format-check hidden">
+                                    <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm">Cuadro clásico. Pierdes y quedas fuera. Opción de incluir cuadro de consolación para los perdedores.</p>
+                        </div>
+
+                        <!-- Liga Mensual -->
+                        <div onclick="selectFormat('liga')" data-format="liga"
+                             class="format-card cursor-pointer bg-gray-800 border-2 border-gray-600 rounded-xl p-6 hover:border-primary transition-all">
+                            <div class="flex items-start justify-between mb-3">
+                                <h4 class="text-xl font-bold">Liga Mensual</h4>
+                                <div class="format-check hidden">
+                                    <svg class="w-6 h-6 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-gray-400 text-sm">Todos contra todos durante varias semanas. Perfecto para ligas de club con calendario extendido.</p>
+                        </div>
+                    </div>
+
+                    <!-- Format-specific fields -->
+                    <div id="format-fields" class="space-y-6 mb-8">
+                        <!-- Fields will be injected here by JavaScript -->
+                    </div>
+
+                    <div class="flex justify-between mt-8">
+                        <button onclick="previousStep()" class="border border-gray-600 hover:border-primary text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                            Atrás
+                        </button>
+                        <button onclick="nextStep()" class="bg-primary hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 3: Premios -->
+                <div id="step-3" class="wizard-step hidden">
+                    <h3 class="text-2xl font-bold mb-6">Premios y wallet del organizador</h3>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold mb-2">Tipo de premio</label>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <button type="button" onclick="setPrizeType('dinero')" data-prize="dinero"
+                                        class="prize-type-btn bg-gray-800 border-2 border-gray-600 rounded-lg p-4 text-left hover:border-primary transition-all">
+                                    <div class="text-2xl mb-2">💰</div>
+                                    <div class="font-bold">Dinero</div>
+                                    <div class="text-sm text-gray-400">Prize pool monetario</div>
+                                </button>
+                                <button type="button" onclick="setPrizeType('productos')" data-prize="productos"
+                                        class="prize-type-btn bg-gray-800 border-2 border-gray-600 rounded-lg p-4 text-left hover:border-primary transition-all">
+                                    <div class="text-2xl mb-2">🎁</div>
+                                    <div class="font-bold">Productos</div>
+                                    <div class="text-sm text-gray-400">Premios no monetarios</div>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="dinero-fields" class="space-y-6 hidden">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Monto total del prize pool *</label>
+                                <div class="relative">
+                                    <input type="number" id="prize-pool" min="0" step="50"
+                                           class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                           placeholder="1000">
+                                    <span id="currency-symbol" class="absolute right-4 top-3 text-gray-400">EUR</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Distribución de premios</label>
+                                <select id="prize-distribution" onchange="updateDistribution()"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                                    <option value="50-30-20">1° lugar: 50% • 2° lugar: 30% • 3° lugar: 20%</option>
+                                    <option value="60-30-10">1° lugar: 60% • 2° lugar: 30% • 3° lugar: 10%</option>
+                                    <option value="70-20-10">1° lugar: 70% • 2° lugar: 20% • 3° lugar: 10%</option>
+                                    <option value="custom">Personalizado</option>
+                                </select>
+                            </div>
+
+                            <div id="custom-distribution" class="hidden">
+                                <label class="block text-sm font-semibold mb-2">Distribución personalizada (%)</label>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <input type="number" id="first-place" min="0" max="100" placeholder="1° lugar"
+                                           class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                                    <input type="number" id="second-place" min="0" max="100" placeholder="2° lugar"
+                                           class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                                    <input type="number" id="third-place" min="0" max="100" placeholder="3° lugar"
+                                           class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="productos-fields" class="hidden">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Descripción de premios *</label>
+                                <textarea id="prize-description" rows="4"
+                                          class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                          placeholder="Ej: 1° lugar: Paleta profesional Wilson&#10;2° lugar: Bolso deportivo&#10;3° lugar: Pack de pelotas"></textarea>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-gray-700 pt-6">
+                            <label class="block text-sm font-semibold mb-2">Wallet del organizador</label>
+                            <p class="text-sm text-gray-400 mb-3">
+                                En el futuro, conectarás tu wallet aquí para recibir pagos automáticos vía smart contract. Por ahora, ingresa una dirección de wallet o deja en blanco.
+                            </p>
+                            <div class="flex gap-2">
+                                <input type="text" id="organizer-wallet"
+                                       class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                       placeholder="0x... (opcional por ahora)">
+                                <button type="button" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg font-semibold transition-all" disabled>
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-2">
+                                🔜 Próximamente: Integración con Coinbase Smart Wallets, Base, XRPL
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between mt-8">
+                        <button onclick="previousStep()" class="border border-gray-600 hover:border-primary text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                            Atrás
+                        </button>
+                        <button onclick="nextStep()" class="bg-primary hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                            Siguiente
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Step 4: Vista previa e invitaciones -->
+                <div id="step-4" class="wizard-step hidden">
+                    <h3 class="text-2xl font-bold mb-6">Vista previa y configuración de invitaciones</h3>
+
+                    <!-- Tournament Summary -->
+                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-6">
+                        <h4 class="text-lg font-bold mb-4 text-primary">Resumen del torneo</h4>
+                        <div id="tournament-summary" class="space-y-2 text-sm">
+                            <!-- Summary will be populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- Invitation Options -->
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-semibold mb-3">Opciones de invitación</label>
+                            <div class="space-y-3">
+                                <div class="flex items-start gap-3 bg-gray-800 border border-gray-700 rounded-lg p-4">
+                                    <input type="checkbox" id="invite-link" checked class="mt-1">
+                                    <div class="flex-1">
+                                        <label for="invite-link" class="font-semibold cursor-pointer">Link compartible</label>
+                                        <p class="text-sm text-gray-400 mt-1">Genera un link único para que los jugadores se registren</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start gap-3 bg-gray-800 border border-gray-700 rounded-lg p-4">
+                                    <input type="checkbox" id="invite-email" class="mt-1">
+                                    <div class="flex-1">
+                                        <label for="invite-email" class="font-semibold cursor-pointer">Invitación por correo</label>
+                                        <p class="text-sm text-gray-400 mt-1">Envía invitaciones automáticas por email</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-start gap-3 bg-gray-800 border border-gray-700 rounded-lg p-4">
+                                    <input type="checkbox" id="invite-qr" class="mt-1">
+                                    <div class="flex-1">
+                                        <label for="invite-qr" class="font-semibold cursor-pointer">Código QR</label>
+                                        <p class="text-sm text-gray-400 mt-1">Genera un QR code para compartir en físico o redes sociales</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-primary/10 border border-primary/30 rounded-xl p-6">
+                            <div class="flex items-start gap-3">
+                                <svg class="w-6 h-6 text-primary flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <div>
+                                    <h4 class="font-bold text-primary mb-2">Tu torneo está casi listo</h4>
+                                    <p class="text-sm text-gray-300">
+                                        Para activar las invitaciones y acceder al dashboard de gestión,
+                                        necesitas crear una cuenta y realizar el pago de activación.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between mt-8">
+                        <button onclick="previousStep()" class="border border-gray-600 hover:border-primary text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                            Atrás
+                        </button>
+                        <button onclick="finishWizard()" class="bg-primary hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-all flex items-center gap-2">
+                            Crear cuenta y activar torneo
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Final -->
+    <section class="py-20 px-4">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl lg:text-5xl font-bold mb-6">¿Listo para organizar tu mejor torneo?</h2>
+            <p class="text-xl text-gray-400 mb-8">
+                Únete a los organizadores que ya están usando PadelFlow
+            </p>
+            <button onclick="scrollToWizard()" class="bg-primary hover:bg-green-600 text-white px-12 py-4 rounded-lg font-bold text-xl transition-all shadow-lg shadow-primary/25">
+                Empieza gratis, paga sólo al publicar
+            </button>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 border-t border-gray-800 py-12 px-4">
+        <div class="max-w-7xl mx-auto">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <span class="text-xl font-bold">Padel<span class="text-primary">Flow</span></span>
+                    </div>
+                    <p class="text-sm text-gray-400">
+                        La plataforma más moderna para organizar torneos de pádel
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="font-bold mb-4">Producto</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-primary">Características</a></li>
+                        <li><a href="#" class="hover:text-primary">Precios</a></li>
+                        <li><a href="#" class="hover:text-primary">Roadmap</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold mb-4">Empresa</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-primary">Sobre nosotros</a></li>
+                        <li><a href="#" class="hover:text-primary">Blog</a></li>
+                        <li><a href="#" class="hover:text-primary">Contacto</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="font-bold mb-4">Legal</h4>
+                    <ul class="space-y-2 text-sm text-gray-400">
+                        <li><a href="#" class="hover:text-primary">Privacidad</a></li>
+                        <li><a href="#" class="hover:text-primary">Términos</a></li>
+                        <li><a href="#" class="hover:text-primary">Cookies</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-sm text-gray-400">
+                <p>© 2025 PadelFlow. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="app.js"></script>
+</body>
+</html>

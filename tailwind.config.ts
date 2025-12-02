@@ -59,6 +59,17 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // PadelFlow Brand Colors
+        navy: {
+          DEFAULT: "#0A0F1F",
+          light: "#151B2F",
+          dark: "#050812",
+        },
+        cyan: {
+          DEFAULT: "#24D0E6",
+          light: "#4FDDEE",
+          dark: "#1AB5CA",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
