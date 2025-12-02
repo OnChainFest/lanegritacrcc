@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear cuenta - PadelFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10B981',
+                        secondary: '#1F2937',
+                        accent: '#3B82F6'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-secondary min-h-screen flex items-center justify-center p-4">
+    <!-- Background Pattern -->
+    <div class="fixed inset-0 opacity-5">
+        <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.4) 1px, transparent 0); background-size: 48px 48px;"></div>
+    </div>
+
+    <!-- Gradient Orbs -->
+    <div class="fixed top-20 left-10 w-72 h-72 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+    <div class="fixed bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse"></div>
+
+    <!-- Auth Card -->
+    <div class="relative z-10 w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="flex items-center justify-center space-x-2 mb-4">
+                <svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                <span class="text-3xl font-bold text-white">Padel<span class="text-primary">Flow</span></span>
+            </div>
+            <p class="text-gray-400">
+                Un paso más para activar tu torneo
+            </p>
+        </div>
+
+        <!-- Main Card -->
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl p-8 shadow-2xl">
+            <!-- Tournament Info Banner -->
+            <div id="tournament-banner" class="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-6">
+                <div class="flex items-start gap-3">
+                    <svg class="w-6 h-6 text-primary flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"></path>
+                    </svg>
+                    <div class="flex-1">
+                        <h3 class="font-bold text-primary text-sm mb-1">Torneo configurado:</h3>
+                        <p id="tournament-name-display" class="text-white text-sm font-semibold">-</p>
+                        <p id="tournament-details" class="text-gray-300 text-xs mt-1">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step Indicator -->
+            <div class="flex items-center justify-center gap-2 mb-8">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-secondary font-bold text-sm">
+                        1
+                    </div>
+                    <span class="text-sm font-semibold text-primary">Cuenta</span>
+                </div>
+                <div class="w-16 h-0.5 bg-gray-700"></div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-gray-400 font-bold text-sm">
+                        2
+                    </div>
+                    <span class="text-sm text-gray-400">Pago</span>
+                </div>
+                <div class="w-16 h-0.5 bg-gray-700"></div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-gray-700 rounded-full flex items-center justify-center text-gray-400 font-bold text-sm">
+                        3
+                    </div>
+                    <span class="text-sm text-gray-400">Dashboard</span>
+                </div>
+            </div>
+
+            <!-- Auth Form -->
+            <div id="auth-form">
+                <h2 class="text-2xl font-bold text-white mb-2">Crea tu cuenta</h2>
+                <p class="text-gray-400 text-sm mb-6">
+                    Ingresa tus datos para activar tu torneo
+                </p>
+
+                <form onsubmit="handleAuth(event)" class="space-y-4">
+                    <div>
+                        <label for="name" class="block text-sm font-semibold text-gray-300 mb-2">
+                            Nombre completo *
+                        </label>
+                        <input type="text" id="name" required
+                               class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                               placeholder="Juan Pérez">
+                    </div>
+
+                    <div>
+                        <label for="email" class="block text-sm font-semibold text-gray-300 mb-2">
+                            Email *
+                        </label>
+                        <input type="email" id="email" required
+                               class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                               placeholder="tu@email.com">
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-semibold text-gray-300 mb-2">
+                            Contraseña *
+                        </label>
+                        <input type="password" id="password" required minlength="6"
+                               class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                               placeholder="Mínimo 6 caracteres">
+                        <p class="text-xs text-gray-500 mt-1">Al menos 6 caracteres</p>
+                    </div>
+
+                    <div class="flex items-start gap-3 pt-2">
+                        <input type="checkbox" id="terms" required class="mt-1">
+                        <label for="terms" class="text-sm text-gray-400">
+                            Acepto los <a href="#" class="text-primary hover:underline">términos y condiciones</a> y la <a href="#" class="text-primary hover:underline">política de privacidad</a>
+                        </label>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full bg-primary hover:bg-green-600 text-white py-4 rounded-lg font-bold text-lg transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2 group">
+                        Crear cuenta y continuar
+                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-400">
+                        ¿Ya tienes cuenta?
+                        <a href="#" class="text-primary hover:underline font-semibold">Inicia sesión</a>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Payment Processing (Hidden initially) -->
+            <div id="payment-processing" class="hidden">
+                <div class="text-center py-8">
+                    <div class="mb-6">
+                        <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-10 h-10 text-primary animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-white mb-2">Procesando pago</h3>
+                        <p class="text-gray-400 text-sm mb-4">
+                            Estamos simulando el proceso de pago...
+                        </p>
+                        <div class="w-full bg-gray-800 rounded-full h-2 mb-2">
+                            <div id="payment-progress" class="bg-primary h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p id="payment-status" class="text-xs text-gray-500">Conectando con procesador de pagos...</p>
+                    </div>
+
+                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 text-left">
+                        <h4 class="font-bold text-white mb-3 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Simulación de pago
+                        </h4>
+                        <p class="text-sm text-gray-400 mb-4">
+                            Este es un proceso simulado. En producción, aquí se integrará:
+                        </p>
+                        <ul class="space-y-2 text-sm">
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">•</span>
+                                <span class="text-gray-300">Stripe Checkout o similar</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">•</span>
+                                <span class="text-gray-300">Pasarela de pagos con tarjeta</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">•</span>
+                                <span class="text-gray-300">Opción de pago con crypto (futuro)</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="text-primary">•</span>
+                                <span class="text-gray-300">Webhook para confirmar pago</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-6 text-xs text-gray-500">
+                        <p>💡 Por ahora, el pago se simula automáticamente en 2 segundos</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Success (Hidden initially) -->
+            <div id="payment-success" class="hidden">
+                <div class="text-center py-8">
+                    <div class="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-2">¡Pago completado!</h3>
+                    <p class="text-gray-400 text-sm mb-8">
+                        Tu torneo ha sido activado correctamente
+                    </p>
+
+                    <div class="bg-gray-800 border border-gray-700 rounded-xl p-6 mb-6 text-left">
+                        <h4 class="font-bold text-white mb-3">¿Qué sigue?</h4>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex items-start gap-3">
+                                <div class="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <span class="text-primary text-xs font-bold">1</span>
+                                </div>
+                                <div>
+                                    <p class="text-white font-semibold">Accede al dashboard</p>
+                                    <p class="text-gray-400 text-xs">Gestiona tu torneo desde el panel de control</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <span class="text-primary text-xs font-bold">2</span>
+                                </div>
+                                <div>
+                                    <p class="text-white font-semibold">Genera invitaciones</p>
+                                    <p class="text-gray-400 text-xs">Links, QR codes y emails para jugadores</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-3">
+                                <div class="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <span class="text-primary text-xs font-bold">3</span>
+                                </div>
+                                <div>
+                                    <p class="text-white font-semibold">Gestiona inscripciones</p>
+                                    <p class="text-gray-400 text-xs">Revisa y confirma participantes</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <button onclick="goToDashboard()"
+                            class="w-full bg-primary hover:bg-green-600 text-white py-4 rounded-lg font-bold text-lg transition-all shadow-lg shadow-primary/25 flex items-center justify-center gap-2 group">
+                        Ir al Dashboard
+                        <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Link -->
+        <div class="text-center mt-6">
+            <a href="index.html" class="text-gray-400 hover:text-primary text-sm transition-colors inline-flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Volver al inicio
+            </a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Load tournament info on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const tournament = getLastTournamentFromLocalStorage();
+
+            if (tournament) {
+                document.getElementById('tournament-name-display').textContent = tournament.basicInfo.name;
+
+                const formatNames = {
+                    'americano': 'Formato Americano',
+                    'round-robin': 'Round Robin',
+                    'eliminacion': 'Eliminación Directa',
+                    'liga': 'Liga Mensual'
+                };
+
+                const formatName = formatNames[tournament.format.type] || tournament.format.type;
+                const startDate = new Date(tournament.basicInfo.startDate).toLocaleDateString('es-ES', {
+                    day: 'numeric',
+                    month: 'short'
+                });
+
+                document.getElementById('tournament-details').textContent =
+                    `${formatName} • ${tournament.basicInfo.location} • ${startDate}`;
+            } else {
+                // No tournament found, redirect to index
+                console.warn('No tournament found in localStorage');
+                document.getElementById('tournament-banner').innerHTML = `
+                    <div class="text-center text-gray-400 text-sm">
+                        <p>No se encontró información del torneo.</p>
+                        <a href="index.html" class="text-primary hover:underline">Volver al inicio</a>
+                    </div>
+                `;
+            }
+        });
+
+        // Handle authentication form submission
+        function handleAuth(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Simulate account creation
+            console.log('Creating account:', { name, email });
+
+            // Mark user as authenticated
+            markUserAsAuthenticated();
+
+            // Save user info (demo only)
+            localStorage.setItem('padelflow_user_name', name);
+            localStorage.setItem('padelflow_user_email', email);
+
+            // Hide auth form, show payment processing
+            document.getElementById('auth-form').classList.add('hidden');
+            document.getElementById('payment-processing').classList.remove('hidden');
+
+            // Update step indicator
+            updateStepIndicator(2);
+
+            // Simulate payment process
+            simulatePayment();
+        }
+
+        // Simulate payment processing
+        function simulatePayment() {
+            const progressBar = document.getElementById('payment-progress');
+            const statusText = document.getElementById('payment-status');
+
+            const steps = [
+                { progress: 20, text: 'Conectando con procesador de pagos...' },
+                { progress: 40, text: 'Validando información...' },
+                { progress: 60, text: 'Procesando pago...' },
+                { progress: 80, text: 'Confirmando transacción...' },
+                { progress: 100, text: 'Pago completado ✓' }
+            ];
+
+            let currentStep = 0;
+
+            const interval = setInterval(() => {
+                if (currentStep < steps.length) {
+                    progressBar.style.width = steps[currentStep].progress + '%';
+                    statusText.textContent = steps[currentStep].text;
+                    currentStep++;
+                } else {
+                    clearInterval(interval);
+
+                    // Payment complete
+                    setTimeout(() => {
+                        completePayment();
+                    }, 500);
+                }
+            }, 400);
+        }
+
+        // Complete payment and activate tournament
+        function completePayment() {
+            const tournament = getLastTournamentFromLocalStorage();
+
+            if (tournament) {
+                // Activate tournament
+                activateTournament(tournament.id);
+
+                // Hide payment processing, show success
+                document.getElementById('payment-processing').classList.add('hidden');
+                document.getElementById('payment-success').classList.remove('hidden');
+
+                // Update step indicator
+                updateStepIndicator(3);
+
+                console.log('✅ Payment completed and tournament activated');
+
+                /* 🔗 FUTURE INTEGRATION POINTS:
+                 *
+                 * 1. STRIPE INTEGRATION:
+                 *    - Replace simulatePayment() with Stripe Checkout
+                 *    - Use Stripe.js to create checkout session
+                 *    - Handle webhook for payment confirmation
+                 *
+                 * 2. BACKEND API:
+                 *    - POST /api/tournaments/create - Create tournament in DB
+                 *    - POST /api/auth/register - Real user registration
+                 *    - POST /api/payments/create-checkout - Create Stripe session
+                 *    - POST /api/payments/webhook - Stripe webhook handler
+                 *
+                 * 3. AUTHENTICATION:
+                 *    - Replace localStorage with JWT tokens
+                 *    - Implement secure session management
+                 *    - Add email verification flow
+                 *
+                 * Example Stripe integration:
+                 *
+                 * const stripe = Stripe('pk_test_...');
+                 * const response = await fetch('/api/payments/create-checkout', {
+                 *     method: 'POST',
+                 *     body: JSON.stringify({
+                 *         tournament_id: tournament.id,
+                 *         amount: 2999, // 29.99 EUR
+                 *         currency: 'eur'
+                 *     })
+                 * });
+                 * const session = await response.json();
+                 * await stripe.redirectToCheckout({ sessionId: session.id });
+                 */
+            }
+        }
+
+        // Navigate to dashboard
+        function goToDashboard() {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Update step indicator
+        function updateStepIndicator(step) {
+            const circles = document.querySelectorAll('.w-8.h-8.rounded-full');
+            const lines = document.querySelectorAll('.w-16.h-0\\.5');
+            const labels = document.querySelectorAll('.text-sm.text-gray-400, .text-sm.font-semibold.text-primary');
+
+            // Reset all
+            circles.forEach((circle, index) => {
+                if (index < step - 1) {
+                    circle.classList.remove('bg-gray-700', 'text-gray-400');
+                    circle.classList.add('bg-primary', 'text-secondary');
+                } else if (index === step - 1) {
+                    circle.classList.remove('bg-gray-700', 'text-gray-400');
+                    circle.classList.add('bg-primary', 'text-secondary');
+                } else {
+                    circle.classList.add('bg-gray-700', 'text-gray-400');
+                    circle.classList.remove('bg-primary', 'text-secondary');
+                }
+            });
+
+            // Update lines
+            lines.forEach((line, index) => {
+                if (index < step - 1) {
+                    line.classList.remove('bg-gray-700');
+                    line.classList.add('bg-primary');
+                } else {
+                    line.classList.add('bg-gray-700');
+                    line.classList.remove('bg-primary');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

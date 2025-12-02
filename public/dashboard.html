@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - PadelFlow</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#10B981',
+                        secondary: '#1F2937',
+                        accent: '#3B82F6'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-secondary text-white min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-gray-900 border-b border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        <span class="text-xl font-bold">Padel<span class="text-primary">Flow</span></span>
+                    </div>
+
+                    <div class="hidden md:flex items-center space-x-6">
+                        <a href="#" class="text-white font-semibold border-b-2 border-primary pb-1">Mis torneos</a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">Plantillas</a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors">Historial</a>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <button onclick="openCreateTournamentModal()"
+                            class="bg-primary hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        <span class="hidden sm:inline">Crear torneo</span>
+                    </button>
+
+                    <div class="relative">
+                        <button class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center hover:bg-primary/20 transition-all">
+                            <span id="user-initial" class="text-primary font-bold">U</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Banner -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">Bienvenido, <span id="user-name">Usuario</span> 👋</h1>
+            <p class="text-gray-400">Gestiona tus torneos y revisa el estado de las inscripciones</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <div class="text-3xl text-primary font-bold mb-2" id="stat-active">0</div>
+                <div class="text-sm text-gray-400">Torneos activos</div>
+            </div>
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <div class="text-3xl text-accent font-bold mb-2" id="stat-participants">0</div>
+                <div class="text-sm text-gray-400">Participantes totales</div>
+            </div>
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <div class="text-3xl text-yellow-500 font-bold mb-2" id="stat-pending">0</div>
+                <div class="text-sm text-gray-400">Invitaciones pendientes</div>
+            </div>
+            <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
+                <div class="text-3xl text-green-400 font-bold mb-2" id="stat-total">0</div>
+                <div class="text-sm text-gray-400">Torneos totales</div>
+            </div>
+        </div>
+
+        <!-- Tournament Sections -->
+        <div class="space-y-8">
+            <!-- Active Tournaments -->
+            <div>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold">Torneos Activos</h2>
+                    <button onclick="openCreateTournamentModal()" class="text-primary hover:underline font-semibold flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Nuevo torneo
+                    </button>
+                </div>
+
+                <div id="active-tournaments" class="grid md:grid-cols-2 gap-6">
+                    <!-- Tournaments will be loaded here -->
+                </div>
+
+                <div id="no-active-tournaments" class="hidden bg-gray-900 border border-gray-700 rounded-xl p-12 text-center">
+                    <div class="text-5xl mb-4">🎾</div>
+                    <h3 class="text-xl font-bold mb-2">No tienes torneos activos</h3>
+                    <p class="text-gray-400 mb-6">Crea tu primer torneo para empezar</p>
+                    <button onclick="openCreateTournamentModal()" class="bg-primary hover:bg-green-600 text-white px-8 py-3 rounded-lg font-semibold transition-all">
+                        Crear mi primer torneo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Future Features Section -->
+            <div>
+                <h2 class="text-2xl font-bold mb-4">Próximamente</h2>
+
+                <div class="grid md:grid-cols-3 gap-4">
+                    <!-- Responses -->
+                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 opacity-60 cursor-not-allowed">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold">Respuestas de participantes</h3>
+                            <span class="text-xs bg-gray-700 px-2 py-1 rounded">Próximamente</span>
+                        </div>
+                        <p class="text-sm text-gray-400">Gestiona confirmaciones y registros de jugadores</p>
+                    </div>
+
+                    <!-- Payment Status -->
+                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 opacity-60 cursor-not-allowed">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold">Estado de pagos</h3>
+                            <span class="text-xs bg-gray-700 px-2 py-1 rounded">Próximamente</span>
+                        </div>
+                        <p class="text-sm text-gray-400">Revisa pagos de inscripción y prize pool</p>
+                    </div>
+
+                    <!-- Smart Contracts -->
+                    <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 opacity-60 cursor-not-allowed">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold">Smart Contracts</h3>
+                            <span class="text-xs bg-gray-700 px-2 py-1 rounded">Próximamente</span>
+                        </div>
+                        <p class="text-sm text-gray-400">Distribución automática de premios on-chain</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Tournament Detail Modal -->
+    <div id="detail-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-8">
+                <div class="flex justify-between items-start mb-6">
+                    <h2 class="text-3xl font-bold" id="modal-title">Detalle del torneo</h2>
+                    <button onclick="closeDetailModal()" class="text-gray-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="modal-content">
+                    <!-- Content will be injected here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invitations Modal -->
+    <div id="invitations-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="p-8">
+                <div class="flex justify-between items-start mb-6">
+                    <h2 class="text-3xl font-bold">Generar invitaciones</h2>
+                    <button onclick="closeInvitationsModal()" class="text-gray-400 hover:text-white">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Link compartible -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Link de invitación</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="invitation-link" readonly
+                                   class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-sm font-mono"
+                                   value="https://padelflow.com/t/demo-123456">
+                            <button onclick="copyLink()" class="bg-primary hover:bg-green-600 px-6 py-3 rounded-lg font-semibold transition-all">
+                                Copiar
+                            </button>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-2">Comparte este link con los jugadores para que se registren</p>
+                    </div>
+
+                    <!-- QR Code Placeholder -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Código QR</label>
+                        <div class="bg-gray-800 border border-gray-600 rounded-xl p-8 text-center">
+                            <div class="w-48 h-48 bg-white rounded-lg mx-auto mb-4 flex items-center justify-center">
+                                <div class="text-gray-400">
+                                    <svg class="w-24 h-24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-2">Código QR del torneo</p>
+                            <p class="text-xs text-gray-500">En producción, aquí se generará un QR real</p>
+                        </div>
+                    </div>
+
+                    <!-- Email Placeholder -->
+                    <div>
+                        <label class="block text-sm font-semibold mb-2">Invitación por correo</label>
+                        <div class="bg-gray-800 border border-gray-600 rounded-xl p-6">
+                            <p class="text-sm text-gray-400 mb-4">Envía invitaciones automáticas por email</p>
+                            <textarea rows="3" placeholder="Ingresa emails separados por comas..."
+                                      class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-sm mb-4"
+                                      disabled></textarea>
+                            <button class="w-full bg-gray-700 px-6 py-3 rounded-lg font-semibold opacity-50 cursor-not-allowed" disabled>
+                                Enviar invitaciones (próximamente)
+                            </button>
+                            <p class="text-xs text-gray-500 mt-2">🔜 Integración con servicio de email en desarrollo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Tournament Modal -->
+    <div id="create-tournament-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-700 rounded-2xl max-w-md w-full">
+            <div class="p-8">
+                <div class="text-center mb-6">
+                    <div class="text-5xl mb-4">🎾</div>
+                    <h3 class="text-2xl font-bold mb-2">Crear nuevo torneo</h3>
+                    <p class="text-gray-400">Elige cómo quieres empezar</p>
+                </div>
+
+                <div class="space-y-4">
+                    <a href="index.html#wizard"
+                       class="block bg-primary hover:bg-green-600 text-white p-6 rounded-xl transition-all text-center">
+                        <div class="font-bold text-lg mb-2">Desde cero</div>
+                        <p class="text-sm opacity-90">Configurar un nuevo torneo paso a paso</p>
+                    </a>
+
+                    <button class="w-full bg-gray-800 border border-gray-600 hover:border-primary text-gray-400 p-6 rounded-xl transition-all opacity-60 cursor-not-allowed" disabled>
+                        <div class="font-bold text-lg mb-2">Usar plantilla</div>
+                        <p class="text-sm">Partir de torneos anteriores (próximamente)</p>
+                    </button>
+                </div>
+
+                <button onclick="closeCreateTournamentModal()" class="w-full mt-6 text-gray-400 hover:text-white transition-colors">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Check authentication
+        if (!isUserAuthenticated()) {
+            window.location.href = 'index.html';
+        }
+
+        // Load user data and tournaments on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            loadTournaments();
+            calculateStats();
+        });
+
+        function loadUserData() {
+            const userName = localStorage.getItem('padelflow_user_name') || 'Usuario';
+            const userEmail = localStorage.getItem('padelflow_user_email') || '';
+
+            document.getElementById('user-name').textContent = userName;
+
+            // Set user initial
+            const initial = userName.charAt(0).toUpperCase();
+            document.getElementById('user-initial').textContent = initial;
+        }
+
+        function loadTournaments() {
+            const tournaments = getStoredTournaments();
+            const activeTournaments = tournaments.filter(t => t.status === 'active');
+
+            const container = document.getElementById('active-tournaments');
+            const noTournamentsDiv = document.getElementById('no-active-tournaments');
+
+            if (activeTournaments.length === 0) {
+                container.classList.add('hidden');
+                noTournamentsDiv.classList.remove('hidden');
+            } else {
+                container.classList.remove('hidden');
+                noTournamentsDiv.classList.add('hidden');
+
+                container.innerHTML = activeTournaments.map(tournament => createTournamentCard(tournament)).join('');
+            }
+        }
+
+        function createTournamentCard(tournament) {
+            const formatNames = {
+                'americano': 'Formato Americano',
+                'round-robin': 'Round Robin',
+                'eliminacion': 'Eliminación Directa',
+                'liga': 'Liga Mensual'
+            };
+
+            const formatName = formatNames[tournament.format.type] || tournament.format.type;
+
+            const startDate = new Date(tournament.basicInfo.startDate);
+            const formattedDate = startDate.toLocaleDateString('es-ES', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+
+            return `
+                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6 hover:border-primary/50 transition-all">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold mb-2">${tournament.basicInfo.name}</h3>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <span class="text-xs bg-primary/10 text-primary px-2 py-1 rounded">${formatName}</span>
+                                <span class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded">${tournament.status === 'active' ? 'Activo' : 'Pendiente'}</span>
+                            </div>
+                        </div>
+                        <button onclick="viewTournamentDetail('${tournament.id}')"
+                                class="text-gray-400 hover:text-primary">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="space-y-2 text-sm text-gray-400 mb-4">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                            <span>${tournament.basicInfo.location}, ${tournament.basicInfo.city}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <span>${formattedDate}</span>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-700 pt-4 flex gap-2">
+                        <button onclick="viewTournamentDetail('${tournament.id}')"
+                                class="flex-1 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+                            Ver detalle
+                        </button>
+                        <button onclick="openInvitationsModal('${tournament.id}')"
+                                class="flex-1 bg-primary hover:bg-green-600 px-4 py-2 rounded-lg text-sm font-semibold transition-all">
+                            Invitaciones
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateStats() {
+            const tournaments = getStoredTournaments();
+            const activeTournaments = tournaments.filter(t => t.status === 'active');
+
+            document.getElementById('stat-active').textContent = activeTournaments.length;
+            document.getElementById('stat-participants').textContent = '0'; // Future: count actual participants
+            document.getElementById('stat-pending').textContent = activeTournaments.length > 0 ? activeTournaments.length * 16 : 0; // Placeholder
+            document.getElementById('stat-total').textContent = tournaments.length;
+        }
+
+        // Modal functions
+        let currentTournamentId = null;
+
+        function viewTournamentDetail(tournamentId) {
+            const tournaments = getStoredTournaments();
+            const tournament = tournaments.find(t => t.id === tournamentId);
+
+            if (!tournament) return;
+
+            currentTournamentId = tournamentId;
+
+            const formatNames = {
+                'americano': 'Formato Americano',
+                'round-robin': 'Round Robin',
+                'eliminacion': 'Eliminación Directa',
+                'liga': 'Liga Mensual'
+            };
+
+            document.getElementById('modal-title').textContent = tournament.basicInfo.name;
+
+            let detailsHTML = `
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">Información básica</h3>
+                        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                            <div class="grid md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-400">Ubicación:</span>
+                                    <span class="font-semibold ml-2">${tournament.basicInfo.location}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Ciudad:</span>
+                                    <span class="font-semibold ml-2">${tournament.basicInfo.city}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Fecha inicio:</span>
+                                    <span class="font-semibold ml-2">${new Date(tournament.basicInfo.startDate).toLocaleDateString('es-ES')}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Fecha fin:</span>
+                                    <span class="font-semibold ml-2">${new Date(tournament.basicInfo.endDate).toLocaleDateString('es-ES')}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Canchas:</span>
+                                    <span class="font-semibold ml-2">${tournament.basicInfo.courts}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Formato:</span>
+                                    <span class="font-semibold ml-2">${formatNames[tournament.format.type]}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">Premios</h3>
+                        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                            ${tournament.prizes.type === 'dinero' ? `
+                                <div class="text-sm">
+                                    <div class="mb-2">
+                                        <span class="text-gray-400">Prize Pool:</span>
+                                        <span class="font-semibold text-primary ml-2 text-lg">${tournament.prizes.amount} ${tournament.prizes.currency}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-400">Distribución:</span>
+                                        <span class="font-semibold ml-2">${tournament.prizes.distribution}</span>
+                                    </div>
+                                </div>
+                            ` : `
+                                <div class="text-sm">
+                                    <div class="text-gray-400 mb-2">Premios no monetarios:</div>
+                                    <div class="font-semibold">${tournament.prizes.description}</div>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">Estado</h3>
+                        <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
+                            <div class="flex items-center gap-3 mb-4">
+                                <div class="w-3 h-3 bg-primary rounded-full animate-pulse"></div>
+                                <span class="font-semibold">${tournament.status === 'active' ? 'Torneo activo' : 'Pendiente de activación'}</span>
+                            </div>
+                            <div class="text-sm text-gray-400">
+                                <p>• Invitaciones: No enviadas aún</p>
+                                <p>• Participantes confirmados: 0</p>
+                                <p>• Pagos recibidos: 0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modal-content').innerHTML = detailsHTML;
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detail-modal').classList.add('hidden');
+            currentTournamentId = null;
+        }
+
+        function openInvitationsModal(tournamentId) {
+            currentTournamentId = tournamentId;
+            document.getElementById('invitations-modal').classList.remove('hidden');
+
+            // Update invitation link with tournament ID
+            document.getElementById('invitation-link').value = `https://padelflow.com/t/${tournamentId}`;
+        }
+
+        function closeInvitationsModal() {
+            document.getElementById('invitations-modal').classList.add('hidden');
+            currentTournamentId = null;
+        }
+
+        function openCreateTournamentModal() {
+            document.getElementById('create-tournament-modal').classList.remove('hidden');
+        }
+
+        function closeCreateTournamentModal() {
+            document.getElementById('create-tournament-modal').classList.add('hidden');
+        }
+
+        function copyLink() {
+            const linkInput = document.getElementById('invitation-link');
+            linkInput.select();
+            document.execCommand('copy');
+
+            // Show feedback
+            alert('Link copiado al portapapeles!');
+        }
+
+        /* 🔗 FUTURE INTEGRATION POINTS:
+         *
+         * 1. PARTICIPANT MANAGEMENT:
+         *    - GET /api/tournaments/:id/participants - List registered players
+         *    - POST /api/tournaments/:id/participants/:playerId/confirm - Confirm player
+         *    - DELETE /api/tournaments/:id/participants/:playerId - Remove player
+         *
+         * 2. PAYMENT TRACKING:
+         *    - GET /api/tournaments/:id/payments - List all payments
+         *    - GET /api/tournaments/:id/payments/status - Get payment summary
+         *    - POST /api/tournaments/:id/payments/refund - Process refunds
+         *
+         * 3. SMART CONTRACT INTEGRATION:
+         *    - POST /api/tournaments/:id/deploy-contract - Deploy tournament smart contract
+         *    - GET /api/tournaments/:id/contract-status - Check contract deployment
+         *    - POST /api/tournaments/:id/distribute-prizes - Trigger prize distribution
+         *    - GET /api/tournaments/:id/transactions - View on-chain transactions
+         *
+         * 4. REAL-TIME UPDATES:
+         *    - Implement WebSocket connection for live updates
+         *    - Show real-time participant registrations
+         *    - Display live payment confirmations
+         *    - Update bracket/standings automatically
+         *
+         * 5. INVITATION SYSTEM:
+         *    - POST /api/tournaments/:id/invitations/email - Send email invitations
+         *    - GET /api/tournaments/:id/invitations/qr - Generate QR code
+         *    - POST /api/tournaments/:id/invitations/whatsapp - Send WhatsApp invites
+         */
+    </script>
+</body>
+</html>
