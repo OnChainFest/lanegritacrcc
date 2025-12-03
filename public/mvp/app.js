@@ -161,6 +161,25 @@ function validateStep(step) {
                     return false;
                 }
             }
+        } else if (prizeType === 'nft_trophy') {
+            const winnersCount = document.getElementById('nft-trophy-winners-count');
+            const trophyName = document.getElementById('nft-trophy-name');
+            const trophyDescription = document.getElementById('nft-trophy-description');
+
+            if (!winnersCount || !winnersCount.value || winnersCount.value <= 0) {
+                alert('Por favor, ingresa un número válido de ganadores que recibirán NFT Trophy');
+                return false;
+            }
+
+            if (!trophyName || !trophyName.value.trim()) {
+                alert('Por favor, ingresa un nombre para el NFT Trophy');
+                return false;
+            }
+
+            if (!trophyDescription || !trophyDescription.value.trim()) {
+                alert('Por favor, ingresa una descripción para el NFT Trophy');
+                return false;
+            }
         }
 
         return true;
@@ -217,6 +236,19 @@ function saveStepData(step) {
                 prizePoolAmount: parseFloat(prizePoolAmount?.value) || 0,
                 prizeDistribution: prizeDistribution,
                 prizeStatus: [], // Will be populated in dashboard
+                organizerWallet: document.getElementById('organizer-wallet')?.value || ''
+            };
+        } else if (prizeType === 'nft_trophy') {
+            const winnersCount = document.getElementById('nft-trophy-winners-count');
+            const trophyName = document.getElementById('nft-trophy-name');
+            const trophyDescription = document.getElementById('nft-trophy-description');
+
+            tournamentData.prizes = {
+                type: 'nft_trophy',
+                nftTrophyName: trophyName?.value || '',
+                nftTrophyDescription: trophyDescription?.value || '',
+                nftTrophyWinnersCount: parseInt(winnersCount?.value) || 1,
+                nftTrophyStatus: [], // Will be populated in dashboard
                 organizerWallet: document.getElementById('organizer-wallet')?.value || ''
             };
         }
@@ -437,10 +469,16 @@ function setPrizeType(type) {
     // Save prize type
     tournamentData.prizes.type = type;
 
-    // Show monetary fields by default
+    // Show/hide appropriate fields
     const monetaryFields = document.getElementById('monetary-fields');
-    if (monetaryFields && type === 'monetary') {
-        monetaryFields.classList.remove('hidden');
+    const nftTrophyFields = document.getElementById('nft-trophy-fields');
+
+    if (type === 'monetary') {
+        if (monetaryFields) monetaryFields.classList.remove('hidden');
+        if (nftTrophyFields) nftTrophyFields.classList.add('hidden');
+    } else if (type === 'nft_trophy') {
+        if (monetaryFields) monetaryFields.classList.add('hidden');
+        if (nftTrophyFields) nftTrophyFields.classList.remove('hidden');
     }
 }
 
@@ -849,6 +887,171 @@ function updatePrizeDeliveryStatus(tournamentId, place, winnerName, delivered) {
         console.error('Error updating prize delivery status:', error);
         return false;
     }
+}
+
+// ========================================
+// NFT TROPHY MANAGEMENT (SYMBOLIC)
+// ========================================
+
+/**
+ * Initialize NFT Trophy status array if needed
+ * Creates default entries for each winner place with status "active"
+ * @param {Object} tournament - Tournament object
+ * @returns {Object} Tournament with initialized nftTrophyStatus
+ *
+ * TODO: Future Web3 integration points:
+ * - Connect to smart contract for NFT minting
+ * - Add IPFS integration for NFT metadata storage
+ * - Implement wallet connection for winners
+ * - Add on-chain verification of NFT ownership
+ */
+function initNftTrophyStatusIfNeeded(tournament) {
+    if (tournament.prizes?.type !== 'nft_trophy') return tournament;
+
+    if (!Array.isArray(tournament.prizes.nftTrophyStatus) || tournament.prizes.nftTrophyStatus.length === 0) {
+        const count = tournament.prizes.nftTrophyWinnersCount || 1;
+        tournament.prizes.nftTrophyStatus = Array.from({ length: count }, (_, idx) => ({
+            place: idx + 1,
+            winnerName: '',
+            status: 'active' // 'active' = not claimed, 'redeemed' = claimed
+        }));
+    }
+
+    return tournament;
+}
+
+/**
+ * Load NFT Trophy status for a specific tournament
+ * @param {String} tournamentId - Tournament ID
+ * @returns {Array} NFT Trophy status array
+ */
+function loadNftTrophyStatus(tournamentId) {
+    try {
+        const tournaments = getStoredTournaments();
+        const tournament = tournaments.find(t => t.id === tournamentId);
+
+        if (!tournament || !tournament.prizes || tournament.prizes.type !== 'nft_trophy') {
+            return [];
+        }
+
+        // Initialize if needed
+        const updatedTournament = initNftTrophyStatusIfNeeded(tournament);
+
+        return updatedTournament.prizes.nftTrophyStatus || [];
+    } catch (error) {
+        console.error('Error loading NFT Trophy status:', error);
+        return [];
+    }
+}
+
+/**
+ * Update NFT Trophy status for a tournament
+ * @param {String} tournamentId - Tournament ID
+ * @param {Array} nftTrophyStatus - Updated status array
+ *
+ * TODO: Future Web3 integration:
+ * - Call mintNftTrophyOnChain(tournament, winner) when status changes to 'redeemed'
+ * - Verify wallet ownership before marking as redeemed
+ * - Store transaction hash for on-chain verification
+ */
+function updateNftTrophyStatus(tournamentId, nftTrophyStatus) {
+    try {
+        const tournaments = getStoredTournaments();
+        const tournamentIndex = tournaments.findIndex(t => t.id === tournamentId);
+
+        if (tournamentIndex === -1) {
+            console.error('Tournament not found');
+            return false;
+        }
+
+        if (!tournaments[tournamentIndex].prizes) {
+            tournaments[tournamentIndex].prizes = {};
+        }
+
+        tournaments[tournamentIndex].prizes.nftTrophyStatus = nftTrophyStatus;
+
+        localStorage.setItem('padelflow_tournaments', JSON.stringify(tournaments));
+        console.log('✅ NFT Trophy status saved for tournament:', tournamentId);
+
+        return true;
+    } catch (error) {
+        console.error('Error updating NFT Trophy status:', error);
+        return false;
+    }
+}
+
+/**
+ * Update NFT Trophy entry for a specific place
+ * @param {String} tournamentId - Tournament ID
+ * @param {Number} place - Prize place (1, 2, 3, etc.)
+ * @param {String} winnerName - Name of the winner
+ * @param {String} status - Status: 'active' or 'redeemed'
+ */
+function updateNftTrophyEntry(tournamentId, place, winnerName, status) {
+    try {
+        let trophyStatus = loadNftTrophyStatus(tournamentId);
+
+        // Find existing entry or create new one
+        const existingIndex = trophyStatus.findIndex(t => t.place === place);
+
+        const statusEntry = {
+            place: place,
+            winnerName: winnerName || '',
+            status: status || 'active',
+            updatedAt: new Date().toISOString()
+        };
+
+        if (existingIndex >= 0) {
+            trophyStatus[existingIndex] = statusEntry;
+        } else {
+            trophyStatus.push(statusEntry);
+        }
+
+        updateNftTrophyStatus(tournamentId, trophyStatus);
+        return true;
+    } catch (error) {
+        console.error('Error updating NFT Trophy entry:', error);
+        return false;
+    }
+}
+
+/**
+ * PLACEHOLDER: Mint NFT Trophy on-chain
+ * This function will be implemented when Web3 integration is ready
+ * @param {Object} tournament - Tournament object
+ * @param {Object} winner - Winner data {place, winnerName, walletAddress}
+ *
+ * TODO: Implement actual minting logic:
+ * - Connect to deployed NFT contract
+ * - Mint NFT with metadata (name, description, attributes)
+ * - Transfer NFT to winner's wallet
+ * - Return transaction hash
+ */
+async function mintNftTrophyOnChain(tournament, winner) {
+    console.log('🔜 mintNftTrophyOnChain placeholder called');
+    console.log('Tournament:', tournament.basicInfo.name);
+    console.log('Winner:', winner);
+    console.log('NFT Trophy:', tournament.prizes.nftTrophyName);
+
+    // Future implementation:
+    // const contract = await getContract('NFTTrophy');
+    // const metadata = {
+    //   name: tournament.prizes.nftTrophyName,
+    //   description: tournament.prizes.nftTrophyDescription,
+    //   attributes: [
+    //     { trait_type: "Tournament", value: tournament.basicInfo.name },
+    //     { trait_type: "Place", value: winner.place },
+    //     { trait_type: "Winner", value: winner.winnerName },
+    //     { trait_type: "Date", value: tournament.basicInfo.startDate }
+    //   ]
+    // };
+    // const tx = await contract.mint(winner.walletAddress, metadata);
+    // return tx.hash;
+
+    return Promise.resolve({
+        success: false,
+        message: 'Web3 integration not yet implemented'
+    });
 }
 
 // ========================================

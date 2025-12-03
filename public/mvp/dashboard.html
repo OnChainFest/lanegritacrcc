@@ -457,7 +457,7 @@
                     </div>
 
                     <div>
-                        <h3 class="text-lg font-bold mb-3">Prize Distribution (Manual)</h3>
+                        <h3 class="text-lg font-bold mb-3">${tournament.prizes && tournament.prizes.type === 'nft_trophy' ? 'NFT Trophy Awards' : 'Prize Distribution (Manual)'}</h3>
                         <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
                             ${tournament.prizes && tournament.prizes.type === 'monetary' ? `
                                 <div class="mb-4">
@@ -473,9 +473,30 @@
                                 <div id="prize-distribution-table-${tournament.id}">
                                     <!-- Prize distribution table will be rendered here -->
                                 </div>
+                            ` : tournament.prizes && tournament.prizes.type === 'nft_trophy' ? `
+                                <div class="mb-4">
+                                    <div class="flex items-start gap-3 mb-3">
+                                        <div class="text-4xl">🏆</div>
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-lg text-primary mb-1">${tournament.prizes.nftTrophyName}</h4>
+                                            <p class="text-sm text-gray-400 mb-3">${tournament.prizes.nftTrophyDescription}</p>
+                                            <div class="text-xs text-gray-500 bg-gray-900 border border-gray-700 rounded p-3">
+                                                <strong>ℹ️ Premio simbólico:</strong> Este torneo no tiene premios monetarios. Los ganadores reciben un NFT Trophy simbólico. Más adelante podrás conectarlo a Web3 para emitirlo on-chain.
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-gray-700 pt-3 mb-3">
+                                        <span class="text-sm text-gray-400">Ganadores que recibirán NFT Trophy:</span>
+                                        <span class="font-semibold text-primary ml-2">${tournament.prizes.nftTrophyWinnersCount}</span>
+                                    </div>
+                                </div>
+
+                                <div id="nft-trophy-table-${tournament.id}">
+                                    <!-- NFT Trophy table will be rendered here -->
+                                </div>
                             ` : `
                                 <div class="text-sm text-gray-400">
-                                    No hay distribución de premios monetarios configurada para este torneo.
+                                    No hay configuración de premios para este torneo.
                                 </div>
                             `}
                         </div>
@@ -504,7 +525,119 @@
             // Render prize distribution table if prizes exist
             if (tournament.prizes && tournament.prizes.type === 'monetary') {
                 renderPrizeDistributionTable(tournament);
+            } else if (tournament.prizes && tournament.prizes.type === 'nft_trophy') {
+                renderNftTrophyTable(tournament);
             }
+        }
+
+        function renderNftTrophyTable(tournament) {
+            const container = document.getElementById(`nft-trophy-table-${tournament.id}`);
+            if (!container) return;
+
+            // Initialize NFT Trophy status if needed
+            const updatedTournament = initNftTrophyStatusIfNeeded(tournament);
+            const trophyStatus = updatedTournament.prizes.nftTrophyStatus || [];
+
+            if (trophyStatus.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-400">No hay ganadores configurados aún.</p>';
+                return;
+            }
+
+            // Build table HTML
+            let tableHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-700">
+                                <th class="text-left py-3 px-2 text-gray-400 font-semibold">Lugar</th>
+                                <th class="text-left py-3 px-2 text-gray-400 font-semibold">Ganador</th>
+                                <th class="text-center py-3 px-2 text-gray-400 font-semibold">Estado NFT</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            trophyStatus.forEach(trophy => {
+                const placeLabel = trophy.place === 1 ? '1°' : trophy.place === 2 ? '2°' : trophy.place === 3 ? '3°' : `${trophy.place}°`;
+                const isRedeemed = trophy.status === 'redeemed';
+
+                tableHTML += `
+                    <tr class="border-b border-gray-700/50 hover:bg-gray-750 transition-colors">
+                        <td class="py-3 px-2 font-semibold">${placeLabel} lugar</td>
+                        <td class="py-3 px-2">
+                            <input type="text"
+                                   id="nft-winner-name-${tournament.id}-${trophy.place}"
+                                   value="${trophy.winnerName || ''}"
+                                   placeholder="Nombre del ganador"
+                                   onchange="updateNftWinnerName('${tournament.id}', ${trophy.place}, this.value)"
+                                   class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-1.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none">
+                        </td>
+                        <td class="py-3 px-2 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox"
+                                           id="nft-redeemed-${tournament.id}-${trophy.place}"
+                                           ${isRedeemed ? 'checked' : ''}
+                                           onchange="toggleNftTrophyRedeemed('${tournament.id}', ${trophy.place})"
+                                           class="w-5 h-5 text-primary bg-gray-700 border-gray-600 rounded focus:ring-primary focus:ring-2">
+                                </label>
+                                <span class="text-xs ${isRedeemed ? 'text-green-500' : 'text-yellow-500'} font-semibold">
+                                    ${isRedeemed ? '✓ Redeemed' : '⏳ Active'}
+                                </span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- TODO: Web3 Integration Section -->
+                <div class="mt-4 p-3 bg-gray-900 border border-gray-700 rounded text-xs text-gray-500">
+                    <strong>🔜 Próximamente:</strong> Conecta wallets de ganadores para mintear NFTs on-chain automáticamente cuando marques como "Redeemed".
+                </div>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        function updateNftWinnerName(tournamentId, place, winnerName) {
+            const checkbox = document.getElementById(`nft-redeemed-${tournamentId}-${place}`);
+            const status = checkbox && checkbox.checked ? 'redeemed' : 'active';
+
+            updateNftTrophyEntry(tournamentId, place, winnerName, status);
+        }
+
+        function toggleNftTrophyRedeemed(tournamentId, place) {
+            const checkbox = document.getElementById(`nft-redeemed-${tournamentId}-${place}`);
+            const nameInput = document.getElementById(`nft-winner-name-${tournamentId}-${place}`);
+
+            if (!checkbox || !nameInput) return;
+
+            const status = checkbox.checked ? 'redeemed' : 'active';
+            const winnerName = nameInput.value;
+
+            updateNftTrophyEntry(tournamentId, place, winnerName, status);
+
+            // Update visual feedback
+            const statusLabel = checkbox.parentElement.nextElementSibling;
+            if (statusLabel) {
+                if (status === 'redeemed') {
+                    statusLabel.className = 'text-xs text-green-500 font-semibold';
+                    statusLabel.textContent = '✓ Redeemed';
+                } else {
+                    statusLabel.className = 'text-xs text-yellow-500 font-semibold';
+                    statusLabel.textContent = '⏳ Active';
+                }
+            }
+
+            // TODO: Future Web3 integration
+            // if (status === 'redeemed' && winnerName) {
+            //     mintNftTrophyOnChain(tournament, { place, winnerName, walletAddress: '...' });
+            // }
         }
 
         function renderPrizeDistributionTable(tournament) {

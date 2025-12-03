@@ -1,0 +1,64 @@
+{
+  "networks": {
+    "baseSepolia": {
+      "chainId": 84532,
+      "name": "Base Sepolia Testnet",
+      "rpcUrl": "https://sepolia.base.org",
+      "explorer": "https://sepolia.basescan.org",
+      "contracts": {
+        "PadelFlowNFTTrophy": {
+          "address": "",
+          "deploymentBlock": 0,
+          "deployer": "",
+          "deployedAt": ""
+        }
+      }
+    },
+    "base": {
+      "chainId": 8453,
+      "name": "Base Mainnet",
+      "rpcUrl": "https://mainnet.base.org",
+      "explorer": "https://basescan.org",
+      "contracts": {
+        "PadelFlowNFTTrophy": {
+          "address": "",
+          "deploymentBlock": 0,
+          "deployer": "",
+          "deployedAt": ""
+        }
+      }
+    },
+    "xrplEvm": {
+      "chainId": 1440002,
+      "name": "XRPL EVM Sidechain",
+      "rpcUrl": "https://rpc-evm-sidechain.xrpl.org",
+      "explorer": "https://evm-sidechain.xrpl.org",
+      "contracts": {
+        "PadelFlowNFTTrophy": {
+          "address": "",
+          "deploymentBlock": 0,
+          "deployer": "",
+          "deployedAt": ""
+        }
+      }
+    },
+    "localhost": {
+      "chainId": 31337,
+      "name": "Hardhat Local Network",
+      "rpcUrl": "http://127.0.0.1:8545",
+      "explorer": "",
+      "contracts": {
+        "PadelFlowNFTTrophy": {
+          "address": "",
+          "deploymentBlock": 0,
+          "deployer": "",
+          "deployedAt": ""
+        }
+      }
+    }
+  },
+  "instructions": {
+    "deployment": "After deploying the contract, update the corresponding address field with the deployed contract address",
+    "usage": "Frontend applications can import this file to get the correct contract address for the current network"
+  }
+}

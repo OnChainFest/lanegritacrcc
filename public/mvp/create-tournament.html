@@ -268,11 +268,11 @@
                                     <div class="font-bold">Monetary Prize</div>
                                     <div class="text-sm text-gray-400">Prize pool monetario</div>
                                 </button>
-                                <button type="button" onclick="setPrizeType('non-monetary')" data-prize="non-monetary"
-                                        class="prize-type-btn bg-gray-800 border-2 border-gray-600 rounded-lg p-4 text-left opacity-50 cursor-not-allowed" disabled>
-                                    <div class="text-2xl mb-2">🎁</div>
-                                    <div class="font-bold">Non-monetary / Recognition</div>
-                                    <div class="text-sm text-gray-400">Próximamente</div>
+                                <button type="button" onclick="setPrizeType('nft_trophy')" data-prize="nft_trophy"
+                                        class="prize-type-btn bg-gray-800 border-2 border-gray-600 rounded-lg p-4 text-left hover:border-primary transition-all">
+                                    <div class="text-2xl mb-2">🏆</div>
+                                    <div class="font-bold">Non-monetary / NFT Trophy</div>
+                                    <div class="text-sm text-gray-400">Trofeo NFT conmemorativo</div>
                                 </button>
                             </div>
                         </div>
@@ -339,6 +339,52 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div id="nft-trophy-fields" class="space-y-6 hidden">
+                            <!-- NFT Trophy Info Notice -->
+                            <div class="bg-cyan-500/10 border border-cyan-500/30 rounded-xl p-4">
+                                <div class="flex items-start gap-3">
+                                    <svg class="w-5 h-5 text-cyan-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <div class="text-sm">
+                                        <strong class="text-cyan-500">Premio simbólico NFT Trophy:</strong>
+                                        <span class="text-gray-300"> En esta fase, el NFT Trophy es un premio simbólico dentro de PadelFlow. Más adelante podrás conectarlo a una wallet y mintearlo on-chain.</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Número de ganadores que recibirán NFT Trophy *</label>
+                                <input type="number" id="nft-trophy-winners-count" min="1" max="10" value="3"
+                                       class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                       placeholder="Ej: 3">
+                                <p class="text-xs text-gray-500 mt-1">Los primeros N lugares recibirán un NFT Trophy</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Nombre del trofeo NFT *</label>
+                                <input type="text" id="nft-trophy-name"
+                                       class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                       placeholder="Ej: PadelFlow Season Champion 2025">
+                                <p class="text-xs text-gray-500 mt-1">Este será el nombre del NFT conmemorativo</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Descripción del NFT Trophy *</label>
+                                <textarea id="nft-trophy-description" rows="3"
+                                          class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                          placeholder="Ej: NFT conmemorativo para los campeones de la temporada 2025. Este token representa tu victoria en el torneo."></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Describe brevemente qué representa este NFT Trophy</p>
+                            </div>
+
+                            <!-- TODO: Future Web3 Integration
+                                 - Add NFT metadata fields (image URL, attributes)
+                                 - Connect to smart contract for minting
+                                 - Integrate IPFS for NFT storage
+                                 - Add wallet connection for winners
+                            -->
                         </div>
 
                         <div class="border-t border-gray-700 pt-6">

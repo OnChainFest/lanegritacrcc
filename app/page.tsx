@@ -576,29 +576,29 @@ export default function PadelFlowLanding() {
                   <div className="flex items-baseline mb-2">
                     <span className="text-5xl font-heading font-bold text-navy">$19.99</span>
                   </div>
-                  <p className="text-sm text-gray-600 font-body">Ideal para organizadores que quieren probar PadelFlow con un solo torneo real. Pago único, sin suscripciones.</p>
+                  <p className="text-sm text-gray-600 font-body">Perfect for organizers who want to try PadelFlow with a single tournament. One-time payment, no subscriptions.</p>
                 </div>
 
                 <ul className="space-y-3 mb-8 flex-grow">
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">1 torneo completo</span>
+                    <span className="text-gray-700 font-body">1 complete tournament</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Hasta 64 jugadores</span>
+                    <span className="text-gray-700 font-body">Up to 64 players</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Todos los formatos: Americano, Round Robin, Eliminación, Liga</span>
+                    <span className="text-gray-700 font-body">All formats: Americano, Round Robin, Elimination, League</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Invitaciones por correo y QR</span>
+                    <span className="text-gray-700 font-body">Email and QR invitations</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Dashboard básico con resultados</span>
+                    <span className="text-gray-700 font-body">Basic dashboard with results</span>
                   </li>
                 </ul>
 
@@ -622,7 +622,7 @@ export default function PadelFlowLanding() {
                     <span className="text-5xl font-heading font-bold text-navy">$49</span>
                     <span className="text-gray-500 ml-2 font-body">/month</span>
                   </div>
-                  <p className="text-sm text-gray-600 font-body">Perfecto para academias y organizadores recurrentes que lanzan torneos cada semana</p>
+                  <p className="text-sm text-gray-600 font-body">Perfect for academies and recurring organizers who run tournaments every week</p>
                 </div>
 
                 <ul className="space-y-3 mb-8 flex-grow">
@@ -666,7 +666,7 @@ export default function PadelFlowLanding() {
                   <div className="flex items-baseline mb-2">
                     <span className="text-5xl font-heading font-bold text-navy">Custom</span>
                   </div>
-                  <p className="text-sm text-gray-600 font-body">Pensado para clubes, ligas y federaciones que necesitan soporte dedicado e integraciones a medida</p>
+                  <p className="text-sm text-gray-600 font-body">Designed for clubs, leagues, and federations that need dedicated support and custom integrations</p>
                 </div>
 
                 <ul className="space-y-3 mb-8 flex-grow">
