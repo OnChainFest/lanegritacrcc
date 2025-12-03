@@ -22,8 +22,8 @@ export interface PlayerEmailData {
 /*                               Local helpers                                */
 /* -------------------------------------------------------------------------- */
 
-// Dominio recomendado para producción: boliche@country.co.cr
-const FROM_EMAIL = process.env.FROM_EMAIL || "boliche@country.co.cr"
+// Dominio recomendado para producción: torneos@padelflow.com
+const FROM_EMAIL = process.env.FROM_EMAIL || "torneos@padelflow.com"
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 
@@ -43,7 +43,7 @@ function buildHtmlTemplate(t: Record<string, string>, data: PlayerEmailData) {
       <div style="max-width:600px;margin:0 auto;background-color:#ffffff;">
         <!-- Header -->
         <div style="background:#1f2937;color:#fff;padding:24px;text-align:center;border-radius:8px 8px 0 0;">
-          <h1 style="margin:0;font-size:24px;font-weight:bold;">🎳 Torneo La Negrita 2025</h1>
+          <h1 style="margin:0;font-size:24px;font-weight:bold;">🎾 PadelFlow</h1>
         </div>
         
         <!-- Content -->
@@ -81,8 +81,8 @@ function buildHtmlTemplate(t: Record<string, string>, data: PlayerEmailData) {
         <!-- Footer -->
         <div style="background:#f8fafc;text-align:center;padding:24px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#64748b;">
-            <strong>Costa Rica Country Club</strong><br>
-            Torneo La Negrita 2025
+            <strong>PadelFlow</strong><br>
+            Gestión Profesional de Torneos de Pádel
           </p>
         </div>
       </div>
@@ -117,27 +117,27 @@ export class EmailService {
     const t =
       lang === "es"
         ? {
-            subject: "✅ Confirmación de Registro – Torneo La Negrita 2025",
+            subject: "✅ Confirmación de Registro – PadelFlow",
             hi: "¡Hola",
-            confirmed: "Tu registro ha sido confirmado exitosamente para el Torneo La Negrita 2025.",
+            confirmed: "Tu registro ha sido confirmado exitosamente en PadelFlow.",
             id: "ID de Registro",
-            qrNote: "Presenta este código QR el día del evento para confirmar tu participación.",
-            thanks: "¡Gracias por ser parte del torneo! Nos vemos en las pistas de bowling.",
+            qrNote: "Presenta este código QR el día del torneo para confirmar tu participación.",
+            thanks: "¡Gracias por ser parte del torneo! Nos vemos en las canchas de pádel.",
           }
         : {
-            subject: "✅ Registration Confirmation – La Negrita Tournament 2025",
+            subject: "✅ Registration Confirmation – PadelFlow",
             hi: "Hello",
-            confirmed: "Your registration has been confirmed successfully for La Negrita Tournament 2025.",
+            confirmed: "Your registration has been confirmed successfully on PadelFlow.",
             id: "Registration ID",
-            qrNote: "Present this QR code on event day to confirm your participation.",
-            thanks: "Thanks for joining the tournament! See you at the bowling lanes.",
+            qrNote: "Present this QR code on tournament day to confirm your participation.",
+            thanks: "Thanks for joining the tournament! See you at the padel courts.",
           }
 
     return {
       to: data.email,
       subject: t.subject,
       html: buildHtmlTemplate(t, data),
-      text: `${t.hi} ${data.name},\n\n${t.confirmed}\n\n${t.id}: ${data.registrationId}\n\n${t.qrNote}\n\n${t.thanks}\n\nCosta Rica Country Club\nTorneo La Negrita 2025`,
+      text: `${t.hi} ${data.name},\n\n${t.confirmed}\n\n${t.id}: ${data.registrationId}\n\n${t.qrNote}\n\n${t.thanks}\n\nPadelFlow\nGestión Profesional de Torneos de Pádel`,
     }
   }
 
@@ -171,7 +171,7 @@ export class EmailService {
               subject: tpl.subject,
             },
           ],
-          from: { email: FROM_EMAIL, name: "Torneo La Negrita 2025" },
+          from: { email: FROM_EMAIL, name: "PadelFlow" },
           content: [
             { type: "text/html", value: tpl.html },
             { type: "text/plain", value: tpl.text || "" },
@@ -210,7 +210,7 @@ export class EmailService {
       console.log("🔄 Enviando via Resend SDK... (from:", fromAddress, ")")
 
       const { data, error } = await resend.emails.send({
-        from: `Torneo La Negrita 2025 <${fromAddress}>`,
+        from: `PadelFlow <${fromAddress}>`,
         to: [tpl.to],
         subject: tpl.subject,
         html: tpl.html,

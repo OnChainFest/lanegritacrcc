@@ -25,8 +25,8 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: "Torneo La Negrita 2025",
-  description: "Torneo de Bowling La Negrita 2025 - Country Club",
+  title: "PadelFlow - Gestión de Torneos de Pádel",
+  description: "Plataforma profesional para gestión de torneos de pádel",
     generator: 'v0.dev'
 }
 

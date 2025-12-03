@@ -1,8 +1,8 @@
-# 🚀 Mejoras Implementadas - Torneo La Negrita CRCC 2025
+# 🚀 Mejoras Implementadas - PadelFlow
 
 ## Resumen de Mejoras
 
-Este documento detalla todas las mejoras implementadas para llevar el proyecto del **75% al ~95% de completitud**.
+Este documento detalla todas las mejoras implementadas para la plataforma PadelFlow de gestión de torneos de pádel.
 
 ---
 

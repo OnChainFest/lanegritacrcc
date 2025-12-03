@@ -11,7 +11,7 @@
 4. Clic en "New Project"
 5. Completa:
    - **Organization**: Crea nueva o usa existente
-   - **Name**: `torneo-la-negrita-2025`
+   - **Name**: `padelflow`
    - **Database Password**: Genera contraseña segura (guárdala)
    - **Region**: `US East (N. Virginia)` recomendado
    - **Pricing Plan**: Free tier es suficiente para empezar

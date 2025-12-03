@@ -1,7 +1,7 @@
 {
-  "name": "Torneo La Negrita CRCC 2025",
-  "short_name": "La Negrita 2025",
-  "description": "Torneo de Boliche La Negrita - Costa Rica Country Club",
+  "name": "PadelFlow - Gestión de Torneos de Pádel",
+  "short_name": "PadelFlow",
+  "description": "Plataforma profesional para gestión de torneos de pádel",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

@@ -33,9 +33,9 @@ export function RegulationModal() {
         <DialogHeader>
           <DialogTitle className="text-2xl font-heading font-bold text-gray-900 flex items-center gap-2">
             <FileText className="w-6 h-6 text-red-600" />
-            Reglamento Torneo La Negrita 2025
+            Reglamento del Torneo - PadelFlow
           </DialogTitle>
-          <DialogDescription className="text-gray-600">5ª Edición - 2 al 9 de Agosto, 2025</DialogDescription>
+          <DialogDescription className="text-gray-600">Reglamento General de Torneos de Pádel</DialogDescription>
           <div className="flex gap-2 pt-2">
             <Button
               onClick={handleDownloadPDF}
