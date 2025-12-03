@@ -1,4 +1,4 @@
-# 📋 Guía del Administrador - Torneo La Negrita 2025
+# 📋 Guía del Administrador - PadelFlow
 
 ## Índice
 1. [Introducción](#introducción)
@@ -16,7 +16,7 @@
 
 ## Introducción
 
-Esta plataforma permite administrar completamente el Torneo La Negrita 2025 del Country Club Costa Rica. Incluye gestión de jugadores, resultados, llaves de competencia y comunicación automática.
+Esta plataforma permite administrar completamente torneos de pádel de manera profesional. Incluye gestión de jugadores, resultados, llaves de competencia y comunicación automática.
 
 ### Características principales:
 - ✅ Registro y verificación de jugadores
@@ -64,7 +64,7 @@ NODE_ENV=production
 2. Crea una nueva cuenta o inicia sesión
 3. Clic en "New Project"
 4. Completa los datos:
-   - **Name**: `torneo-la-negrita-2025`
+   - **Name**: `padelflow`
    - **Database Password**: Genera una contraseña segura
    - **Region**: Selecciona la más cercana (US East recomendado)
 
@@ -96,8 +96,8 @@ Host: smtp.gmail.com
 Port: 587
 Username: tu-email@gmail.com
 Password: tu-app-password
-Sender email: boliche@country.co.cr
-Sender name: Torneo La Negrita
+Sender email: torneos@padelflow.com
+Sender name: PadelFlow
 \`\`\`
 
 **Para SendGrid:**
@@ -106,8 +106,8 @@ Host: smtp.sendgrid.net
 Port: 587
 Username: apikey
 Password: tu-sendgrid-api-key
-Sender email: boliche@country.co.cr
-Sender name: Torneo La Negrita
+Sender email: torneos@padelflow.com
+Sender name: PadelFlow
 \`\`\`
 
 ### 3. Generar Hash de Contraseña
@@ -322,7 +322,7 @@ Cada fila muestra:
 ##### Validación Manual:
 1. Clic en pestaña **"Manual"**
 2. Pega el código QR completo
-3. Formato: `TORNEO-LA-NEGRITA-2025:ID:Nombre`
+3. Formato: `PADELFLOW-2025:ID:Nombre`
 4. Presiona Enter o clic **"Validar QR"**
 
 ##### Validación por Cámara:
@@ -332,7 +332,7 @@ Cada fila muestra:
 #### 3. **Proceso de Validación**
 
 \`\`\`
-1. Jugador llega al evento
+1. Jugador llega al torneo
 2. Muestra su código QR (email o impreso)
 3. Administrador abre validador QR
 4. Escanea o ingresa código manualmente
@@ -388,9 +388,9 @@ El email incluye:
 - Footer con datos de contacto
 
 ##### Personalización:
-- **Remitente**: `boliche@country.co.cr`
-- **Nombre**: `Torneo La Negrita`
-- **Asunto**: `Confirmación - Torneo La Negrita 2025`
+- **Remitente**: `torneos@padelflow.com`
+- **Nombre**: `PadelFlow`
+- **Asunto**: `Confirmación de Inscripción - PadelFlow`
 
 #### 4. **Solución de Problemas de Email**
 
@@ -513,7 +513,7 @@ supabase functions deploy send-email
 - Jugador no puede acceder
 
 ##### Solución:
-1. Verifica formato del QR: `TORNEO-LA-NEGRITA-2025:ID:Nombre`
+1. Verifica formato del QR: `PADELFLOW-2025:ID:Nombre`
 2. Confirma que el jugador está verificado
 3. Regenera el QR reenviando email
 4. Usa validación manual como respaldo
@@ -549,8 +549,8 @@ supabase functions deploy send-email
 ### Contacto de Soporte
 
 Para problemas técnicos:
-- **Email**: soporte@country.co.cr
-- **Teléfono**: +506 2xxx-xxxx
+- **Email**: soporte@padelflow.com
+- **Teléfono**: Configurar según tu club
 - **Horario**: Lunes a Viernes, 8am-5pm
 
 ---

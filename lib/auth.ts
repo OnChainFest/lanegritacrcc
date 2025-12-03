@@ -1,7 +1,7 @@
 // Credenciales de administrador (en producción deberían estar en variables de entorno)
 const ADMIN_CREDENTIALS = {
   username: "admin",
-  password: "TorneoLaNegrita2025!", // Contraseña segura
+  password: "PadelFlow2025!", // Contraseña segura
 }
 
 export interface AuthUser {

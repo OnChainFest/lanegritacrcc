@@ -1,8 +1,8 @@
-# API Documentation - Torneo La Negrita CRCC 2025
+# API Documentation - PadelFlow
 
 ## Base URL
 ```
-Production: https://lanegritacrcc.vercel.app
+Production: https://padelflow.vercel.app
 Development: http://localhost:3000
 ```
 

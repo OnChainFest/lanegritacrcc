@@ -109,7 +109,7 @@ export function ChangePasswordModal({ open, onOpenChange, onSuccess, isFirstLogi
                 type={showPasswords.current ? "text" : "password"}
                 value={passwords.current}
                 onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
-                placeholder={isFirstLogin ? "TorneoLaNegrita2025!" : "Contraseña actual"}
+                placeholder={isFirstLogin ? "PadelFlow2025!" : "Contraseña actual"}
                 required
                 disabled={loading}
                 className="pr-10"

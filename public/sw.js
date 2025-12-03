@@ -1,5 +1,5 @@
 // Service Worker for PWA functionality
-const CACHE_NAME = 'lanegrita-v1'
+const CACHE_NAME = 'padelflow-v1'
 const STATIC_CACHE = 'static-v1'
 const DYNAMIC_CACHE = 'dynamic-v1'
 

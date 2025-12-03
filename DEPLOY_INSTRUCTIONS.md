@@ -7,7 +7,7 @@ Abre [vercel.com](https://vercel.com) e inicia sesión con GitHub
 
 ### 2. Importa el Repositorio
 1. Click en "Add New Project"
-2. Selecciona el repositorio: `OnChainFest/lanegritacrcc`
+2. Selecciona el repositorio: `OnChainFest/padelflow`
 3. Click en "Import"
 
 ### 3. Configura Variables de Entorno
@@ -36,7 +36,7 @@ Click en "Deploy" - ¡listo en 2 minutos!
 ## URL del Sitio
 Vercel te dará una URL como:
 ```
-https://lanegritacrcc.vercel.app
+https://padelflow.vercel.app
 ```
 
 ## Configurar Dominio Personalizado (Opcional)

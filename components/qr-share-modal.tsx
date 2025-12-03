@@ -18,7 +18,7 @@ export function QRShareModal({ language = "es", children }: QRShareModalProps) {
 
   const content = {
     es: {
-      title: "Compartir Torneo La Negrita",
+      title: "Compartir PadelFlow",
       copyLink: "Copiar Enlace",
       shareVia: "Compartir por:",
       qrDescription: "Escanea este código QR para acceder directamente al torneo",
@@ -26,7 +26,7 @@ export function QRShareModal({ language = "es", children }: QRShareModalProps) {
       close: "Cerrar",
     },
     en: {
-      title: "Share La Negrita Tournament",
+      title: "Share PadelFlow",
       copyLink: "Copy Link",
       shareVia: "Share via:",
       qrDescription: "Scan this QR code to access the tournament directly",
@@ -38,7 +38,7 @@ export function QRShareModal({ language = "es", children }: QRShareModalProps) {
   // Safe language fallback
   const lang = language === "en" ? "en" : "es"
   const t = content[lang]
-  const currentUrl = typeof window !== "undefined" ? window.location.href : "https://torneo-la-negrita.vercel.app"
+  const currentUrl = typeof window !== "undefined" ? window.location.href : "https://padelflow.vercel.app"
 
   // Generate QR code URL using QR Server API
   useEffect(() => {
@@ -60,31 +60,31 @@ export function QRShareModal({ language = "es", children }: QRShareModalProps) {
     {
       name: "WhatsApp",
       icon: MessageCircle,
-      url: `https://wa.me/?text=${encodeURIComponent(`🎳 ¡Mira este increíble torneo de boliche! Torneo La Negrita 2025 - Costa Rica Country Club\n\n${currentUrl}`)}`,
+      url: `https://wa.me/?text=${encodeURIComponent(`🎾 ¡Mira esta plataforma increíble para torneos de pádel! PadelFlow - Gestión Profesional de Torneos\n\n${currentUrl}`)}`,
       color: "bg-green-600/90 hover:bg-green-700/90 backdrop-blur-sm",
     },
     {
       name: "Facebook",
       icon: Facebook,
-      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}&quote=${encodeURIComponent("🎳 Torneo La Negrita 2025 - El torneo de boliche más prestigioso de Costa Rica")}`,
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}&quote=${encodeURIComponent("🎾 PadelFlow - Plataforma profesional para gestión de torneos de pádel")}`,
       color: "bg-blue-600/90 hover:bg-blue-700/90 backdrop-blur-sm",
     },
     {
       name: "Twitter",
       icon: Twitter,
-      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent("🎳 ¡Increíble torneo de boliche en Costa Rica! Torneo La Negrita 2025 - 2-9 Agosto en Costa Rica Country Club. Premios +$10,000")}&hashtags=TorneoLaNegrita,Boliche,CostaRica`,
+      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent("🎾 PadelFlow - La plataforma profesional para gestión de torneos de pádel. Gestiona inscripciones, brackets y resultados en tiempo real.")}&hashtags=PadelFlow,Padel,Torneos`,
       color: "bg-sky-500/90 hover:bg-sky-600/90 backdrop-blur-sm",
     },
     {
       name: "Email",
       icon: Mail,
-      url: `mailto:?subject=${encodeURIComponent("🎳 Torneo La Negrita 2025 - Invitación")}&body=${encodeURIComponent(`Hola,\n\nTe invito a conocer el Torneo La Negrita 2025, el torneo de boliche más prestigioso de Costa Rica.\n\n📅 Fechas: 2-9 Agosto 2025\n🏆 Premios: +$10,000\n📍 Lugar: Costa Rica Country Club\n\nMás información: ${currentUrl}\n\n¡Espero verte ahí!\n\nSaludos`)}`,
+      url: `mailto:?subject=${encodeURIComponent("🎾 PadelFlow - Plataforma de Torneos")}&body=${encodeURIComponent(`Hola,\n\nTe invito a conocer PadelFlow, la plataforma profesional para gestión de torneos de pádel.\n\n✨ Gestión completa de torneos\n🎾 Brackets en tiempo real\n📊 Estadísticas avanzadas\n\nMás información: ${currentUrl}\n\n¡Espero que te sea útil!\n\nSaludos`)}`,
       color: "bg-gray-600/90 hover:bg-gray-700/90 backdrop-blur-sm",
     },
     {
       name: "Telegram",
       icon: Send,
-      url: `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent("🎳 Torneo La Negrita 2025 - El torneo de boliche más prestigioso de Costa Rica. 2-9 Agosto en Costa Rica Country Club.")}`,
+      url: `https://t.me/share/url?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent("🎾 PadelFlow - Plataforma profesional para gestión de torneos de pádel. Gestiona todo tu torneo en un solo lugar.")}`,
       color: "bg-blue-500/90 hover:bg-blue-600/90 backdrop-blur-sm",
     },
     {
@@ -143,7 +143,7 @@ export function QRShareModal({ language = "es", children }: QRShareModalProps) {
                 {qrCodeUrl ? (
                   <Image
                     src={qrCodeUrl || "/placeholder.svg"}
-                    alt="QR Code para Torneo La Negrita"
+                    alt="QR Code para PadelFlow"
                     width={250}
                     height={250}
                     className="rounded-lg"

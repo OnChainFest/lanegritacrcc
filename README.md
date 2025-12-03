@@ -1,6 +1,6 @@
-# 🎳 Torneo La Negrita CRCC 2025
+# 🎾 PadelFlow
 
-Plataforma oficial para la gestión del Torneo de Boliche **La Negrita 2025** del Country Club Río Cuarto, desarrollada para facilitar la inscripción, gestión de llaves (brackets), registro de puntajes y visualización de estadísticas en tiempo real.
+Plataforma profesional para la gestión de torneos de pádel, desarrollada para facilitar la inscripción, gestión de llaves (brackets), registro de resultados y visualización de estadísticas en tiempo real.
 
 ---
 
@@ -8,17 +8,18 @@ Plataforma oficial para la gestión del Torneo de Boliche **La Negrita 2025** de
 
 - Registro público de jugadores
 - Panel administrativo seguro
-- Gestión de brackets y rondas
-- Ingreso de puntajes y seguimiento en vivo
+- Gestión de brackets y rondas de partidos
+- Registro de resultados y seguimiento en vivo
 - Estadísticas del torneo en tiempo real
 - Sistema de pagos e inscripción validada
 - Interfaz responsive (móvil y escritorio)
+- Gestión de parejas y equipos
 
 ---
 
 ## 🧩 Tecnologías Utilizadas
 
-- **Frontend**: Next.js 14, React, TypeScript
+- **Frontend**: Next.js 15, React, TypeScript
 - **Estilos**: Tailwind CSS, shadcn/ui
 - **Backend & DB**: Supabase (PostgreSQL + Auth)
 - **Autenticación**: JWT personalizado + RLS (Row Level Security)
@@ -32,7 +33,8 @@ Plataforma oficial para la gestión del Torneo de Boliche **La Negrita 2025** de
 
 - Registro e inscripción en línea
 - Visualización de brackets en tiempo real
-- Seguimiento de puntajes personales y globales
+- Seguimiento de resultados personales y globales
+- Gestión de parejas de dobles
 - Acceso a reglamento oficial
 
 ### 🛠️ Para Administradores
@@ -40,8 +42,9 @@ Plataforma oficial para la gestión del Torneo de Boliche **La Negrita 2025** de
 - Login seguro con credenciales protegidas
 - Validación de inscripciones y pagos
 - Gestión de llaves y emparejamientos
-- Ingreso manual de puntajes por ronda
+- Registro de resultados por partido
 - Visualización de estadísticas globales del torneo
+- Gestión de canchas y horarios
 
 ---
 
@@ -49,8 +52,8 @@ Plataforma oficial para la gestión del Torneo de Boliche **La Negrita 2025** de
 
 \`\`\`bash
 # Clonar el repositorio
-git clone https://github.com/OnChainFest/lanegritacrcc.git
-cd lanegritacrcc
+git clone https://github.com/OnChainFest/padelflow.git
+cd padelflow
 
 # Instalar dependencias
 npm install
@@ -102,24 +105,25 @@ El proyecto está preparado para despliegue automático en Vercel:
 
 ## 📊 Estadísticas y Reportes
 
-- Clasificación general por puntaje total y promedio.
-- Mejor partida individual por jugador.
-- Distribución de participación por categoría.
-- Estados de inscripción (pendiente, verificado).
-- Exportación de datos en formato CSV y Excel para análisis externo.
+- Clasificación general por victorias y sets ganados
+- Mejor desempeño individual por jugador
+- Distribución de participación por categoría
+- Estados de inscripción (pendiente, verificado)
+- Exportación de datos en formato CSV y Excel para análisis externo
+- Historial de enfrentamientos entre parejas
 
 ---
 
-## 🏟️ Detalles del Torneo
+## 🏟️ Características del Sistema
 
-- **Nombre**: Torneo de Boliche “La Negrita” 2025  
-- **Ubicación**: Country Club Río Cuarto, Costa Rica  
-- **Modalidad**: Eliminación directa  
-- **Categorías**: Handicap, Scratch, Senior, Maratón de Strikes, Desesperado
+- **Deporte**: Pádel
+- **Modalidades**: Individual, Dobles, Equipos
+- **Formatos**: Eliminación directa, Round Robin, Grupos + Eliminación
+- **Categorías**: Configurables (Masculino, Femenino, Mixto, por nivel)
 
 ---
 
 ## 📄 Licencia
 
-Este software fue desarrollado exclusivamente para fines organizativos del **Torneo La Negrita CRCC 2025**.  
-Su uso está restringido a contextos relacionados con el evento y requiere autorización del comité organizador.
+Este software es una plataforma profesional para la gestión de torneos de pádel.
+Puede ser utilizada por clubes deportivos, organizadores de eventos y academias de pádel.

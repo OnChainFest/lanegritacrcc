@@ -1,14 +1,14 @@
 openapi: 3.0.0
 info:
-  title: Torneo La Negrita CRCC 2025 API
-  description: API for managing bowling tournament registrations, brackets, and results
+  title: PadelFlow API
+  description: API for managing padel tournament registrations, brackets, and results
   version: 1.0.0
   contact:
     name: Tournament Support
-    email: admin@lanegritacrcc.com
+    email: admin@padelflow.com
 
 servers:
-  - url: https://lanegritacrcc.vercel.app
+  - url: https://padelflow.vercel.app
     description: Production server
   - url: http://localhost:3000
     description: Development server
