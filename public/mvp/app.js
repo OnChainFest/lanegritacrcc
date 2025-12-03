@@ -147,17 +147,19 @@ function validateStep(step) {
         // Validate prizes
         const prizeType = tournamentData.prizes.type;
 
-        if (prizeType === 'dinero') {
-            const prizePool = document.getElementById('prize-pool').value;
-            if (!prizePool || prizePool <= 0) {
+        if (prizeType === 'monetary') {
+            const prizePoolAmount = document.getElementById('prize-pool-amount');
+            if (!prizePoolAmount || !prizePoolAmount.value || prizePoolAmount.value <= 0) {
                 alert('Por favor, ingresa un monto válido para el prize pool');
                 return false;
             }
-        } else if (prizeType === 'productos') {
-            const description = document.getElementById('prize-description').value.trim();
-            if (!description) {
-                alert('Por favor, describe los premios');
-                return false;
+
+            const distributionScheme = document.getElementById('prize-distribution-scheme');
+            if (distributionScheme && distributionScheme.value === 'custom') {
+                if (!validatePrizePercentages()) {
+                    alert('Los porcentajes de distribución deben sumar exactamente 100%');
+                    return false;
+                }
             }
         }
 
@@ -182,26 +184,40 @@ function saveStepData(step) {
     } else if (step === 2) {
         // Format data is saved when user selects format
     } else if (step === 3) {
-        const prizeType = tournamentData.prizes.type;
+        const prizeType = tournamentData.prizes.type || 'monetary';
+        const scheme = document.getElementById('prize-distribution-scheme');
+        const prizeCurrency = document.getElementById('prize-currency');
+        const prizePoolAmount = document.getElementById('prize-pool-amount');
 
-        if (prizeType === 'dinero') {
-            const distribution = document.getElementById('prize-distribution').value;
+        if (prizeType === 'monetary') {
+            let prizeDistribution = [];
+
+            if (scheme && scheme.value === 'preset') {
+                // Default preset: 50/30/20
+                prizeDistribution = [
+                    { place: 1, percentage: 50 },
+                    { place: 2, percentage: 30 },
+                    { place: 3, percentage: 20 }
+                ];
+            } else if (scheme && scheme.value === 'custom') {
+                // Custom distribution
+                const placesSelect = document.getElementById('prize-places');
+                const numPlaces = parseInt(placesSelect?.value) || 3;
+
+                for (let i = 1; i <= numPlaces; i++) {
+                    const input = document.getElementById(`prize-place-${i}`);
+                    const percentage = parseFloat(input?.value) || 0;
+                    prizeDistribution.push({ place: i, percentage: percentage });
+                }
+            }
+
             tournamentData.prizes = {
-                type: 'dinero',
-                amount: document.getElementById('prize-pool').value,
-                currency: document.getElementById('tournament-currency').value,
-                distribution: distribution === 'custom' ? {
-                    first: document.getElementById('first-place').value,
-                    second: document.getElementById('second-place').value,
-                    third: document.getElementById('third-place').value
-                } : distribution,
-                organizerWallet: document.getElementById('organizer-wallet').value
-            };
-        } else {
-            tournamentData.prizes = {
-                type: 'productos',
-                description: document.getElementById('prize-description').value,
-                organizerWallet: document.getElementById('organizer-wallet').value
+                type: 'monetary',
+                prizeCurrency: prizeCurrency?.value || 'USD',
+                prizePoolAmount: parseFloat(prizePoolAmount?.value) || 0,
+                prizeDistribution: prizeDistribution,
+                prizeStatus: [], // Will be populated in dashboard
+                organizerWallet: document.getElementById('organizer-wallet')?.value || ''
             };
         }
     } else if (step === 4) {
@@ -413,41 +429,104 @@ function setPrizeType(type) {
 
     // Add selection to clicked button
     const selectedBtn = document.querySelector(`[data-prize="${type}"]`);
-    selectedBtn.classList.add('border-primary', 'bg-primary/5');
-    selectedBtn.classList.remove('border-gray-600');
+    if (selectedBtn) {
+        selectedBtn.classList.add('border-primary', 'bg-primary/5');
+        selectedBtn.classList.remove('border-gray-600');
+    }
 
     // Save prize type
     tournamentData.prizes.type = type;
 
-    // Show/hide relevant fields
-    if (type === 'dinero') {
-        document.getElementById('dinero-fields').classList.remove('hidden');
-        document.getElementById('productos-fields').classList.add('hidden');
-    } else {
-        document.getElementById('dinero-fields').classList.add('hidden');
-        document.getElementById('productos-fields').classList.remove('hidden');
+    // Show monetary fields by default
+    const monetaryFields = document.getElementById('monetary-fields');
+    if (monetaryFields && type === 'monetary') {
+        monetaryFields.classList.remove('hidden');
     }
 }
 
-function updateDistribution() {
-    const distribution = document.getElementById('prize-distribution').value;
+function updateDistributionScheme() {
+    const scheme = document.getElementById('prize-distribution-scheme');
     const customDiv = document.getElementById('custom-distribution');
 
-    if (distribution === 'custom') {
-        customDiv.classList.remove('hidden');
-    } else {
-        customDiv.classList.add('hidden');
+    if (scheme && customDiv) {
+        if (scheme.value === 'custom') {
+            customDiv.classList.remove('hidden');
+            updatePrizePlaces(); // Initialize custom places
+        } else {
+            customDiv.classList.add('hidden');
+        }
     }
 }
 
-// Update currency symbol when currency changes in step 1
+function updatePrizePlaces() {
+    const placesSelect = document.getElementById('prize-places');
+    const container = document.getElementById('prize-percentages-container');
+
+    if (!placesSelect || !container) return;
+
+    const numPlaces = parseInt(placesSelect.value) || 3;
+
+    // Generate percentage inputs
+    let html = '';
+    for (let i = 1; i <= numPlaces; i++) {
+        const placeLabel = i === 1 ? '1er lugar' : i === 2 ? '2do lugar' : i === 3 ? '3er lugar' : `${i}° lugar`;
+        html += `
+            <div class="flex items-center gap-3">
+                <label class="text-sm font-semibold w-24">${placeLabel}:</label>
+                <input type="number" id="prize-place-${i}" min="0" max="100" step="1"
+                       placeholder="%"
+                       oninput="validatePrizePercentages()"
+                       class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                <span class="text-gray-400 text-sm">%</span>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+    validatePrizePercentages();
+}
+
+function validatePrizePercentages() {
+    const placesSelect = document.getElementById('prize-places');
+    if (!placesSelect) return true;
+
+    const numPlaces = parseInt(placesSelect.value) || 3;
+    let total = 0;
+
+    for (let i = 1; i <= numPlaces; i++) {
+        const input = document.getElementById(`prize-place-${i}`);
+        if (input) {
+            total += parseFloat(input.value) || 0;
+        }
+    }
+
+    const warningDiv = document.getElementById('percentage-warning');
+    const successDiv = document.getElementById('percentage-success');
+
+    if (warningDiv && successDiv) {
+        if (Math.abs(total - 100) < 0.01) { // Account for floating point precision
+            warningDiv.classList.add('hidden');
+            successDiv.classList.remove('hidden');
+            return true;
+        } else {
+            warningDiv.classList.remove('hidden');
+            successDiv.classList.add('hidden');
+            return false;
+        }
+    }
+
+    return Math.abs(total - 100) < 0.01;
+}
+
+// Update currency symbol when currency changes
 document.addEventListener('DOMContentLoaded', function() {
-    const currencySelect = document.getElementById('tournament-currency');
-    if (currencySelect) {
-        currencySelect.addEventListener('change', function() {
-            const symbols = { EUR: '€', USD: '$', GBP: '£', ARS: '$' };
+    // Prize currency symbol update
+    const prizeCurrencySelect = document.getElementById('prize-currency');
+    if (prizeCurrencySelect) {
+        prizeCurrencySelect.addEventListener('change', function() {
+            const symbols = { EUR: '€', USD: '$', GBP: '£', ARS: '$', CRC: '₡' };
             const symbol = symbols[this.value] || this.value;
-            const currencySymbol = document.getElementById('currency-symbol');
+            const currencySymbol = document.getElementById('prize-currency-symbol');
             if (currencySymbol) {
                 currencySymbol.textContent = symbol;
             }
@@ -645,6 +724,129 @@ function activateTournament(tournamentId) {
         return false;
     } catch (error) {
         console.error('Error activating tournament:', error);
+        return false;
+    }
+}
+
+// ========================================
+// PRIZE DISTRIBUTION MANAGEMENT (MANUAL)
+// ========================================
+
+/**
+ * Calculate prize amounts for each place based on distribution percentages
+ * @param {Object} tournament - Tournament object with prize configuration
+ * @returns {Array} Array of prize entries with calculated amounts
+ *
+ * TODO: Future integration point for Pro/Clubs plans:
+ * - Connect smart contracts for automated distribution
+ * - Integrate wallet connections (Coinbase Smart Wallets, Base, XRPL)
+ * - Add on-chain verification of payouts
+ */
+function calculatePrizeAmounts(tournament) {
+    if (!tournament.prizes || !tournament.prizes.prizeDistribution || !tournament.prizes.prizePoolAmount) {
+        return [];
+    }
+
+    return tournament.prizes.prizeDistribution.map(entry => ({
+        ...entry,
+        amount: (tournament.prizes.prizePoolAmount * entry.percentage) / 100,
+        currency: tournament.prizes.prizeCurrency || 'USD'
+    }));
+}
+
+/**
+ * Load prize delivery status for a specific tournament
+ * @param {String} tournamentId - Tournament ID
+ * @returns {Array} Prize status array
+ */
+function loadPrizeStatus(tournamentId) {
+    try {
+        const tournaments = getStoredTournaments();
+        const tournament = tournaments.find(t => t.id === tournamentId);
+
+        if (!tournament || !tournament.prizes) {
+            return [];
+        }
+
+        // Initialize prizeStatus if it doesn't exist
+        if (!tournament.prizes.prizeStatus) {
+            tournament.prizes.prizeStatus = [];
+        }
+
+        return tournament.prizes.prizeStatus;
+    } catch (error) {
+        console.error('Error loading prize status:', error);
+        return [];
+    }
+}
+
+/**
+ * Save prize delivery status to localStorage
+ * @param {String} tournamentId - Tournament ID
+ * @param {Array} prizeStatus - Updated prize status array
+ *
+ * TODO: Future integration point for Pro/Clubs plans:
+ * - Save to database instead of localStorage
+ * - Add timestamp tracking for delivery
+ * - Send notifications to winners when marked as delivered
+ */
+function savePrizeStatus(tournamentId, prizeStatus) {
+    try {
+        const tournaments = getStoredTournaments();
+        const tournamentIndex = tournaments.findIndex(t => t.id === tournamentId);
+
+        if (tournamentIndex === -1) {
+            console.error('Tournament not found');
+            return false;
+        }
+
+        if (!tournaments[tournamentIndex].prizes) {
+            tournaments[tournamentIndex].prizes = {};
+        }
+
+        tournaments[tournamentIndex].prizes.prizeStatus = prizeStatus;
+
+        localStorage.setItem('padelflow_tournaments', JSON.stringify(tournaments));
+        console.log('✅ Prize status saved for tournament:', tournamentId);
+
+        return true;
+    } catch (error) {
+        console.error('Error saving prize status:', error);
+        return false;
+    }
+}
+
+/**
+ * Update the delivery status for a specific prize place
+ * @param {String} tournamentId - Tournament ID
+ * @param {Number} place - Prize place (1, 2, 3, etc.)
+ * @param {String} winnerName - Name of the winner
+ * @param {Boolean} delivered - Whether the prize has been delivered
+ */
+function updatePrizeDeliveryStatus(tournamentId, place, winnerName, delivered) {
+    try {
+        let prizeStatus = loadPrizeStatus(tournamentId);
+
+        // Find existing entry or create new one
+        const existingIndex = prizeStatus.findIndex(p => p.place === place);
+
+        const statusEntry = {
+            place: place,
+            winnerName: winnerName || '',
+            delivered: delivered,
+            updatedAt: new Date().toISOString()
+        };
+
+        if (existingIndex >= 0) {
+            prizeStatus[existingIndex] = statusEntry;
+        } else {
+            prizeStatus.push(statusEntry);
+        }
+
+        savePrizeStatus(tournamentId, prizeStatus);
+        return true;
+    } catch (error) {
+        console.error('Error updating prize delivery status:', error);
         return false;
     }
 }

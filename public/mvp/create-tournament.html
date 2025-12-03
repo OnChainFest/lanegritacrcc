@@ -243,75 +243,108 @@
 
                 <!-- Step 3: Premios -->
                 <div id="step-3" class="wizard-step hidden">
-                    <h3 class="text-2xl font-bold mb-6">Premios y wallet del organizador</h3>
+                    <h3 class="text-2xl font-bold mb-6">Configuración de premios</h3>
+
+                    <!-- Manual Distribution Notice -->
+                    <div class="bg-primary/10 border border-primary/30 rounded-xl p-4 mb-6">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-primary flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div class="text-sm">
+                                <strong class="text-primary">Distribución manual:</strong>
+                                <span class="text-gray-300"> En el plan actual, PadelFlow calculará los montos por lugar, pero tú entregas los premios fuera de la plataforma. Podrás marcar cada premio como entregado desde el dashboard.</span>
+                            </div>
+                        </div>
+                    </div>
 
                     <div class="space-y-6">
                         <div>
                             <label class="block text-sm font-semibold mb-2">Tipo de premio</label>
                             <div class="grid md:grid-cols-2 gap-4">
-                                <button type="button" onclick="setPrizeType('dinero')" data-prize="dinero"
-                                        class="prize-type-btn bg-gray-800 border-2 border-gray-600 rounded-lg p-4 text-left hover:border-primary transition-all">
+                                <button type="button" onclick="setPrizeType('monetary')" data-prize="monetary"
+                                        class="prize-type-btn bg-gray-800 border-2 border-primary bg-primary/5 rounded-lg p-4 text-left hover:border-primary transition-all">
                                     <div class="text-2xl mb-2">💰</div>
-                                    <div class="font-bold">Dinero</div>
+                                    <div class="font-bold">Monetary Prize</div>
                                     <div class="text-sm text-gray-400">Prize pool monetario</div>
                                 </button>
-                                <button type="button" onclick="setPrizeType('productos')" data-prize="productos"
-                                        class="prize-type-btn bg-gray-800 border-2 border-gray-600 rounded-lg p-4 text-left hover:border-primary transition-all">
+                                <button type="button" onclick="setPrizeType('non-monetary')" data-prize="non-monetary"
+                                        class="prize-type-btn bg-gray-800 border-2 border-gray-600 rounded-lg p-4 text-left opacity-50 cursor-not-allowed" disabled>
                                     <div class="text-2xl mb-2">🎁</div>
-                                    <div class="font-bold">Productos</div>
-                                    <div class="text-sm text-gray-400">Premios no monetarios</div>
+                                    <div class="font-bold">Non-monetary / Recognition</div>
+                                    <div class="text-sm text-gray-400">Próximamente</div>
                                 </button>
                             </div>
                         </div>
 
-                        <div id="dinero-fields" class="space-y-6 hidden">
+                        <div id="monetary-fields" class="space-y-6">
                             <div>
-                                <label class="block text-sm font-semibold mb-2">Monto total del prize pool *</label>
-                                <div class="relative">
-                                    <input type="number" id="prize-pool" min="0" step="50"
-                                           class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                                           placeholder="1000">
-                                    <span id="currency-symbol" class="absolute right-4 top-3 text-gray-400">EUR</span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Distribución de premios</label>
-                                <select id="prize-distribution" onchange="updateDistribution()"
+                                <label class="block text-sm font-semibold mb-2">Moneda del premio *</label>
+                                <select id="prize-currency"
                                         class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
-                                    <option value="50-30-20">1° lugar: 50% • 2° lugar: 30% • 3° lugar: 20%</option>
-                                    <option value="60-30-10">1° lugar: 60% • 2° lugar: 30% • 3° lugar: 10%</option>
-                                    <option value="70-20-10">1° lugar: 70% • 2° lugar: 20% • 3° lugar: 10%</option>
-                                    <option value="custom">Personalizado</option>
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="CRC">CRC (₡)</option>
                                 </select>
                             </div>
 
-                            <div id="custom-distribution" class="hidden">
-                                <label class="block text-sm font-semibold mb-2">Distribución personalizada (%)</label>
-                                <div class="grid grid-cols-3 gap-4">
-                                    <input type="number" id="first-place" min="0" max="100" placeholder="1° lugar"
-                                           class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
-                                    <input type="number" id="second-place" min="0" max="100" placeholder="2° lugar"
-                                           class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
-                                    <input type="number" id="third-place" min="0" max="100" placeholder="3° lugar"
-                                           class="bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Monto total del prize pool *</label>
+                                <div class="relative">
+                                    <input type="number" id="prize-pool-amount" min="0" step="50"
+                                           class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                                           placeholder="1000.00">
+                                    <span id="prize-currency-symbol" class="absolute right-4 top-3 text-gray-400">USD</span>
                                 </div>
                             </div>
-                        </div>
 
-                        <div id="productos-fields" class="hidden">
                             <div>
-                                <label class="block text-sm font-semibold mb-2">Descripción de premios *</label>
-                                <textarea id="prize-description" rows="4"
-                                          class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                                          placeholder="Ej: 1° lugar: Paleta profesional Wilson&#10;2° lugar: Bolso deportivo&#10;3° lugar: Pack de pelotas"></textarea>
+                                <label class="block text-sm font-semibold mb-2">Esquema de distribución</label>
+                                <select id="prize-distribution-scheme" onchange="updateDistributionScheme()"
+                                        class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                                    <option value="preset">Preset: 1st/2nd/3rd (50% / 30% / 20%)</option>
+                                    <option value="custom">Custom: Definir porcentajes manualmente</option>
+                                </select>
+                            </div>
+
+                            <div id="custom-distribution" class="hidden space-y-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Número de lugares premiados *</label>
+                                    <select id="prize-places" onchange="updatePrizePlaces()"
+                                            class="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none">
+                                        <option value="1">1 lugar</option>
+                                        <option value="2">2 lugares</option>
+                                        <option value="3" selected>3 lugares</option>
+                                        <option value="4">4 lugares</option>
+                                        <option value="5">5 lugares</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Porcentaje por lugar (debe sumar 100%)</label>
+                                    <div id="prize-percentages-container" class="space-y-3">
+                                        <!-- Will be populated by JavaScript -->
+                                    </div>
+                                    <div id="percentage-warning" class="hidden mt-2 text-sm text-yellow-500 flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                                        </svg>
+                                        <span>Los porcentajes deben sumar exactamente 100%</span>
+                                    </div>
+                                    <div id="percentage-success" class="hidden mt-2 text-sm text-primary flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span>Distribución correcta: 100%</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
                         <div class="border-t border-gray-700 pt-6">
-                            <label class="block text-sm font-semibold mb-2">Wallet del organizador</label>
+                            <label class="block text-sm font-semibold mb-2">Wallet del organizador (opcional)</label>
                             <p class="text-sm text-gray-400 mb-3">
-                                En el futuro, conectarás tu wallet aquí para recibir pagos automáticos vía smart contract. Por ahora, ingresa una dirección de wallet o deja en blanco.
+                                En el futuro, conectarás tu wallet aquí para recibir pagos automáticos vía smart contract. Por ahora puedes dejar este campo en blanco.
                             </p>
                             <div class="flex gap-2">
                                 <input type="text" id="organizer-wallet"

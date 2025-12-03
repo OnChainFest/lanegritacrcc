@@ -569,8 +569,8 @@ export default function PadelFlowLanding() {
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* One Time Payment Tier */}
-            <Card className="border-2 border-gray-200 hover:shadow-xl transition-all">
-              <CardContent className="p-8">
+            <Card className="border-2 border-gray-200 hover:shadow-xl transition-all h-full">
+              <CardContent className="p-8 flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-2xl font-heading font-bold text-navy mb-2">One Time Payment – 1 Tournament</h3>
                   <div className="flex items-baseline mb-2">
@@ -579,7 +579,7 @@ export default function PadelFlowLanding() {
                   <p className="text-sm text-gray-600 font-body">Ideal para organizadores que quieren probar PadelFlow con un solo torneo real. Pago único, sin suscripciones.</p>
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-8 flex-grow">
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
                     <span className="text-gray-700 font-body">1 torneo completo</span>
@@ -602,20 +602,20 @@ export default function PadelFlowLanding() {
                   </li>
                 </ul>
 
-                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-heading">
+                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-heading mt-auto">
                   Create 1 Tournament
                 </Button>
               </CardContent>
             </Card>
 
             {/* Pro Tier */}
-            <Card className="border-2 border-cyan bg-gradient-to-br from-white to-cyan-light/5 hover:shadow-2xl transition-all relative">
+            <Card className="border-2 border-cyan bg-gradient-to-br from-white to-cyan-light/5 hover:shadow-2xl transition-all relative h-full">
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <Badge className="bg-gradient-to-r from-cyan to-cyan-dark text-navy font-heading font-bold px-4 py-1">
                   Most Popular
                 </Badge>
               </div>
-              <CardContent className="p-8">
+              <CardContent className="p-8 flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-2xl font-heading font-bold text-navy mb-2">Pro Organizer</h3>
                   <div className="flex items-baseline mb-2">
@@ -625,7 +625,7 @@ export default function PadelFlowLanding() {
                   <p className="text-sm text-gray-600 font-body">Perfecto para academias y organizadores recurrentes que lanzan torneos cada semana</p>
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-8 flex-grow">
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
                     <span className="text-gray-700 font-body">Unlimited tournaments</span>
@@ -652,15 +652,15 @@ export default function PadelFlowLanding() {
                   </li>
                 </ul>
 
-                <Button className="w-full bg-gradient-to-r from-cyan to-cyan-dark hover:from-cyan-dark hover:to-cyan text-navy font-heading font-bold">
+                <Button className="w-full bg-gradient-to-r from-cyan to-cyan-dark hover:from-cyan-dark hover:to-cyan text-navy font-heading font-bold mt-auto">
                   Start Pro Trial
                 </Button>
               </CardContent>
             </Card>
 
             {/* Enterprise Tier */}
-            <Card className="border-2 border-gray-200 hover:shadow-xl transition-all">
-              <CardContent className="p-8">
+            <Card className="border-2 border-gray-200 hover:shadow-xl transition-all h-full">
+              <CardContent className="p-8 flex flex-col h-full">
                 <div className="mb-6">
                   <h3 className="text-2xl font-heading font-bold text-navy mb-2">Clubs & Federations</h3>
                   <div className="flex items-baseline mb-2">
@@ -669,7 +669,7 @@ export default function PadelFlowLanding() {
                   <p className="text-sm text-gray-600 font-body">Pensado para clubes, ligas y federaciones que necesitan soporte dedicado e integraciones a medida</p>
                 </div>
 
-                <ul className="space-y-3 mb-8">
+                <ul className="space-y-3 mb-8 flex-grow">
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
                     <span className="text-gray-700 font-body">Everything in Pro</span>
@@ -698,7 +698,7 @@ export default function PadelFlowLanding() {
 
                 <Button
                   variant="outline"
-                  className="w-full border-navy text-navy hover:bg-navy hover:text-white font-heading"
+                  className="w-full border-navy text-navy hover:bg-navy hover:text-white font-heading mt-auto"
                 >
                   Contact Sales
                 </Button>
