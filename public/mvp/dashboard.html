@@ -40,12 +40,19 @@
                 </div>
 
                 <div class="flex items-center space-x-4">
+                    <!-- Language Selector -->
+                    <select id="language-selector" onchange="changeLanguage(this.value)"
+                            class="bg-gray-800 border border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer">
+                        <option value="en">🇬🇧 EN</option>
+                        <option value="es" selected>🇪🇸 ES</option>
+                        <option value="pt">🇵🇹 PT</option>
+                    </select>
                     <button onclick="openCreateTournamentModal()"
                             class="bg-primary hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
-                        <span class="hidden sm:inline">Crear torneo</span>
+                        <span class="hidden sm:inline" data-i18n="dashboard.createTournament">Crear torneo</span>
                     </button>
 
                     <div class="relative">
@@ -263,8 +270,17 @@
         </div>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="app.js"></script>
     <script>
+        // Sync language selector with current language
+        document.addEventListener('DOMContentLoaded', function() {
+            const selector = document.getElementById('language-selector');
+            if (selector) {
+                selector.value = getCurrentLanguage();
+            }
+        });
+
         // Check authentication
         if (!isUserAuthenticated()) {
             window.location.href = 'index.html';
