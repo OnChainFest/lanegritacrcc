@@ -436,23 +436,25 @@
                     </div>
 
                     <div>
-                        <h3 class="text-lg font-bold mb-3">Premios</h3>
+                        <h3 class="text-lg font-bold mb-3">Prize Distribution (Manual)</h3>
                         <div class="bg-gray-800 border border-gray-700 rounded-xl p-6">
-                            ${tournament.prizes.type === 'dinero' ? `
-                                <div class="text-sm">
-                                    <div class="mb-2">
-                                        <span class="text-gray-400">Prize Pool:</span>
-                                        <span class="font-semibold text-primary ml-2 text-lg">${tournament.prizes.amount} ${tournament.prizes.currency}</span>
+                            ${tournament.prizes && tournament.prizes.type === 'monetary' ? `
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-gray-400">Prize Pool Total:</span>
+                                        <span class="font-semibold text-primary text-lg">${tournament.prizes.prizePoolAmount} ${tournament.prizes.prizeCurrency}</span>
                                     </div>
-                                    <div>
-                                        <span class="text-gray-400">Distribución:</span>
-                                        <span class="font-semibold ml-2">${tournament.prizes.distribution}</span>
-                                    </div>
+                                    <p class="text-xs text-gray-500 italic">
+                                        PadelFlow calcula los premios por lugar; tú marcas manualmente cuando cada premio haya sido entregado.
+                                    </p>
+                                </div>
+
+                                <div id="prize-distribution-table-${tournament.id}">
+                                    <!-- Prize distribution table will be rendered here -->
                                 </div>
                             ` : `
-                                <div class="text-sm">
-                                    <div class="text-gray-400 mb-2">Premios no monetarios:</div>
-                                    <div class="font-semibold">${tournament.prizes.description}</div>
+                                <div class="text-sm text-gray-400">
+                                    No hay distribución de premios monetarios configurada para este torneo.
                                 </div>
                             `}
                         </div>
@@ -477,6 +479,109 @@
 
             document.getElementById('modal-content').innerHTML = detailsHTML;
             document.getElementById('detail-modal').classList.remove('hidden');
+
+            // Render prize distribution table if prizes exist
+            if (tournament.prizes && tournament.prizes.type === 'monetary') {
+                renderPrizeDistributionTable(tournament);
+            }
+        }
+
+        function renderPrizeDistributionTable(tournament) {
+            const container = document.getElementById(`prize-distribution-table-${tournament.id}`);
+            if (!container) return;
+
+            // Calculate prize amounts
+            const prizeAmounts = calculatePrizeAmounts(tournament);
+            if (!prizeAmounts || prizeAmounts.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-400">No hay distribución de premios configurada.</p>';
+                return;
+            }
+
+            // Load current prize status
+            const prizeStatus = loadPrizeStatus(tournament.id);
+
+            // Build table HTML
+            let tableHTML = `
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-700">
+                                <th class="text-left py-3 px-2 text-gray-400 font-semibold">Lugar</th>
+                                <th class="text-left py-3 px-2 text-gray-400 font-semibold">%</th>
+                                <th class="text-left py-3 px-2 text-gray-400 font-semibold">Monto</th>
+                                <th class="text-left py-3 px-2 text-gray-400 font-semibold">Ganador</th>
+                                <th class="text-center py-3 px-2 text-gray-400 font-semibold">Entregado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            prizeAmounts.forEach(prize => {
+                const placeLabel = prize.place === 1 ? '1°' : prize.place === 2 ? '2°' : prize.place === 3 ? '3°' : `${prize.place}°`;
+                const status = prizeStatus.find(s => s.place === prize.place) || { winnerName: '', delivered: false };
+
+                tableHTML += `
+                    <tr class="border-b border-gray-700/50 hover:bg-gray-750 transition-colors">
+                        <td class="py-3 px-2 font-semibold">${placeLabel} lugar</td>
+                        <td class="py-3 px-2 text-gray-400">${prize.percentage}%</td>
+                        <td class="py-3 px-2 font-semibold text-primary">${prize.amount.toFixed(2)} ${prize.currency}</td>
+                        <td class="py-3 px-2">
+                            <input type="text"
+                                   id="winner-name-${tournament.id}-${prize.place}"
+                                   value="${status.winnerName || ''}"
+                                   placeholder="Nombre del ganador"
+                                   onchange="updateWinnerName('${tournament.id}', ${prize.place}, this.value)"
+                                   class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-1.5 text-sm focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none">
+                        </td>
+                        <td class="py-3 px-2 text-center">
+                            <label class="inline-flex items-center cursor-pointer">
+                                <input type="checkbox"
+                                       id="delivered-${tournament.id}-${prize.place}"
+                                       ${status.delivered ? 'checked' : ''}
+                                       onchange="togglePrizeDelivered('${tournament.id}', ${prize.place})"
+                                       class="w-5 h-5 text-primary bg-gray-700 border-gray-600 rounded focus:ring-primary focus:ring-2">
+                            </label>
+                            ${status.delivered ? '<span class="ml-2 text-xs text-primary">✓</span>' : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = tableHTML;
+        }
+
+        function updateWinnerName(tournamentId, place, winnerName) {
+            const prizeStatus = loadPrizeStatus(tournamentId);
+            const deliveredCheckbox = document.getElementById(`delivered-${tournamentId}-${place}`);
+            const delivered = deliveredCheckbox ? deliveredCheckbox.checked : false;
+
+            updatePrizeDeliveryStatus(tournamentId, place, winnerName, delivered);
+        }
+
+        function togglePrizeDelivered(tournamentId, place) {
+            const checkbox = document.getElementById(`delivered-${tournamentId}-${place}`);
+            const nameInput = document.getElementById(`winner-name-${tournamentId}-${place}`);
+
+            if (!checkbox || !nameInput) return;
+
+            const delivered = checkbox.checked;
+            const winnerName = nameInput.value;
+
+            updatePrizeDeliveryStatus(tournamentId, place, winnerName, delivered);
+
+            // Show visual feedback
+            if (delivered) {
+                checkbox.parentElement.insertAdjacentHTML('beforeend', '<span class="ml-2 text-xs text-primary">✓</span>');
+            } else {
+                const checkmark = checkbox.parentElement.querySelector('span');
+                if (checkmark) checkmark.remove();
+            }
         }
 
         function closeDetailModal() {
