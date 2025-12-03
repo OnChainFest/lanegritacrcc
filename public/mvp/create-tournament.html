@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PadelFlow - Crea tu torneo de pádel en minutos</title>
+    <title>Crear Torneo - PadelFlow</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -24,175 +24,27 @@
     <nav class="fixed top-0 w-full bg-secondary/95 backdrop-blur-md border-b border-gray-700 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-2">
+                <a href="index.html" class="flex items-center space-x-2">
                     <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
                     <span class="text-2xl font-bold">Padel<span class="text-primary">Flow</span></span>
-                </div>
-                <button onclick="scrollToWizard()" class="bg-primary hover:bg-green-600 text-white px-6 py-2 rounded-lg font-semibold transition-all">
-                    Crear Torneo
-                </button>
+                </a>
+                <a href="index.html" class="text-gray-400 hover:text-white transition-all flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Volver al inicio
+                </a>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section class="pt-32 pb-20 px-4 relative overflow-hidden">
-        <!-- Background Pattern -->
-        <div class="absolute inset-0 opacity-10">
-            <div class="absolute inset-0" style="background-image: radial-gradient(circle at 2px 2px, rgba(16, 185, 129, 0.4) 1px, transparent 0); background-size: 48px 48px;"></div>
-        </div>
-
-        <!-- Gradient Orbs -->
-        <div class="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse"></div>
-        <div class="absolute bottom-20 right-10 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse"></div>
-
-        <div class="max-w-7xl mx-auto relative z-10">
-            <div class="grid lg:grid-cols-2 gap-12 items-center">
-                <div>
-                    <div class="inline-block mb-4 px-4 py-2 bg-primary/10 border border-primary/30 rounded-full text-primary text-sm font-semibold">
-                        ⚡ Automatiza tu torneo
-                    </div>
-                    <h1 class="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
-                        Crea tu torneo de pádel en <span class="text-primary">minutos</span>
-                    </h1>
-                    <p class="text-xl text-gray-300 mb-8 leading-relaxed">
-                        Configura el formato, premios y participantes. Comparte por correo o QR.
-                        <span class="text-primary font-semibold">Paga solo cuando estés listo para lanzar.</span>
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4">
-                        <button onclick="scrollToWizard()" class="bg-primary hover:bg-green-600 text-white px-8 py-4 rounded-lg font-bold text-lg transition-all shadow-lg shadow-primary/25 flex items-center justify-center group">
-                            Crear mi primer torneo
-                            <svg class="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
-                            </svg>
-                        </button>
-                        <a href="#como-funciona" class="border-2 border-primary/50 text-primary hover:bg-primary/10 px-8 py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center">
-                            Ver cómo funciona
-                        </a>
-                    </div>
-
-                    <!-- Trust Indicators -->
-                    <div class="mt-12 grid grid-cols-3 gap-6">
-                        <div>
-                            <div class="text-3xl font-bold text-primary">100%</div>
-                            <div class="text-sm text-gray-400">Automatizado</div>
-                        </div>
-                        <div>
-                            <div class="text-3xl font-bold text-primary">5min</div>
-                            <div class="text-sm text-gray-400">Para configurar</div>
-                        </div>
-                        <div>
-                            <div class="text-3xl font-bold text-primary">∞</div>
-                            <div class="text-sm text-gray-400">Formatos</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Hero Image -->
-                <div class="relative">
-                    <img src="https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&h=600&fit=crop"
-                         alt="Jugadores de pádel"
-                         class="rounded-2xl shadow-2xl border-4 border-gray-700">
-                    <div class="absolute -bottom-6 -left-6 bg-primary text-secondary px-6 py-4 rounded-xl shadow-xl">
-                        <div class="text-2xl font-bold">4 Formatos</div>
-                        <div class="text-sm">Americano • Round Robin • Eliminación • Liga</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Cómo Funciona Section -->
-    <section id="como-funciona" class="py-20 px-4 bg-gray-900">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl lg:text-5xl font-bold mb-4">¿Cómo funciona?</h2>
-                <p class="text-xl text-gray-400">Configura tu torneo en 3 simples pasos</p>
-            </div>
-
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Step 1 -->
-                <div class="bg-secondary border border-gray-700 rounded-2xl p-8 hover:border-primary/50 transition-all">
-                    <div class="w-16 h-16 bg-primary/10 border border-primary rounded-2xl flex items-center justify-center text-primary text-2xl font-bold mb-6">
-                        1
-                    </div>
-                    <h3 class="text-2xl font-bold mb-4">Configura el torneo</h3>
-                    <p class="text-gray-400 leading-relaxed">
-                        Elige el formato (Americano, Round Robin, Eliminación o Liga),
-                        define fechas, categorías y número de participantes.
-                    </p>
-                </div>
-
-                <!-- Step 2 -->
-                <div class="bg-secondary border border-gray-700 rounded-2xl p-8 hover:border-primary/50 transition-all">
-                    <div class="w-16 h-16 bg-primary/10 border border-primary rounded-2xl flex items-center justify-center text-primary text-2xl font-bold mb-6">
-                        2
-                    </div>
-                    <h3 class="text-2xl font-bold mb-4">Define premios</h3>
-                    <p class="text-gray-400 leading-relaxed">
-                        Configura el prize pool, distribución de premios y conecta
-                        tu wallet para recibir pagos (próximamente: smart contracts).
-                    </p>
-                </div>
-
-                <!-- Step 3 -->
-                <div class="bg-secondary border border-gray-700 rounded-2xl p-8 hover:border-primary/50 transition-all">
-                    <div class="w-16 h-16 bg-primary/10 border border-primary rounded-2xl flex items-center justify-center text-primary text-2xl font-bold mb-6">
-                        3
-                    </div>
-                    <h3 class="text-2xl font-bold mb-4">Comparte e invita</h3>
-                    <p class="text-gray-400 leading-relaxed">
-                        Paga, activa tu torneo y comparte el link o QR.
-                        Los jugadores se registran y todo se gestiona automáticamente.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Beneficios Section -->
-    <section class="py-20 px-4">
-        <div class="max-w-7xl mx-auto">
-            <div class="text-center mb-16">
-                <h2 class="text-4xl lg:text-5xl font-bold mb-4">¿Por qué PadelFlow?</h2>
-                <p class="text-xl text-gray-400">La forma más moderna de organizar torneos</p>
-            </div>
-
-            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
-                    <div class="text-3xl mb-4">⚡</div>
-                    <h3 class="text-xl font-bold mb-2">Ahorra tiempo</h3>
-                    <p class="text-gray-400 text-sm">Automatiza sorteos, calendarios y resultados</p>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
-                    <div class="text-3xl mb-4">🎯</div>
-                    <h3 class="text-xl font-bold mb-2">4 Formatos</h3>
-                    <p class="text-gray-400 text-sm">Americano, Round Robin, Eliminación y Liga</p>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
-                    <div class="text-3xl mb-4">💰</div>
-                    <h3 class="text-xl font-bold mb-2">Smart Contracts</h3>
-                    <p class="text-gray-400 text-sm">Pagos automáticos y transparentes (próximamente)</p>
-                </div>
-
-                <div class="bg-gray-900 border border-gray-700 rounded-xl p-6">
-                    <div class="text-3xl mb-4">📱</div>
-                    <h3 class="text-xl font-bold mb-2">100% Digital</h3>
-                    <p class="text-gray-400 text-sm">Invitaciones por email, link o QR code</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Wizard Section -->
-    <section id="wizard" class="py-20 px-4 bg-gray-900">
+    <section class="pt-32 pb-20 px-4">
         <div class="max-w-4xl mx-auto">
             <div class="text-center mb-12">
-                <h2 class="text-4xl lg:text-5xl font-bold mb-4">Crea tu torneo ahora</h2>
+                <h1 class="text-4xl lg:text-5xl font-bold mb-4">Crea tu torneo</h1>
                 <p class="text-xl text-gray-400">Sigue los pasos y lanza tu torneo en minutos</p>
             </div>
 
@@ -545,19 +397,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
-
-    <!-- CTA Final -->
-    <section class="py-20 px-4">
-        <div class="max-w-4xl mx-auto text-center">
-            <h2 class="text-4xl lg:text-5xl font-bold mb-6">¿Listo para organizar tu mejor torneo?</h2>
-            <p class="text-xl text-gray-400 mb-8">
-                Únete a los organizadores que ya están usando PadelFlow
-            </p>
-            <button onclick="scrollToWizard()" class="bg-primary hover:bg-green-600 text-white px-12 py-4 rounded-lg font-bold text-xl transition-all shadow-lg shadow-primary/25">
-                Empieza gratis, paga sólo al publicar
-            </button>
         </div>
     </section>
 

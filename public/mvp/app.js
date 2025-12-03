@@ -16,8 +16,18 @@ let selectedCategories = [];
 // UTILITY FUNCTIONS
 // ========================================
 
+/**
+ * Navigate to the tournament creation wizard page
+ * This function can be called from any page to redirect to create-tournament.html
+ */
+function startTournamentFlow() {
+    window.location.href = "create-tournament.html";
+}
+
 function scrollToWizard() {
-    document.getElementById('wizard').scrollIntoView({ behavior: 'smooth' });
+    // Legacy function - kept for backwards compatibility
+    // Now redirects to dedicated tournament creation page
+    startTournamentFlow();
 }
 
 function updateProgressBar() {
