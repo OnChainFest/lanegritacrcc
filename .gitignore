@@ -54,3 +54,11 @@ VERCEL_ENVIRONMENT_VARIABLES.txt
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# hardhat
+/cache
+/artifacts
+/typechain
+/typechain-types
+coverage.json
+.openzeppelin
