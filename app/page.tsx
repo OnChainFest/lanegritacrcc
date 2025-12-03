@@ -563,48 +563,47 @@ export default function PadelFlowLanding() {
               Simple, Transparent Pricing
             </h2>
             <p className="text-xl text-gray-600 font-body max-w-2xl mx-auto">
-              Start for free. Scale as you grow. No hidden fees.
+              Choose the plan that fits your needs. Scale as you grow. No hidden fees.
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Free Tier */}
+            {/* One Time Payment Tier */}
             <Card className="border-2 border-gray-200 hover:shadow-xl transition-all">
               <CardContent className="p-8">
                 <div className="mb-6">
-                  <h3 className="text-2xl font-heading font-bold text-navy mb-2">Free</h3>
+                  <h3 className="text-2xl font-heading font-bold text-navy mb-2">One Time Payment – 1 Tournament</h3>
                   <div className="flex items-baseline mb-2">
-                    <span className="text-5xl font-heading font-bold text-navy">$0</span>
-                    <span className="text-gray-500 ml-2 font-body">/tournament</span>
+                    <span className="text-5xl font-heading font-bold text-navy">$19.99</span>
                   </div>
-                  <p className="text-sm text-gray-600 font-body">Perfect to get started</p>
+                  <p className="text-sm text-gray-600 font-body">Ideal para organizadores que quieren probar PadelFlow con un solo torneo real. Pago único, sin suscripciones.</p>
                 </div>
 
                 <ul className="space-y-3 mb-8">
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Up to 1 tournament</span>
+                    <span className="text-gray-700 font-body">1 torneo completo</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Up to 16 players</span>
+                    <span className="text-gray-700 font-body">Hasta 64 jugadores</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Smart contract payouts</span>
+                    <span className="text-gray-700 font-body">Todos los formatos: Americano, Round Robin, Eliminación, Liga</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Basic dashboard</span>
+                    <span className="text-gray-700 font-body">Invitaciones por correo y QR</span>
                   </li>
                   <li className="flex items-start">
                     <CheckCircle2 className="w-5 h-5 text-cyan mt-1 mr-3 flex-shrink-0" />
-                    <span className="text-gray-700 font-body">Community support</span>
+                    <span className="text-gray-700 font-body">Dashboard básico con resultados</span>
                   </li>
                 </ul>
 
                 <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-heading">
-                  Get Started Free
+                  Create 1 Tournament
                 </Button>
               </CardContent>
             </Card>
@@ -623,7 +622,7 @@ export default function PadelFlowLanding() {
                     <span className="text-5xl font-heading font-bold text-navy">$49</span>
                     <span className="text-gray-500 ml-2 font-body">/month</span>
                   </div>
-                  <p className="text-sm text-gray-600 font-body">For serious organizers</p>
+                  <p className="text-sm text-gray-600 font-body">Perfecto para academias y organizadores recurrentes que lanzan torneos cada semana</p>
                 </div>
 
                 <ul className="space-y-3 mb-8">
@@ -667,7 +666,7 @@ export default function PadelFlowLanding() {
                   <div className="flex items-baseline mb-2">
                     <span className="text-5xl font-heading font-bold text-navy">Custom</span>
                   </div>
-                  <p className="text-sm text-gray-600 font-body">For organizations at scale</p>
+                  <p className="text-sm text-gray-600 font-body">Pensado para clubes, ligas y federaciones que necesitan soporte dedicado e integraciones a medida</p>
                 </div>
 
                 <ul className="space-y-3 mb-8">
@@ -862,7 +861,7 @@ export default function PadelFlowLanding() {
               size="lg"
               className="bg-gradient-to-r from-cyan to-cyan-dark hover:from-cyan-dark hover:to-cyan text-navy font-heading font-bold text-lg px-8 py-6 shadow-xl shadow-cyan/30"
             >
-              Start Free Today
+              Get Started Today
             </Button>
             <Button
               size="lg"
