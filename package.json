@@ -23,6 +23,7 @@
     "hardhat:mint:batch:ipfs:base": "hardhat run scripts/deploy/mint-trophy-batch-with-ipfs.ts --network base"
   },
   "dependencies": {
+    "@coinbase/wallet-sdk": "^4.3.7",
     "@pinata/sdk": "^2.1.0",
     "@radix-ui/react-alert-dialog": "^1.0.5",
     "@radix-ui/react-avatar": "^1.0.4",
@@ -39,6 +40,7 @@
     "@radix-ui/react-toast": "latest",
     "@stripe/stripe-js": "^2.4.0",
     "@supabase/supabase-js": "latest",
+    "@tanstack/react-query": "^5.90.11",
     "bcryptjs": "latest",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -56,7 +58,9 @@
     "resend": "latest",
     "stripe": "^14.10.0",
     "tailwind-merge": "^2.5.5",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "viem": "^2.41.2",
+    "wagmi": "^3.1.0"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ethers": "^4.0.3",
