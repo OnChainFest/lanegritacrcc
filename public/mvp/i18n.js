@@ -725,8 +725,8 @@ const translations = {
     }
 };
 
-// Current language (default to browser language or fallback to English)
-let currentLang = localStorage.getItem('padelflow_language') || getBrowserLanguage();
+// Current language (default to English)
+let currentLang = localStorage.getItem('padelflow_language') || 'en';
 
 /**
  * Get browser's preferred language
