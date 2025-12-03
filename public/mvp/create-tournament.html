@@ -32,17 +32,22 @@
                 </a>
                 <div class="flex items-center gap-4">
                     <!-- Language Selector -->
-                    <select id="language-selector" onchange="changeLanguage(this.value)"
-                            class="bg-gray-800 border border-gray-600 rounded-lg px-3 py-1.5 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer">
-                        <option value="en">🇬🇧 EN</option>
-                        <option value="es" selected>🇪🇸 ES</option>
-                        <option value="pt">🇵🇹 PT</option>
-                    </select>
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"></path>
+                        </svg>
+                        <select id="language-selector" onchange="changeLanguage(this.value)"
+                                class="bg-gray-700 border border-gray-500 text-white rounded-lg px-3 py-1.5 text-sm font-medium focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none cursor-pointer hover:bg-gray-600 transition-colors">
+                            <option value="en" selected>🇬🇧 EN</option>
+                            <option value="es">🇪🇸 ES</option>
+                            <option value="pt">🇵🇹 PT</option>
+                        </select>
+                    </div>
                     <a href="index.html" class="text-gray-400 hover:text-white transition-all flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                         </svg>
-                        <span data-i18n="nav.backToHome">Volver al inicio</span>
+                        <span data-i18n="nav.backToHome">Back to home</span>
                     </a>
                 </div>
             </div>
