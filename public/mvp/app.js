@@ -1016,42 +1016,69 @@ function updateNftTrophyEntry(tournamentId, place, winnerName, status) {
 }
 
 /**
- * PLACEHOLDER: Mint NFT Trophy on-chain
- * This function will be implemented when Web3 integration is ready
+ * Mint NFT Trophy on-chain
+ * Uses web3-integration.js to connect wallet and mint NFT
  * @param {Object} tournament - Tournament object
  * @param {Object} winner - Winner data {place, winnerName, walletAddress}
- *
- * TODO: Implement actual minting logic:
- * - Connect to deployed NFT contract
- * - Mint NFT with metadata (name, description, attributes)
- * - Transfer NFT to winner's wallet
- * - Return transaction hash
+ * @returns {Promise<Object>} Result with success, txHash, tokenId, etc.
  */
 async function mintNftTrophyOnChain(tournament, winner) {
-    console.log('🔜 mintNftTrophyOnChain placeholder called');
+    console.log('🏆 Minting NFT Trophy on-chain...');
     console.log('Tournament:', tournament.basicInfo.name);
     console.log('Winner:', winner);
-    console.log('NFT Trophy:', tournament.prizes.nftTrophyName);
 
-    // Future implementation:
-    // const contract = await getContract('NFTTrophy');
-    // const metadata = {
-    //   name: tournament.prizes.nftTrophyName,
-    //   description: tournament.prizes.nftTrophyDescription,
-    //   attributes: [
-    //     { trait_type: "Tournament", value: tournament.basicInfo.name },
-    //     { trait_type: "Place", value: winner.place },
-    //     { trait_type: "Winner", value: winner.winnerName },
-    //     { trait_type: "Date", value: tournament.basicInfo.startDate }
-    //   ]
-    // };
-    // const tx = await contract.mint(winner.walletAddress, metadata);
-    // return tx.hash;
+    try {
+        // Check if web3Integration is loaded
+        if (typeof window.web3Integration === 'undefined') {
+            throw new Error('Web3 integration not loaded. Please include web3-integration.js');
+        }
 
-    return Promise.resolve({
-        success: false,
-        message: 'Web3 integration not yet implemented'
-    });
+        // Prepare tournament data for minting
+        const tournamentData = {
+            id: tournament.id,
+            name: tournament.basicInfo.name,
+            date: tournament.basicInfo.startDate,
+            format: tournament.basicInfo.format || 'americano',
+            totalPlayers: parseInt(tournament.basicInfo.numPlayers) || 0
+        };
+
+        // Prepare winner data for minting
+        const winnerData = {
+            place: winner.place,
+            winnerName: winner.winnerName,
+            walletAddress: winner.walletAddress
+        };
+
+        // Call the Web3 integration mint function
+        const result = await window.web3Integration.mintNFTTrophy(tournamentData, winnerData);
+
+        if (result.success) {
+            console.log('✅ NFT minted successfully!');
+            console.log('   Transaction Hash:', result.txHash);
+            console.log('   Token ID:', result.tokenId);
+            console.log('   Block Explorer:', result.blockExplorerUrl);
+
+            // Store transaction hash in the trophy status
+            const status = loadNftTrophyStatus(tournament.id);
+            const entry = status.find(s => s.place === winner.place);
+            if (entry) {
+                entry.txHash = result.txHash;
+                entry.tokenId = result.tokenId;
+                entry.mintedAt = new Date().toISOString();
+                entry.blockExplorerUrl = result.blockExplorerUrl;
+                saveNftTrophyStatus(tournament.id, status);
+            }
+        }
+
+        return result;
+
+    } catch (error) {
+        console.error('❌ Minting error:', error);
+        return {
+            success: false,
+            error: error.message || 'Unknown error occurred'
+        };
+    }
 }
 
 // ========================================
